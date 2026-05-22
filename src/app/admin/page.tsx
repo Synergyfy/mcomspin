@@ -401,7 +401,7 @@ export default function AdminDashboard() {
                       <div className="text-xl mb-2.5 text-orange-500"><Coins className="w-5 h-5" /></div>
                       <span className="text-[10px] text-[#888] font-bold uppercase tracking-wider block">Platform Revenue Ledger</span>
                       <span className="text-2xl font-display font-black text-[#1a1a1a] mt-1 block">
-                        ${totalPlatformRevenue.toLocaleString()} <span className="text-[12px] text-[#888] font-normal">USD</span>
+                        £{totalPlatformRevenue.toLocaleString()} <span className="text-[12px] text-[#888] font-normal">GBP</span>
                       </span>
                     </div>
                   </div>
@@ -702,7 +702,7 @@ export default function AdminDashboard() {
                           <div key={biz.id} className="space-y-1">
                             <div className="flex justify-between text-[11px] font-bold text-[#1a1a1a]">
                               <span>{biz.name} ({biz.partnerTier})</span>
-                              <span>${(totalPlatformRevenue * (biz.leadConversion / 100) * 0.1).toFixed(2)} Platform Share</span>
+                              <span>£{(totalPlatformRevenue * (biz.leadConversion / 100) * 0.1).toFixed(2)} Platform Share</span>
                             </div>
                             <div className="h-2 bg-[#f5f5f3] rounded-full overflow-hidden">
                               <div
@@ -1074,7 +1074,7 @@ export default function AdminDashboard() {
                         <span className="text-[10px] text-[#888] font-bold block uppercase tracking-wider">Simulated Checkout Simulator</span>
                         <div className="border border-stone-200/50 bg-white rounded-xl p-3 text-center my-auto space-y-1">
                           <p className="font-bold text-[12px]">Luxury Silk Scarf</p>
-                          <p className="text-[10px] text-[#888]">$120.00 USD</p>
+                          <p className="text-[10px] text-[#888]">£120.00 GBP</p>
                         </div>
                         {/* Simulated widget anchor */}
                         <div className="absolute bottom-3 right-3 bg-[#f97316] text-white w-9 h-9 rounded-full flex items-center justify-center shadow-md cursor-pointer animate-bounce">
@@ -1279,7 +1279,7 @@ export default function AdminDashboard() {
                             <p className="font-bold text-[#1a1a1a]">Meridian Apparel billing ledger</p>
                             <p className="text-[10px] text-[#888]">Monthly SaaS recurring + 2% transaction commission</p>
                           </div>
-                          <span className="font-mono font-bold text-[#1a1a1a]">$1,240.80</span>
+                          <span className="font-mono font-bold text-[#1a1a1a]">£1,240.80</span>
                         </div>
 
                         <div className="p-3 bg-[#fafaf9] border border-[#eee] rounded-xl flex justify-between items-center">
@@ -1287,7 +1287,7 @@ export default function AdminDashboard() {
                             <p className="font-bold text-[#1a1a1a]">Elara Wellness billing ledger</p>
                             <p className="text-[10px] text-[#888]">Monthly SaaS recurring + 2% transaction commission</p>
                           </div>
-                          <span className="font-mono font-bold text-[#1a1a1a]">$842.10</span>
+                          <span className="font-mono font-bold text-[#1a1a1a]">£842.10</span>
                         </div>
                       </div>
                     </div>

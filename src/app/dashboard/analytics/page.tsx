@@ -38,10 +38,10 @@ const campaignROIData = [
 ];
 
 const partnerData = [
-  { partner: 'Meridian Digital', leads: 482, revenue: '$42,100', conversion: '28.4%', trend: '+12%' },
-  { partner: 'Solara Media', leads: 367, revenue: '$31,800', conversion: '22.1%', trend: '+8%' },
-  { partner: 'NovaPeak Inc.', leads: 291, revenue: '$26,400', conversion: '19.7%', trend: '+3%' },
-  { partner: 'Cascade Partners', leads: 198, revenue: '$18,200', conversion: '16.2%', trend: '-2%' },
+  { partner: 'Meridian Digital', leads: 482, revenue: '£42,100', conversion: '28.4%', trend: '+12%' },
+  { partner: 'Solara Media', leads: 367, revenue: '£31,800', conversion: '22.1%', trend: '+8%' },
+  { partner: 'NovaPeak Inc.', leads: 291, revenue: '£26,400', conversion: '19.7%', trend: '+3%' },
+  { partner: 'Cascade Partners', leads: 198, revenue: '£18,200', conversion: '16.2%', trend: '-2%' },
 ];
 
 const dateRanges = ['Last 7 days', 'Last 30 days', 'Last 90 days', 'Custom'] as const;
@@ -78,9 +78,9 @@ export default function AnalyticsPage() {
       {/* Summary Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-5">
         {[
-          { label: 'Total Revenue', value: '$162,890', change: '+24%', positive: true },
+          { label: 'Total Revenue', value: '£162,890', change: '+24%', positive: true },
           { label: 'Avg Conversion', value: '22.4%', change: '+3.1%', positive: true },
-          { label: 'Customer LTV', value: '$84.20', change: '+11%', positive: true },
+          { label: 'Customer LTV', value: '£84.20', change: '+11%', positive: true },
         ].map((card) => (
           <div key={card.label} className="bg-white rounded-2xl border border-[#eee] shadow-sm p-6 hover:shadow-md transition-shadow duration-300">
             <p className="text-[#888] text-[13px] mb-1">{card.label}</p>

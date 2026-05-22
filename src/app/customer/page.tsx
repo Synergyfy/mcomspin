@@ -108,7 +108,7 @@ const spinPrizes = [
   { title: '20% Off Styling Session', provider: 'Meridian Apparel', providerLogo: 'MA', type: 'discount' as const, value: '20% Off', details: 'Valid on custom styling appointments.' },
   { title: 'Complimentary Detox Facial', provider: 'Elara Wellness', providerLogo: 'EW', type: 'appointment' as const, value: 'Free Facial', details: 'Full 30-min organic botanical skin clearing session.' },
   { title: 'Premium Multi-Adapter Charger', provider: 'Vantage Electronics', providerLogo: 'VE', type: 'product' as const, value: 'Free Charger', details: 'Grab our ultra-slim multi-socket home charger.' },
-  { title: '$50 Gourmet Tasting Credit', provider: 'Soleil Dining Group', providerLogo: 'SD', type: 'voucher' as const, value: '$50 Credit', details: 'Applied instantly to your dine-in table balance.' },
+  { title: '£50 Gourmet Tasting Credit', provider: 'Soleil Dining Group', providerLogo: 'SD', type: 'voucher' as const, value: '£50 Credit', details: 'Applied instantly to your dine-in table balance.' },
   { title: 'VIP Apparel Showcase Pass', provider: 'Meridian Apparel', providerLogo: 'MA', type: 'exclusive' as const, value: 'VIP Entry', details: 'Priority seat booking at the upcoming fashion show.' },
   { title: 'Signature Organic Massage', provider: 'Elara Wellness', providerLogo: 'EW', type: 'appointment' as const, value: 'Free Massage', details: 'Full 45-min therapeutic thermal stone massage.' },
 ];
@@ -475,7 +475,7 @@ export default function CustomerPortal() {
               <div className="p-5 rounded-2xl border border-dashed border-[#f97316]/30 bg-orange-50/20 max-w-sm mx-auto space-y-3 relative">
                 <span className="absolute top-2 right-2 text-[10px] font-bold bg-[#f97316] text-white px-2 py-0.5 rounded uppercase">Voucher</span>
                 <p className="text-[12px] font-bold text-[#888]">Meridian Apparel</p>
-                <h3 className="text-xl font-display font-extrabold text-[#1a1a1a]">$15 Storewide Off</h3>
+                <h3 className="text-xl font-display font-extrabold text-[#1a1a1a]">£15 Storewide Off</h3>
                 <p className="text-[11px] text-[#888]">Auto-added to your wallet. You also received +1 Bonus Spin!</p>
               </div>
 
@@ -548,7 +548,7 @@ export default function CustomerPortal() {
               {/* Floating Cards Graphic */}
               <div className="pt-10 flex flex-wrap justify-center gap-4 max-w-4xl mx-auto opacity-90 select-none pointer-events-none">
                 {[
-                  { title: '$50 Gourmet Credit', provider: 'Soleil Dining', color: 'border-amber-200' },
+                  { title: '£50 Gourmet Credit', provider: 'Soleil Dining', color: 'border-amber-200' },
                   { title: 'Free Signature Facial', provider: 'Elara Wellness', color: 'border-teal-200' },
                   { title: 'VIP Apparel Pass', provider: 'Meridian Apparel', color: 'border-rose-200' },
                 ].map((card, i) => (
@@ -1042,12 +1042,12 @@ export default function CustomerPortal() {
                     <div className="bg-white border border-[#eee] p-4 rounded-2xl space-y-2 shadow-sm">
                       <div className="w-full h-24 bg-stone-50 border border-stone-100 rounded-xl" />
                       <p className="text-[12px] font-bold text-[#1a1a1a]">Premium Collection Item A</p>
-                      <p className="text-[11px] text-[#f97316] font-bold">$149.00</p>
+                      <p className="text-[11px] text-[#f97316] font-bold">£149.00</p>
                     </div>
                     <div className="bg-white border border-[#eee] p-4 rounded-2xl space-y-2 shadow-sm">
                       <div className="w-full h-24 bg-stone-50 border border-stone-100 rounded-xl" />
                       <p className="text-[12px] font-bold text-[#1a1a1a]">Premium Collection Item B</p>
-                      <p className="text-[11px] text-[#f97316] font-bold">$219.00</p>
+                      <p className="text-[11px] text-[#f97316] font-bold">£219.00</p>
                     </div>
                   </div>
                 </div>

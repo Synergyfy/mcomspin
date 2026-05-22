@@ -40,7 +40,7 @@ const rewardTypes: Record<string, { bg: string; text: string }> = {
 };
 
 const rewards = [
-  { name: '$50 Styling Voucher',  type: 'Voucher',      stock: 45,  maxStock: 100, expires: 'Jul 15, 2026', redeemed: 55 },
+  { name: '£50 Styling Voucher',  type: 'Voucher',      stock: 45,  maxStock: 100, expires: 'Jul 15, 2026', redeemed: 55 },
   { name: 'Premium Spa Session',  type: 'Appointment',  stock: 12,  maxStock: 40,  expires: 'Aug 1, 2026',  redeemed: 28 },
   { name: 'Wireless Charger',     type: 'Product',      stock: 89,  maxStock: 120, expires: null,           redeemed: 31 },
   { name: '20% Off Dining',       type: 'Coupon',       stock: 200, maxStock: 500, expires: 'Jun 30, 2026', redeemed: 300 },
@@ -181,7 +181,7 @@ export default function RewardsPage() {
             </div>
             {/* value */}
             <div className="flex flex-col gap-1">
-              <label className="text-[11px] font-semibold text-[#888] uppercase tracking-wide">Value ($)</label>
+              <label className="text-[11px] font-semibold text-[#888] uppercase tracking-wide">Value (£)</label>
               <input
                 type="text"
                 value={formValue}

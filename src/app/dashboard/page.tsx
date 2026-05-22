@@ -26,13 +26,13 @@ const engagementData = Array.from({ length: 30 }, (_, i) => {
 /* ─── Activity feed ─── */
 const activityFeed = [
   { id: 1, type: 'lead', icon: 'target', text: 'New lead captured — Yuki Tanaka via Summer Lead Blitz', time: '2 min ago' },
-  { id: 2, type: 'reward', icon: 'gift', text: 'Reward redeemed — $50 Voucher claimed by Marcus Vance', time: '8 min ago' },
+  { id: 2, type: 'reward', icon: 'gift', text: 'Reward redeemed — £50 Voucher claimed by Marcus Vance', time: '8 min ago' },
   { id: 3, type: 'partner', icon: 'partner', text: 'Partner joined — Orchard & Co. Spas activated', time: '23 min ago' },
   { id: 4, type: 'lead', icon: 'target', text: 'Lead converted — Elena Rostova completed checkout', time: '41 min ago' },
   { id: 5, type: 'campaign', icon: 'campaign', text: 'Campaign started — Partner Spotlight Q3 went live', time: '1 hr ago' },
   { id: 6, type: 'reward', icon: 'gift', text: 'Reward restocked — Premium Wireless Charger ×50 added', time: '2 hr ago' },
   { id: 7, type: 'lead', icon: 'target', text: 'Lead captured — Sophia Sterling via Storefront widget', time: '3 hr ago' },
-  { id: 8, type: 'partner', icon: 'partner', text: 'Partner payout processed — Vanguard Fine Dining $2,340', time: '4 hr ago' },
+  { id: 8, type: 'partner', icon: 'partner', text: 'Partner payout processed — Vanguard Fine Dining £2,340', time: '4 hr ago' },
 ];
 
 const getActivityIcon = (icon: string, className = "w-4 h-4 text-[#888]") => {
@@ -105,7 +105,7 @@ const kpis = [
   },
   {
     label: 'Partner Revenue',
-    value: '$162,890',
+    value: '£162,890',
     change: '+24.1%',
     trend: 'up' as const,
     icon: (

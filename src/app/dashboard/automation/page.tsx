@@ -42,7 +42,7 @@ const scheduledTasks = [
 
 const eventLog = [
   { time: '19:32', date: 'Today', event: 'Auto Partner Rotation executed — shifted 24 leads from Solara to Meridian.', type: 'rotation' },
-  { time: '18:15', date: 'Today', event: 'Reward Rebalancing completed — redistributed $1,240 across 3 pools.', type: 'reward' },
+  { time: '18:15', date: 'Today', event: 'Reward Rebalancing completed — redistributed £1,240 across 3 pools.', type: 'reward' },
   { time: '14:02', date: 'Today', event: 'Low Stock Alert fired — "Premium Gift Card" at 12% inventory.', type: 'alert' },
   { time: '09:00', date: 'Yesterday', event: 'Daily Revenue Sync completed — 842 records processed.', type: 'sync' },
   { time: '08:45', date: 'Yesterday', event: 'Lead Nurture Sequence paused by user — manual override.', type: 'pause' },
