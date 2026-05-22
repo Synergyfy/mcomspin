@@ -3,10 +3,10 @@
 import React from 'react';
 
 const invoices = [
-  { id: 'INV-2026-004', date: 'May 15, 2026', amount: '$299.00', status: 'Paid' },
-  { id: 'INV-2026-003', date: 'Apr 15, 2026', amount: '$299.00', status: 'Paid' },
-  { id: 'INV-2026-002', date: 'Mar 15, 2026', amount: '$299.00', status: 'Paid' },
-  { id: 'INV-2026-001', date: 'Feb 15, 2026', amount: '$149.00', status: 'Paid' },
+  { id: 'INV-2026-004', date: 'May 15, 2026', amount: '£299.00', status: 'Paid' },
+  { id: 'INV-2026-003', date: 'Apr 15, 2026', amount: '£299.00', status: 'Paid' },
+  { id: 'INV-2026-002', date: 'Mar 15, 2026', amount: '£299.00', status: 'Paid' },
+  { id: 'INV-2026-001', date: 'Feb 15, 2026', amount: '£149.00', status: 'Paid' },
 ];
 
 export default function BillingPage() {
@@ -39,7 +39,7 @@ export default function BillingPage() {
                   <p className="text-[#888] text-[12px] mt-1">Controlled gamification & multi-storefront routing.</p>
                 </div>
                 <div className="flex items-baseline gap-1 pt-2">
-                  <span className="text-3xl font-display font-bold">$299</span>
+                  <span className="text-3xl font-display font-bold">£299</span>
                   <span className="text-[#888] text-[12px]">/ month</span>
                 </div>
               </div>

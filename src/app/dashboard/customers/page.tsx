@@ -46,7 +46,7 @@ const customers = [
 ];
 
 const segments = [
-  { label: 'High Value', count: 892, color: 'from-[#f97316] to-[#fb923c]', icon: 'crown', description: 'LTV above $120, engaged weekly' },
+  { label: 'High Value', count: 892, color: 'from-[#f97316] to-[#fb923c]', icon: 'crown', description: 'LTV above £120, engaged weekly' },
   { label: 'At Risk', count: 156, color: 'from-[#ef4444] to-[#f87171]', icon: 'alert', description: 'No activity in 7+ days, declining score' },
   { label: 'New', count: 347, color: 'from-[#3b82f6] to-[#60a5fa]', icon: 'sparkles', description: 'Joined in the last 30 days' },
 ];
