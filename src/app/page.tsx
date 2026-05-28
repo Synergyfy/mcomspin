@@ -49,16 +49,16 @@ export default function LandingPage() {
     { labelTop: 'STOCK', labelBottom: 'CLEARED', icon: 'box' },
     { labelTop: 'SLOTS', labelBottom: 'BOOKED', icon: 'clock' },
     { labelTop: 'TRAFFIC', labelBottom: 'ROUTED', icon: 'route' },
-    { labelTop: 'REVENUE', labelBottom: 'EARNED', icon: 'dollar' },
+    { labelTop: 'REVENUE', labelBottom: 'EARNED', icon: 'pound' },
     { labelTop: 'VOUCHER', labelBottom: 'ISSUED', icon: 'ticket' },
   ];
 
   /* ─── Partner rotation data ─── */
   const partners = [
-    { name: 'Meridian Apparel', category: 'Luxury Fashion & Excess Stock', leads: 412, conversion: '18.4%', revenue: '$32,490' },
-    { name: 'Elara Wellness', category: 'Premium Spa & Booking Services', leads: 589, conversion: '22.1%', revenue: '$45,800' },
-    { name: 'Vantage Electronics', category: 'Consumer Tech & Voucher Programs', leads: 304, conversion: '14.8%', revenue: '$21,900' },
-    { name: 'Soleil Dining Group', category: 'Hospitality & Experience Packages', leads: 622, conversion: '26.3%', revenue: '$62,700' },
+    { name: 'Meridian Apparel', category: 'Luxury Fashion & Excess Stock', leads: 412, conversion: '18.4%', revenue: '£32,490' },
+    { name: 'Elara Wellness', category: 'Premium Spa & Booking Services', leads: 589, conversion: '22.1%', revenue: '£45,800' },
+    { name: 'Vantage Electronics', category: 'Consumer Tech & Voucher Programs', leads: 304, conversion: '14.8%', revenue: '£21,900' },
+    { name: 'Soleil Dining Group', category: 'Hospitality & Experience Packages', leads: 622, conversion: '26.3%', revenue: '£62,700' },
   ];
 
   useEffect(() => {
@@ -107,8 +107,10 @@ export default function LandingPage() {
         return (<svg className={cls} fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>);
       case 'route':
         return (<svg className={cls} fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M7.5 21L3 16.5m0 0L7.5 12M3 16.5h13.5m0-13.5L21 7.5m0 0L16.5 12M21 7.5H7.5" /></svg>);
-      case 'dollar':
-        return (<svg className={cls} fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M12 6v12m-3-2.818l.879.659c1.171.879 3.07.879 4.242 0 1.172-.879 1.172-2.303 0-3.182C13.536 12.219 12.768 12 12 12c-.725 0-1.45-.22-2.003-.659-1.106-.879-1.106-2.303 0-3.182s2.9-.879 4.006 0l.415.33M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>);
+      case 'pound':
+        return (<svg className={cls} fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" d="M18 7c0-5.333-8-5.333-8 0 M10 7v14 M6 21h12 M6 13h10" />
+        </svg>);
       case 'ticket':
         return (<svg className={cls} fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M16.5 6v.75m0 3v.75m0 3v.75m0 3V18m-9-5.25h5.25M7.5 15h3M3.375 5.25c-.621 0-1.125.504-1.125 1.125v3.026a2.999 2.999 0 010 5.198v3.026c0 .621.504 1.125 1.125 1.125h17.25c.621 0 1.125-.504 1.125-1.125v-3.026a2.999 2.999 0 010-5.198V6.375c0-.621-.504-1.125-1.125-1.125H3.375z" /></svg>);
       default:
