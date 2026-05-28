@@ -3,129 +3,992 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
-  AreaChart,
-  Area,
-  XAxis,
-  YAxis,
-  Tooltip,
-  ResponsiveContainer,
-  BarChart,
-  Bar,
-  LineChart,
-  Line,
-  Cell,
-  PieChart,
-  Pie,
-} from 'recharts';
-import { useAdminStore, AdminBusiness, ProbabilitySegment, SecurityAlert, SpotlightCampaign } from '@/store/admin-store';
-import { 
-  BarChart3, 
-  Network, 
-  UserCheck, 
-  Users, 
-  Sliders, 
-  Compass, 
-  Gift, 
-  Scale, 
-  Calendar, 
-  Route, 
-  Monitor, 
-  Zap, 
-  TrendingUp, 
-  Shield, 
-  Bell, 
-  Coins,
+  TrendingUp,
+  Shield,
   Building2,
   Target,
   Search,
   AlertTriangle,
-  ArrowRight,
   Star,
   Sparkles,
-  Check,
-  X
+  UserCheck,
+  LayoutGrid,
+  Zap,
+  Gift,
+  ShieldAlert,
+  Users,
+  Compass,
+  Route,
+  Bell,
+  Coins,
+  BarChart3,
+  Sliders
 } from 'lucide-react';
+import { useAdminStore } from '@/store/admin-store';
 
-/* ─── HELPERS & CONSTANTS ─── */
-const menuItems = [
-  { id: 'overview', label: 'Platform Overview', icon: 'overview' },
-  { id: 'network', label: 'Live Network Map', icon: 'network' },
-  { id: 'verification', label: 'Business Verification', icon: 'verification' },
-  { id: 'ecosystem', label: 'Partner Ecosystem', icon: 'ecosystem' },
-  { id: 'campaigns', label: 'Campaign Engine', icon: 'campaigns' },
-  { id: 'gamification', label: 'Gamification Orchestrator', icon: 'gamification' },
-  { id: 'rewards', label: 'Reward Oversight', icon: 'rewards' },
-  { id: 'probability', label: 'Probability & Logic', icon: 'probability' },
-  { id: 'spotlight', label: 'Rotation Spotlight', icon: 'spotlight' },
-  { id: 'routing', label: 'Lead Routing', icon: 'routing' },
-  { id: 'storefront', label: 'Storefront Previews', icon: 'storefront' },
-  { id: 'automation', label: 'Automation Rules', icon: 'automation' },
-  { id: 'analytics', label: 'Analytics & Intelligence', icon: 'analytics' },
-  { id: 'risk', label: 'Fraud & Risk', icon: 'risk' },
-  { id: 'alerts', label: 'Alerts Center', icon: 'alerts' },
-  { id: 'revenue', label: 'Revenue Control', icon: 'revenue' },
-];
+import { GamificationControl } from './gamification-control';
+import { CampaignControl } from './campaign-control';
 
-const getAdminMenuIcon = (id: string, className = "w-4 h-4") => {
-  switch (id) {
-    case 'overview': return <BarChart3 className={className} />;
-    case 'network': return <Network className={className} />;
-    case 'verification': return <UserCheck className={className} />;
-    case 'ecosystem': return <Users className={className} />;
-    case 'campaigns': return <Sliders className={className} />;
-    case 'gamification': return <Compass className={className} />;
-    case 'rewards': return <Gift className={className} />;
-    case 'probability': return <Scale className={className} />;
-    case 'spotlight': return <Calendar className={className} />;
-    case 'routing': return <Route className={className} />;
-    case 'storefront': return <Monitor className={className} />;
-    case 'automation': return <Zap className={className} />;
-    case 'analytics': return <TrendingUp className={className} />;
-    case 'risk': return <Shield className={className} />;
-    case 'alerts': return <Bell className={className} />;
-    case 'revenue': return <Coins className={className} />;
-    default: return null;
-  }
+/* ─── SHARED UI COMPONENTS ─── */
+const Card = ({ children, title, isProcessing }: { children: React.ReactNode, title?: string, isProcessing?: boolean }) => (
+  <div className="bg-white p-6 rounded-2xl border border-stone-200 shadow-sm relative overflow-hidden">
+    {title && <h3 className="text-[11px] font-bold uppercase tracking-widest text-stone-500 mb-6">{title}</h3>}
+    {children}
+    {isProcessing && (
+      <div className="absolute inset-0 bg-white/50 backdrop-blur-[1px] flex items-center justify-center z-10">
+        <motion.div 
+          animate={{ rotate: 360 }}
+          transition={{ repeat: Infinity, duration: 1, ease: "linear" }}
+          className="w-5 h-5 border-2 border-stone-800 border-t-transparent rounded-full"
+        />
+      </div>
+    )}
+  </div>
+);
+
+const Badge = ({ children, variant = 'neutral' }: { children: React.ReactNode, variant?: 'neutral' | 'green' | 'red' | 'yellow' | 'blue' }) => {
+  const styles = {
+    neutral: 'bg-stone-100 text-stone-700',
+    green: 'bg-green-50 text-green-700',
+    red: 'bg-red-50 text-red-700',
+    yellow: 'bg-amber-50 text-amber-700',
+    blue: 'bg-blue-50 text-blue-700',
+  };
+  return <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${styles[variant]}`}>{children}</span>;
 };
 
+/* ─── BUSINESS MANAGEMENT COMPONENT ─── */
+const BusinessManagement = () => {
+  const [subTab, setSubTab] = useState('pending');
+  const [isProcessing, setIsProcessing] = useState(false);
+
+  const handleAction = (bizName: string, action: string) => {
+    setIsProcessing(true);
+    setTimeout(() => {
+      setIsProcessing(false);
+      alert(`${action} successful for ${bizName}`);
+    }, 800);
+  };
+
+  const businessTabs = [
+    { id: 'pending', label: 'Pending Businesses' },
+    { id: 'active', label: 'Active Businesses' },
+    { id: 'gamification', label: 'Gamification Status' },
+    { id: 'overrides', label: 'Business Overrides' },
+  ];
+
+  return (
+    <div className="space-y-8">
+      <div className="flex items-center gap-1 bg-stone-100 p-1 rounded-2xl w-max">
+        {businessTabs.map((tab) => (
+          <button
+            key={tab.id}
+            onClick={() => setSubTab(tab.id)}
+            className={`px-5 py-2 rounded-xl text-[11px] font-bold transition-all ${
+              subTab === tab.id
+                ? 'bg-white text-[#1a1a1a] shadow-sm'
+                : 'text-stone-600 hover:text-stone-900'
+            }`}
+          >
+            {tab.label}
+          </button>
+        ))}
+      </div>
+
+      <AnimatePresence mode="wait">
+        <motion.div
+          key={subTab}
+          initial={{ opacity: 0, x: 10 }}
+          animate={{ opacity: 1, x: 0 }}
+          exit={{ opacity: 0, x: -10 }}
+        >
+          {subTab === 'pending' && (
+            <Card title="Business Onboarding Queue" isProcessing={isProcessing}>
+              <table className="w-full text-left border-collapse">
+                <thead>
+                  <tr className="text-[10px] uppercase text-stone-500 border-b border-stone-100">
+                    <th className="pb-4">Business Name</th>
+                    <th className="pb-4">Category</th>
+                    <th className="pb-4">Reason</th>
+                    <th className="pb-4">Submission</th>
+                    <th className="pb-4">Status</th>
+                    <th className="pb-4 text-right">Actions</th>
+                  </tr>
+                </thead>
+                <tbody className="text-xs font-medium text-stone-800">
+                  {[
+                    { name: 'Glow Skin Clinic', cat: 'Wellness', reason: 'Setup Request', date: '2 hours ago', status: 'Pending Agent' },
+                    { name: 'Urban Threads', cat: 'Retail', reason: 'New Approval', date: '5 hours ago', status: 'Verification' },
+                    { name: 'Elite Cuts', cat: 'Barber', reason: 'Agent Request', date: '1 day ago', status: 'Pending Assignment' },
+                  ].map((biz, i) => (
+                    <tr key={i} className="border-b border-stone-50 hover:bg-stone-50 transition-colors">
+                      <td className="py-4 font-bold">{biz.name}</td>
+                      <td className="py-4">{biz.cat}</td>
+                      <td className="py-4 text-stone-500 italic">{biz.reason}</td>
+                      <td className="py-4 text-stone-400">{biz.date}</td>
+                      <td className="py-4"><Badge variant="yellow">{biz.status}</Badge></td>
+                      <td className="py-4 text-right">
+                        <button onClick={() => handleAction(biz.name, 'Review')} className="text-[10px] font-bold bg-[#1a1a1a] text-white px-3 py-1.5 rounded-lg hover:bg-black transition-colors">Review</button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </Card>
+          )}
+
+          {subTab === 'active' && (
+            <Card title="Active Network Monitoring" isProcessing={isProcessing}>
+              <table className="w-full text-left border-collapse">
+                <thead>
+                  <tr className="text-[10px] uppercase text-stone-500 border-b border-stone-100">
+                    <th className="pb-4">Brand ID</th>
+                    <th className="pb-4">Campaigns</th>
+                    <th className="pb-4">Inventory</th>
+                    <th className="pb-4">Engagement</th>
+                    <th className="pb-4">Redemption</th>
+                    <th className="pb-4 text-right">Control</th>
+                  </tr>
+                </thead>
+                <tbody className="text-xs font-medium text-stone-800">
+                  {[
+                    { id: 'MB-001', name: 'MCOM Barber', camps: 2, inv: '142/500', eng: 'High', red: '78%', status: 'Stable' },
+                    { id: 'DR-042', name: 'Downtown Retail', camps: 5, inv: '88/200', eng: 'Med', red: '62%', status: 'Check' },
+                    { id: 'LL-099', name: 'Luna Lounge', camps: 1, inv: '45/100', eng: 'Low', red: '15%', status: 'Alert' },
+                  ].map((biz, i) => (
+                    <tr key={i} className="border-b border-stone-50 hover:bg-stone-50">
+                      <td className="py-4">
+                        <div className="flex flex-col">
+                          <span className="font-bold">{biz.name}</span>
+                          <span className="text-[10px] text-stone-400">{biz.id}</span>
+                        </div>
+                      </td>
+                      <td className="py-4">{biz.camps} active</td>
+                      <td className="py-4 text-stone-500">{biz.inv}</td>
+                      <td className="py-4">
+                        <Badge variant={biz.eng === 'High' ? 'green' : biz.eng === 'Med' ? 'yellow' : 'red'}>{biz.eng}</Badge>
+                      </td>
+                      <td className="py-4 font-mono text-[11px]">{biz.red}</td>
+                      <td className="py-4 text-right">
+                        <button onClick={() => handleAction(biz.name, 'Inspection')} className="text-[10px] font-bold text-[#1a1a1a] hover:underline transition-all">Inspect Node</button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </Card>
+          )}
+
+          {subTab === 'gamification' && (
+            <div className="grid grid-cols-2 gap-6">
+              <Card title="Live Game Nodes" isProcessing={isProcessing}>
+                <div className="space-y-4">
+                  {[
+                    { biz: 'MCOM Barber', game: '8-Box Shuffle', theme: 'Sleek Dark', active: true },
+                    { biz: 'Tech Blitz', game: '4-Box Reveal', theme: 'Neon Blitz', active: true },
+                    { biz: 'Green Grove', game: '6-Box Spin', theme: 'Organic Leaf', active: false },
+                  ].map((node, i) => (
+                    <div key={i} className="flex justify-between items-center p-4 border border-stone-100 rounded-xl bg-stone-50">
+                      <div className="flex flex-col gap-1">
+                        <span className="text-xs font-bold text-stone-700">{node.biz}</span>
+                        <div className="flex items-center gap-2 text-[10px] text-stone-500">
+                          <Compass className="w-3 h-3" /> {node.game} • {node.theme}
+                        </div>
+                      </div>
+                      <Badge variant={node.active ? 'green' : 'neutral'}>{node.active ? 'LIVE' : 'IDLE'}</Badge>
+                    </div>
+                  ))}
+                </div>
+              </Card>
+              <Card title="Reward Activity Stream">
+                <div className="space-y-4">
+                  {[
+                    { time: '12s ago', biz: 'MCOM Barber', reward: 'Free Haircut', user: 'User #8812' },
+                    { time: '1m ago', biz: 'Downtown Retail', reward: '10% Discount', user: 'User #4491' },
+                    { time: '3m ago', biz: 'Tech Blitz', reward: 'Gift Card', user: 'User #2210' },
+                  ].map((item, i) => (
+                    <div key={i} className="flex items-center gap-3 text-xs border-b border-stone-50 pb-3 last:border-0 last:pb-0">
+                      <div className="w-8 h-8 rounded-lg bg-orange-50 flex items-center justify-center text-orange-600 font-bold text-[10px]">WIN</div>
+                      <div className="flex flex-col flex-1">
+                        <div className="flex justify-between items-center">
+                          <span className="font-bold text-stone-800">{item.reward}</span>
+                          <span className="text-[10px] text-stone-400">{item.time}</span>
+                        </div>
+                        <span className="text-[10px] text-stone-500">{item.biz} won by {item.user}</span>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </Card>
+            </div>
+          )}
+
+          {subTab === 'overrides' && (
+            <div className="grid grid-cols-2 gap-6">
+              <Card title="Visibility & Traffic Overrides" isProcessing={isProcessing}>
+                <div className="space-y-6">
+                  {[
+                    { label: 'Platform Global Visibility', desc: 'Force all campaigns to maximum reach', type: 'toggle' },
+                    { label: 'Reward Frequency Multiplier', desc: 'Increase global win rates across all businesses', type: 'slider' },
+                    { label: 'Box Count Override', desc: 'Force 8-box configuration globally', type: 'toggle' },
+                  ].map((ctrl, i) => (
+                    <div key={i} className="flex items-center justify-between p-4 border border-stone-100 rounded-xl">
+                      <div className="flex flex-col gap-1 pr-4">
+                        <span className="text-xs font-bold">{ctrl.label}</span>
+                        <span className="text-[10px] text-stone-400">{ctrl.desc}</span>
+                      </div>
+                      {ctrl.type === 'toggle' ? (
+                        <div className="w-9 h-5 bg-stone-200 rounded-full cursor-pointer p-1">
+                          <div className="w-3 h-3 bg-white rounded-full shadow-sm" />
+                        </div>
+                      ) : (
+                        <div className="w-24 h-1 bg-stone-100 rounded-full relative">
+                          <div className="absolute left-0 top-0 h-full bg-[#1a1a1a] w-1/2 rounded-full" />
+                          <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-3 h-3 bg-white border border-stone-300 rounded-full shadow-sm" />
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              </Card>
+              <Card title="Targeted Campaign Pushes" isProcessing={isProcessing}>
+                <div className="space-y-4">
+                  <div className="p-4 bg-orange-50 border border-orange-100 rounded-xl">
+                    <h4 className="text-[11px] font-bold text-orange-700 uppercase mb-2">Featured Spotlight</h4>
+                    <select className="w-full bg-white border border-orange-200 rounded-lg px-3 py-2 text-xs mb-3">
+                      <option>Select Business to Feature...</option>
+                      <option>MCOM Barber</option>
+                      <option>Tech Blitz</option>
+                    </select>
+                    <button onClick={() => handleAction('Selected Business', 'Spotlight Push')} className="w-full bg-orange-600 text-white text-[10px] font-bold py-2 rounded-lg hover:bg-orange-700 transition-colors">
+                      PUSH TO FRONT PAGE
+                    </button>
+                  </div>
+                  <div className="p-4 bg-stone-50 border border-stone-100 rounded-xl">
+                    <h4 className="text-[11px] font-bold text-stone-700 uppercase mb-2">Inventory Boost</h4>
+                    <p className="text-[10px] text-stone-500 mb-3">Manually inject rewards into a struggling business node.</p>
+                    <button onClick={() => handleAction('Target Node', 'Inventory Injection')} className="w-full border border-stone-300 text-stone-700 text-[10px] font-bold py-2 rounded-lg hover:bg-white transition-colors">
+                      LAUNCH INJECTION
+                    </button>
+                  </div>
+                </div>
+              </Card>
+            </div>
+          )}
+        </motion.div>
+      </AnimatePresence>
+    </div>
+  );
+};
+
+/* ─── AGENT MANAGEMENT COMPONENT ─── */
+const AgentManagement = () => {
+  const [subTab, setSubTab] = useState('assignment');
+  const [isProcessing, setIsProcessing] = useState(false);
+
+  const handleAgentAction = (agentName: string, action: string) => {
+    setIsProcessing(true);
+    setTimeout(() => {
+      setIsProcessing(false);
+      alert(`${action} successful for ${agentName}`);
+    }, 800);
+  };
+
+  const agentTabs = [
+    { id: 'assignment', label: 'Assignment Engine' },
+    { id: 'workload', label: 'Workload Balance' },
+    { id: 'control', label: 'Agent Control Panel' },
+  ];
+
+  return (
+    <div className="space-y-8">
+      <div className="flex items-center gap-1 bg-stone-100 p-1 rounded-2xl w-max">
+        {agentTabs.map((tab) => (
+          <button
+            key={tab.id}
+            onClick={() => setSubTab(tab.id)}
+            className={`px-5 py-2 rounded-xl text-[11px] font-bold transition-all ${
+              subTab === tab.id
+                ? 'bg-white text-[#1a1a1a] shadow-sm'
+                : 'text-stone-600 hover:text-stone-900'
+            }`}
+          >
+            {tab.label}
+          </button>
+        ))}
+      </div>
+
+      <AnimatePresence mode="wait">
+        <motion.div
+          key={subTab}
+          initial={{ opacity: 0, x: 10 }}
+          animate={{ opacity: 1, x: 0 }}
+          exit={{ opacity: 0, x: -10 }}
+        >
+          {subTab === 'assignment' && (
+            <div className="grid grid-cols-3 gap-6">
+              <div className="col-span-2">
+                <Card title="Live Assignment Matching Engine" isProcessing={isProcessing}>
+                  <div className="space-y-4">
+                    {[
+                      { biz: 'Glow Skin Clinic', status: 'Matching...', steps: ['Category: Wellness', 'Goals: Growth', 'Assets: Uploaded'], progress: 65 },
+                      { biz: 'Urban Threads', status: 'Processing...', steps: ['Category: Retail', 'Goals: Blitz', 'Assets: Pending'], progress: 30 },
+                    ].map((match, i) => (
+                      <div key={i} className="p-4 border border-stone-100 rounded-xl bg-stone-50 space-y-3">
+                        <div className="flex justify-between items-center">
+                          <span className="text-sm font-bold">{match.biz}</span>
+                          <span className="text-[10px] font-bold text-orange-600 animate-pulse">{match.status}</span>
+                        </div>
+                        <div className="flex gap-4">
+                          {match.steps.map((step, j) => (
+                            <span key={j} className="text-[10px] text-stone-500 bg-white px-2 py-1 rounded-md border border-stone-200">{step}</span>
+                          ))}
+                        </div>
+                        <div className="w-full bg-stone-200 rounded-full h-1">
+                          <motion.div initial={{ width: 0 }} animate={{ width: `${match.progress}%` }} className="bg-[#1a1a1a] h-1 rounded-full" />
+                        </div>
+                      </div>
+                    ))}
+                    <div className="p-4 border-2 border-dashed border-stone-200 rounded-xl flex flex-col items-center justify-center py-8 text-stone-400">
+                      <Route className="w-8 h-8 mb-2 opacity-20" />
+                      <span className="text-xs font-medium">Listening for New Business Onboarding...</span>
+                    </div>
+                  </div>
+                </Card>
+              </div>
+              <Card title="Assignment Automation Rules">
+                <div className="space-y-5">
+                  {[
+                    { label: 'Auto-Match Engine', enabled: true },
+                    { label: 'Workload Balancing', enabled: true },
+                    { label: 'Industry Expertise Bias', enabled: false },
+                    { label: 'Response Speed Bias', enabled: true },
+                  ].map((rule, i) => (
+                    <div key={i} className="flex justify-between items-center">
+                      <span className="text-[11px] font-bold text-stone-700">{rule.label}</span>
+                      <div className={`w-8 h-4 rounded-full p-0.5 transition-colors ${rule.enabled ? 'bg-green-500' : 'bg-stone-300'}`}>
+                        <div className={`w-3 h-3 bg-white rounded-full ${rule.enabled ? 'translate-x-4' : 'translate-x-0'} transition-transform`} />
+                      </div>
+                    </div>
+                  ))}
+                  <div className="pt-4 border-t border-stone-100">
+                    <p className="text-[10px] text-stone-500 leading-relaxed mb-4">The system auto-assigns based on availability, workload, and industry expertise match.</p>
+                    <button className="w-full py-2 bg-[#1a1a1a] text-white text-[10px] font-bold rounded-lg">FORCE REBALANCE</button>
+                  </div>
+                </div>
+              </Card>
+            </div>
+          )}
+
+          {subTab === 'workload' && (
+            <div className="space-y-6">
+              <div className="grid grid-cols-4 gap-4">
+                {[
+                  { label: 'Avg Workload', value: '4.2', desc: 'Businesses/Agent' },
+                  { label: 'Wait Time', value: '< 5m', desc: 'Auto-Assignment' },
+                  { label: 'Completion', value: '94%', desc: 'Setup Rate' },
+                  { label: 'Satisfaction', value: '4.9', desc: 'Business Rating' },
+                ].map((stat, i) => (
+                  <Card key={i}>
+                    <div className="text-[10px] font-bold uppercase text-stone-500 mb-1">{stat.label}</div>
+                    <div className="text-xl font-bold">{stat.value}</div>
+                    <div className="text-[10px] text-stone-400">{stat.desc}</div>
+                  </Card>
+                ))}
+              </div>
+              <Card title="Agent Capacity & Workload Balance">
+                <table className="w-full text-left border-collapse">
+                  <thead>
+                    <tr className="text-[10px] uppercase text-stone-500 border-b border-stone-100">
+                      <th className="pb-4">Agent Name</th>
+                      <th className="pb-4">Active Load</th>
+                      <th className="pb-4">Expertise</th>
+                      <th className="pb-4">Setup Quality</th>
+                      <th className="pb-4">Last Active</th>
+                      <th className="pb-4 text-right">Status</th>
+                    </tr>
+                  </thead>
+                  <tbody className="text-xs font-medium text-stone-800">
+                    {[
+                      { name: 'Agent B (Sarah)', load: 4, exp: 'Retail/Barber', quality: '98%', active: '3m ago', status: 'Available' },
+                      { name: 'Agent A (Marcus)', load: 5, exp: 'Hospitality', quality: '92%', active: '12m ago', status: 'Busy' },
+                      { name: 'Agent C (Elena)', load: 7, exp: 'Global/Tech', quality: '95%', active: 'Now', status: 'Max Load' },
+                    ].map((agent, i) => (
+                      <tr key={i} className="border-b border-stone-50 hover:bg-stone-50">
+                        <td className="py-4 font-bold">{agent.name}</td>
+                        <td className="py-4">
+                          <div className="flex items-center gap-2">
+                            <span>{agent.load}</span>
+                            <div className="w-16 bg-stone-100 rounded-full h-1">
+                              <div className="bg-[#1a1a1a] h-1 rounded-full" style={{ width: `${(agent.load / 10) * 100}%` }} />
+                            </div>
+                          </div>
+                        </td>
+                        <td className="py-4 text-stone-500">{agent.exp}</td>
+                        <td className="py-4">{agent.quality}</td>
+                        <td className="py-4 text-stone-400">{agent.active}</td>
+                        <td className="py-4 text-right">
+                          <Badge variant={agent.status === 'Available' ? 'green' : agent.status === 'Busy' ? 'yellow' : 'red'}>{agent.status}</Badge>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </Card>
+            </div>
+          )}
+
+          {subTab === 'control' && (
+            <div className="grid grid-cols-2 gap-6">
+              <Card title="Assignment Overrides" isProcessing={isProcessing}>
+                <div className="space-y-4">
+                  <div className="p-4 bg-stone-50 border border-stone-100 rounded-xl space-y-3">
+                    <h4 className="text-[11px] font-bold text-stone-700 uppercase">Manual Reassignment</h4>
+                    <div className="grid grid-cols-2 gap-3">
+                      <select className="bg-white border border-stone-200 rounded-lg px-3 py-2 text-xs">
+                        <option>Select Business...</option>
+                        <option>Glow Skin Clinic</option>
+                      </select>
+                      <select className="bg-white border border-stone-200 rounded-lg px-3 py-2 text-xs">
+                        <option>Assign to Agent...</option>
+                        <option>Agent B (Sarah)</option>
+                        <option>Agent A (Marcus)</option>
+                      </select>
+                    </div>
+                    <button onClick={() => handleAgentAction('Sarah', 'Reassignment')} className="w-full bg-[#1a1a1a] text-white text-[10px] font-bold py-2 rounded-lg">EXECUTE OVERRIDE</button>
+                  </div>
+                  <div className="p-4 bg-red-50 border border-red-100 rounded-xl">
+                    <h4 className="text-[11px] font-bold text-red-700 uppercase mb-2">Emergency Halt</h4>
+                    <p className="text-[10px] text-red-600 mb-3">Pause all automated assignments to resolve system maintenance.</p>
+                    <button className="w-full bg-red-600 text-white text-[10px] font-bold py-2 rounded-lg">PAUSE AUTO-ASSIGNMENT</button>
+                  </div>
+                </div>
+              </Card>
+              <Card title="Agent Quality Monitoring">
+                <div className="space-y-4">
+                  {[
+                    { label: 'Setup Time Compliance', val: '98%', status: 'green' },
+                    { label: 'Branding Fidelity Score', val: '95%', status: 'green' },
+                    { label: 'Reward Logic Accuracy', val: '88%', status: 'yellow' },
+                    { label: 'Visual Design Rating', val: '99%', status: 'green' },
+                  ].map((metric, i) => (
+                    <div key={i} className="flex justify-between items-center p-3 border border-stone-100 rounded-lg">
+                      <span className="text-xs font-medium text-stone-600">{metric.label}</span>
+                      <div className="flex items-center gap-3">
+                        <span className="text-xs font-bold">{metric.val}</span>
+                        <div className={`w-2 h-2 rounded-full bg-${metric.status}-500`} />
+                      </div>
+                    </div>
+                  ))}
+                  <button className="w-full border border-stone-300 text-stone-700 text-[10px] font-bold py-2 rounded-lg mt-2">GENERATE PERFORMANCE REPORT</button>
+                </div>
+              </Card>
+            </div>
+          )}
+        </motion.div>
+      </AnimatePresence>
+    </div>
+  );
+};
+
+/* ─── CONSUMER MONITORING COMPONENT ─── */
+const ConsumerMonitoring = () => {
+  const [subTab, setSubTab] = useState('behavior');
+  const [isProcessing, setIsProcessing] = useState(false);
+
+  const handleConsumerAction = (userId: string, action: string) => {
+    setIsProcessing(true);
+    setTimeout(() => {
+      setIsProcessing(false);
+      alert(`${action} successful for ${userId}`);
+    }, 800);
+  };
+
+  const consumerTabs = [
+    { id: 'behavior', label: 'Consumer Behavior' },
+    { id: 'wallet', label: 'Wallet & Redemptions' },
+    { id: 'fraud', label: 'Fraud & Safety' },
+  ];
+
+  return (
+    <div className="space-y-8">
+      <div className="flex items-center gap-1 bg-stone-100 p-1 rounded-2xl w-max">
+        {consumerTabs.map((tab) => (
+          <button
+            key={tab.id}
+            onClick={() => setSubTab(tab.id)}
+            className={`px-5 py-2 rounded-xl text-[11px] font-bold transition-all ${
+              subTab === tab.id
+                ? 'bg-white text-[#1a1a1a] shadow-sm'
+                : 'text-stone-600 hover:text-stone-900'
+            }`}
+          >
+            {tab.label}
+          </button>
+        ))}
+      </div>
+
+      <AnimatePresence mode="wait">
+        <motion.div
+          key={subTab}
+          initial={{ opacity: 0, x: 10 }}
+          animate={{ opacity: 1, x: 0 }}
+          exit={{ opacity: 0, x: -10 }}
+        >
+          {subTab === 'behavior' && (
+            <div className="space-y-6">
+              <div className="grid grid-cols-4 gap-4">
+                {[
+                  { label: 'Active Users', value: '12.4k', desc: 'Last 24h' },
+                  { label: 'Avg Plays', value: '3.8', desc: 'Per user/day' },
+                  { label: 'Fav Category', value: 'Retail', desc: 'High engagement' },
+                  { label: 'Youth Active', value: '45%', desc: 'Of total base' },
+                ].map((stat, i) => (
+                  <Card key={i}>
+                    <div className="text-[10px] font-bold uppercase text-stone-500 mb-1">{stat.label}</div>
+                    <div className="text-xl font-bold">{stat.value}</div>
+                    <div className="text-[10px] text-stone-400">{stat.desc}</div>
+                  </Card>
+                ))}
+              </div>
+              <Card title="Engagement & Sentiment Analysis">
+                <table className="w-full text-left border-collapse">
+                  <thead>
+                    <tr className="text-[10px] uppercase text-stone-500 border-b border-stone-100">
+                      <th className="pb-4">Consumer</th>
+                      <th className="pb-4">Activity Level</th>
+                      <th className="pb-4">Top Interaction</th>
+                      <th className="pb-4">Persona</th>
+                      <th className="pb-4">Retention</th>
+                      <th className="pb-4 text-right">Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody className="text-xs font-medium text-stone-800">
+                    {[
+                      { user: 'Michael P. (#8812)', act: 'Very High', top: 'MCOM Barber', persona: 'Loyalist', ret: '95%' },
+                      { user: 'Sarah L. (#4421)', act: 'High', top: 'Downtown Retail', persona: 'Shopper', ret: '82%' },
+                      { user: 'Kevin J. (#2210)', act: 'Medium', top: 'Tech Blitz', persona: 'Youth', ret: '45%' },
+                    ].map((row, i) => (
+                      <tr key={i} className="border-b border-stone-50 hover:bg-stone-50">
+                        <td className="py-4 font-bold">{row.user}</td>
+                        <td className="py-4">
+                          <Badge variant={row.act === 'Very High' ? 'green' : row.act === 'High' ? 'blue' : 'yellow'}>{row.act}</Badge>
+                        </td>
+                        <td className="py-4 text-stone-500">{row.top}</td>
+                        <td className="py-4 font-bold text-stone-700">{row.persona}</td>
+                        <td className="py-4">{row.ret}</td>
+                        <td className="py-4 text-right">
+                          <button className="text-[10px] font-bold text-[#1a1a1a] hover:underline transition-all">View Profile</button>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </Card>
+            </div>
+          )}
+
+          {subTab === 'wallet' && (
+            <div className="grid grid-cols-2 gap-6">
+              <Card title="Recent Win & Claim History">
+                <div className="space-y-4">
+                  {[
+                    { time: '2s ago', prize: 'MCOM VIP Pass', biz: 'MCOM Barber', status: 'Claimed' },
+                    { time: '45s ago', prize: '10% Discount', biz: 'Downtown Retail', status: 'Expired' },
+                    { time: '2m ago', prize: 'Free Product', biz: 'Tech Blitz', status: 'Pending' },
+                  ].map((claim, i) => (
+                    <div key={i} className="flex justify-between items-center p-4 border border-stone-100 rounded-xl bg-stone-50">
+                      <div className="flex flex-col gap-1">
+                        <span className="text-xs font-bold text-stone-700">{claim.prize}</span>
+                        <span className="text-[10px] text-stone-500">{claim.biz} • {claim.time}</span>
+                      </div>
+                      <Badge variant={claim.status === 'Claimed' ? 'green' : claim.status === 'Pending' ? 'yellow' : 'red'}>{claim.status}</Badge>
+                    </div>
+                  ))}
+                </div>
+              </Card>
+              <Card title="Wallet Performance Metrics">
+                <div className="space-y-6">
+                  {[
+                    { label: 'Voucher Redemption Rate', val: '72%', status: 'green' },
+                    { label: 'Avg Claim to Use Time', val: '4.2h', status: 'green' },
+                    { label: 'Unclaimed Prize Volume', val: '$1,240', status: 'yellow' },
+                    { label: 'QR Scan Success Rate', val: '99.2%', status: 'green' },
+                  ].map((metric, i) => (
+                    <div key={i} className="flex justify-between items-center p-3 border border-stone-100 rounded-lg">
+                      <span className="text-xs font-medium text-stone-600">{metric.label}</span>
+                      <span className="text-xs font-bold text-stone-800">{metric.val}</span>
+                    </div>
+                  ))}
+                  <button className="w-full border border-stone-300 text-stone-700 text-[10px] font-bold py-2 rounded-lg mt-2">EXPORT WALLET DATA</button>
+                </div>
+              </Card>
+            </div>
+          )}
+
+          {subTab === 'fraud' && (
+            <div className="space-y-6">
+              <Card title="Security & Fairness Alerts" isProcessing={isProcessing}>
+                <div className="space-y-4">
+                  {[
+                    { type: 'IP Abuse', desc: 'Multiple accounts detected from same subnet', severity: 'Critical', user: 'Subnet 0x4' },
+                    { type: 'Bot Behavior', desc: 'High frequency play pattern in 10-box game', severity: 'Warning', user: 'User #9921' },
+                    { type: 'Repeat Exploit', desc: 'Attempting to reclaim expired voucher', severity: 'Medium', user: 'User #4412' },
+                  ].map((alert, i) => (
+                    <div key={i} className="flex justify-between items-center p-4 border border-stone-100 rounded-xl">
+                      <div className="flex items-center gap-4">
+                        <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${alert.severity === 'Critical' ? 'bg-red-50 text-red-600' : 'bg-amber-50 text-amber-600'}`}>
+                          <AlertTriangle className="w-5 h-5" />
+                        </div>
+                        <div className="flex flex-col gap-0.5">
+                          <span className="text-xs font-bold text-stone-800">{alert.type} - {alert.user}</span>
+                          <span className="text-[10px] text-stone-500">{alert.desc}</span>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-4">
+                        <Badge variant={alert.severity === 'Critical' ? 'red' : 'yellow'}>{alert.severity}</Badge>
+                        <button onClick={() => handleConsumerAction(alert.user, 'Security Flag')} className="text-[10px] font-bold text-red-600 hover:underline">Suspend Account</button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </Card>
+              <div className="grid grid-cols-2 gap-6">
+                <Card title="Fraud Prevention Logs">
+                  <div className="space-y-3">
+                    {[
+                      'System: Blocked IP 192.168.1.45 (Rate Limit)',
+                      'Audit: User #4412 flagged for suspicious redemption',
+                      'WAF: Neutralized SQL injection attempt on wallet endpoint',
+                      'Fairness: Re-balancing win distribution for Retail node',
+                    ].map((log, i) => (
+                      <div key={i} className="text-[10px] text-stone-600 font-mono flex items-center gap-2">
+                        <span className="text-stone-300">[{new Date().toLocaleTimeString()}]</span>
+                        {log}
+                      </div>
+                    ))}
+                  </div>
+                </Card>
+                <Card title="Trust Index Global">
+                  <div className="flex items-center justify-center py-4">
+                    <div className="relative w-32 h-32">
+                      <svg className="w-full h-full" viewBox="0 0 36 36">
+                        <path className="text-stone-100" strokeDasharray="100, 100" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="currentColor" strokeWidth="2.5" />
+                        <path className="text-green-500" strokeDasharray="94, 100" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="currentColor" strokeWidth="2.5" />
+                      </svg>
+                      <div className="absolute inset-0 flex flex-col items-center justify-center">
+                        <span className="text-2xl font-bold">94</span>
+                        <span className="text-[8px] font-bold text-stone-400 uppercase tracking-widest">Healthy</span>
+                      </div>
+                    </div>
+                  </div>
+                </Card>
+              </div>
+            </div>
+          )}
+        </motion.div>
+      </AnimatePresence>
+    </div>
+  );
+};
+
+/* ─── ANALYTICS & REPORTING COMPONENT ─── */
+const AnalyticsReporting = () => {
+  const [subTab, setSubTab] = useState('revenue');
+
+  const analyticsTabs = [
+    { id: 'revenue', label: 'Revenue & Growth' },
+    { id: 'campaigns', label: 'Campaign Performance' },
+    { id: 'regional', label: 'Regional Insights' },
+  ];
+
+  return (
+    <div className="space-y-8">
+      <div className="flex items-center gap-1 bg-stone-100 p-1 rounded-2xl w-max">
+        {analyticsTabs.map((tab) => (
+          <button
+            key={tab.id}
+            onClick={() => setSubTab(tab.id)}
+            className={`px-5 py-2 rounded-xl text-[11px] font-bold transition-all ${
+              subTab === tab.id
+                ? 'bg-white text-[#1a1a1a] shadow-sm'
+                : 'text-stone-600 hover:text-stone-900'
+            }`}
+          >
+            {tab.label}
+          </button>
+        ))}
+      </div>
+
+      <AnimatePresence mode="wait">
+        <motion.div
+          key={subTab}
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          exit={{ opacity: 0, y: -10 }}
+        >
+          {subTab === 'revenue' && (
+            <div className="space-y-6">
+              <div className="grid grid-cols-3 gap-6">
+                <Card title="Total Platform Revenue">
+                  <div className="text-3xl font-black text-stone-900 mb-1">$428,590</div>
+                  <div className="text-[10px] font-bold text-green-600 flex items-center gap-1">
+                    <TrendingUp className="w-3 h-3" /> +12.4% vs last month
+                  </div>
+                </Card>
+                <Card title="Lead Conversion Value">
+                  <div className="text-3xl font-black text-stone-900 mb-1">$124,102</div>
+                  <div className="text-[10px] font-bold text-stone-400 uppercase">Averaging $12.50 per lead</div>
+                </Card>
+                <Card title="Sponsored Contribution">
+                  <div className="text-3xl font-black text-stone-900 mb-1">34%</div>
+                  <div className="text-[10px] font-bold text-blue-600 uppercase">Growth in Partner Spend</div>
+                </Card>
+              </div>
+              
+              <Card title="Revenue Distribution by Category">
+                <div className="h-[250px] w-full bg-stone-50 rounded-xl flex items-end p-6 gap-4">
+                  {[
+                    { cat: 'Retail', val: '85%' },
+                    { cat: 'Wellness', val: '62%' },
+                    { cat: 'Tech', val: '45%' },
+                    { cat: 'Food', val: '92%' },
+                    { cat: 'Youth', val: '58%' },
+                  ].map((bar, i) => (
+                    <div key={i} className="flex-1 flex flex-col items-center gap-3">
+                      <motion.div initial={{ height: 0 }} animate={{ height: bar.val }} className="w-full bg-stone-800 rounded-lg shadow-sm" />
+                      <span className="text-[10px] font-bold text-stone-500 uppercase">{bar.cat}</span>
+                    </div>
+                  ))}
+                </div>
+              </Card>
+            </div>
+          )}
+
+          {subTab === 'campaigns' && (
+            <div className="space-y-6">
+              <Card title="Top Performing Campaigns (ROI)">
+                <table className="w-full text-left border-collapse">
+                  <thead>
+                    <tr className="text-[10px] uppercase text-stone-500 border-b border-stone-100">
+                      <th className="pb-4">Campaign Name</th>
+                      <th className="pb-4">Engagement</th>
+                      <th className="pb-4">Conversion</th>
+                      <th className="pb-4">Reward ROI</th>
+                      <th className="pb-4 text-right">Trend</th>
+                    </tr>
+                  </thead>
+                  <tbody className="text-xs font-medium text-stone-800">
+                    {[
+                      { name: 'Summer Fresh', eng: 'High', conv: '12.4%', roi: '4.2x', trend: '+15%' },
+                      { name: 'Tech Blitz', eng: 'Extreme', conv: '18.9%', roi: '5.8x', trend: '+22%' },
+                      { name: 'Glow Reveal', eng: 'Med', conv: '8.2%', roi: '2.1x', trend: '-2%' },
+                    ].map((camp, i) => (
+                      <tr key={i} className="border-b border-stone-50 hover:bg-stone-50">
+                        <td className="py-4 font-bold">{camp.name}</td>
+                        <td className="py-4">{camp.eng}</td>
+                        <td className="py-4 font-mono">{camp.conv}</td>
+                        <td className="py-4 text-green-600 font-bold">{camp.roi}</td>
+                        <td className="py-4 text-right font-bold text-stone-400">{camp.trend}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </Card>
+            </div>
+          )}
+
+          {subTab === 'regional' && (
+            <div className="grid grid-cols-2 gap-6">
+              <Card title="Regional Engagement Heatmap">
+                <div className="space-y-4">
+                  {[
+                    { city: 'London Central', level: '94%', trend: 'up' },
+                    { city: 'Manchester North', level: '72%', trend: 'up' },
+                    { city: 'Birmingham Retail', level: '45%', trend: 'down' },
+                    { city: 'Leeds Global', level: '12%', trend: 'new' },
+                  ].map((loc, i) => (
+                    <div key={i} className="flex justify-between items-center p-3 border border-stone-100 rounded-xl">
+                      <span className="text-xs font-bold text-stone-700">{loc.city}</span>
+                      <div className="flex items-center gap-3">
+                        <span className="text-xs font-bold">{loc.level}</span>
+                        <div className={`w-2 h-2 rounded-full ${loc.trend === 'up' ? 'bg-green-500' : loc.trend === 'new' ? 'bg-blue-500' : 'bg-red-500'}`} />
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </Card>
+              <Card title="Regional Distribution Stats">
+                <p className="text-[10px] text-stone-500 leading-relaxed italic">"Most active regional nodes are currently those with a high density of MCOM businesses and Youth-focused campaigns."</p>
+                <div className="mt-4 pt-4 border-t border-stone-100 flex items-center justify-between">
+                  <span className="text-xs font-bold">Platform Saturation</span>
+                  <span className="text-xs font-black">68.2%</span>
+                </div>
+              </Card>
+            </div>
+          )}
+        </motion.div>
+      </AnimatePresence>
+    </div>
+  );
+};
+
+/* ─── SYSTEM SETTINGS COMPONENT ─── */
+const SystemSettings = () => {
+  const [subTab, setSubTab] = useState('automation');
+
+  const settingsTabs = [
+    { id: 'automation', label: 'Automation Rules' },
+    { id: 'security', label: 'Fraud & Security' },
+    { id: 'config', label: 'Global Config' },
+  ];
+
+  return (
+    <div className="space-y-8">
+      <div className="flex items-center gap-1 bg-stone-100 p-1 rounded-2xl w-max">
+        {settingsTabs.map((tab) => (
+          <button
+            key={tab.id}
+            onClick={() => setSubTab(tab.id)}
+            className={`px-5 py-2 rounded-xl text-[11px] font-bold transition-all ${
+              subTab === tab.id
+                ? 'bg-white text-[#1a1a1a] shadow-sm'
+                : 'text-stone-600 hover:text-stone-900'
+            }`}
+          >
+            {tab.label}
+          </button>
+        ))}
+      </div>
+
+      <AnimatePresence mode="wait">
+        <motion.div
+          key={subTab}
+          initial={{ opacity: 0, scale: 0.98 }}
+          animate={{ opacity: 1, scale: 1 }}
+          exit={{ opacity: 0, scale: 0.98 }}
+        >
+          {subTab === 'automation' && (
+            <div className="grid grid-cols-2 gap-6">
+              <Card title="Global Automation Triggers">
+                <div className="space-y-4">
+                  {[
+                    { label: 'Auto-Pause Low Engagement', desc: 'Pause campaigns under 2% engagement', enabled: true },
+                    { label: 'Auto-Scale Inventory', desc: 'Inject rewards when stock drops below 10%', enabled: false },
+                    { label: 'Agent Matching Engine', desc: 'Allow AI to auto-assign businesses', enabled: true },
+                    { label: 'Youth Mode Priority', desc: 'Priority routing for 18-24 demographic', enabled: true },
+                  ].map((rule, i) => (
+                    <div key={i} className="flex items-center justify-between p-4 border border-stone-100 rounded-xl">
+                      <div className="flex flex-col gap-1">
+                        <span className="text-xs font-bold">{rule.label}</span>
+                        <span className="text-[10px] text-stone-400">{rule.desc}</span>
+                      </div>
+                      <div className={`w-8 h-4 rounded-full p-0.5 transition-colors ${rule.enabled ? 'bg-stone-800' : 'bg-stone-200'}`}>
+                        <div className={`w-3 h-3 bg-white rounded-full ${rule.enabled ? 'translate-x-4' : 'translate-x-0'} transition-transform`} />
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </Card>
+              <Card title="Operational Thresholds">
+                <div className="space-y-5">
+                  <div>
+                    <label className="text-[10px] font-bold uppercase text-stone-500 block mb-2">Max Agent Workload</label>
+                    <input type="range" className="w-full accent-stone-800" />
+                    <div className="flex justify-between text-[10px] text-stone-400 mt-1">
+                      <span>1 Business</span>
+                      <span>Current: 8 Businesses</span>
+                      <span>15 Businesses</span>
+                    </div>
+                  </div>
+                  <div>
+                    <label className="text-[10px] font-bold uppercase text-stone-500 block mb-2">Platform Visibility Bias</label>
+                    <input type="range" className="w-full accent-stone-800" />
+                    <div className="flex justify-between text-[10px] text-stone-400 mt-1">
+                      <span>Equal Dist.</span>
+                      <span>Current: Growth Priority</span>
+                      <span>Extreme Blitz</span>
+                    </div>
+                  </div>
+                </div>
+              </Card>
+            </div>
+          )}
+
+          {subTab === 'security' && (
+            <div className="space-y-6">
+              <Card title="Fraud Prevention Sensitivity">
+                <div className="grid grid-cols-3 gap-8">
+                  {[
+                    { label: 'IP Rate Limiting', level: 'Aggressive' },
+                    { label: 'Pattern Detection', level: 'Heuristic' },
+                    { label: 'Voucher Fingerprinting', level: 'Strict' },
+                  ].map((sec, i) => (
+                    <div key={i} className="text-center p-4 border border-stone-100 rounded-xl bg-stone-50">
+                      <div className="text-[10px] font-bold uppercase text-stone-400 mb-2">{sec.label}</div>
+                      <div className="text-sm font-black text-stone-800">{sec.level}</div>
+                    </div>
+                  ))}
+                </div>
+              </Card>
+              <Card title="Security Master Kill-Switches">
+                <div className="grid grid-cols-2 gap-4">
+                  <button className="bg-red-50 text-red-600 text-[10px] font-bold py-3 rounded-xl border border-red-100 hover:bg-red-100 transition-colors">PAUSE ALL REDEMPTIONS</button>
+                  <button className="bg-stone-50 text-stone-600 text-[10px] font-bold py-3 rounded-xl border border-stone-200 hover:bg-stone-100 transition-colors">RESET ALL API KEYS</button>
+                </div>
+              </Card>
+            </div>
+          )}
+
+          {subTab === 'config' && (
+            <div className="grid grid-cols-2 gap-6">
+              <Card title="Platform Branding & UI">
+                <div className="space-y-4">
+                  <div className="flex justify-between items-center">
+                    <span className="text-xs font-bold">Theme Mode</span>
+                    <select className="bg-stone-50 border border-stone-200 rounded-lg px-3 py-1.5 text-xs">
+                      <option>System Default</option>
+                      <option>Sleek Dark</option>
+                      <option>Clean Light</option>
+                    </select>
+                  </div>
+                  <div className="flex justify-between items-center">
+                    <span className="text-xs font-bold">Primary Accent</span>
+                    <div className="flex gap-2">
+                      {['#f97316', '#1a1a1a', '#22c55e', '#3b82f6'].map(color => (
+                        <div key={color} className="w-5 h-5 rounded-full border border-stone-200" style={{ backgroundColor: color }} />
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              </Card>
+              <Card title="Ecosystem Endpoint Config">
+                <div className="space-y-3">
+                  <div className="p-3 bg-stone-50 border border-stone-100 rounded-lg text-[10px] font-mono text-stone-500 break-all">wss://gateway.mcomspin.network/v1/live</div>
+                  <button className="w-full border border-stone-300 text-stone-700 text-[10px] font-bold py-2 rounded-lg">RE-SYNCHRONIZE ALL NODES</button>
+                </div>
+              </Card>
+            </div>
+          )}
+        </motion.div>
+      </AnimatePresence>
+    </div>
+  );
+};
+
+/* ─── MAIN DASHBOARD COMPONENT ─── */
 export default function AdminDashboard() {
   const {
-    totalActiveBusinesses,
-    totalRewardsAllocated,
-    leadConversionRate,
-    totalPlatformRevenue,
     businesses,
-    probabilities,
-    telemetryLogs,
-    securityAlerts,
-    spotlights,
-    systemHealthIndex,
-    activeInspectorId,
-    activeInspectorType,
-    verifyBusiness,
-    suspendBusiness,
-    deleteBusiness,
-    setProbabilityWeight,
-    resolveAlert,
-    dismissAlert,
-    setInspector,
-    addBusiness,
     addTelemetryLog,
-    updateSpotlightWeight,
     triggerSecurityAlert,
+    setInspector,
   } = useAdminStore();
 
   /* ─── DASHBOARD LOCAL STATE ─── */
   const [activeTab, setActiveTab] = useState('overview');
   const [searchQuery, setSearchQuery] = useState('');
-  const [businessFilter, setBusinessFilter] = useState<'all' | 'active' | 'pending' | 'suspended'>('all');
-  const [newBizName, setNewBizName] = useState('');
-  const [newBizEmail, setNewBizEmail] = useState('');
-  const [newBizOwner, setNewBizOwner] = useState('');
-  const [newBizCategory, setNewBizCategory] = useState('Luxury Fashion');
-  const [newBizTier, setNewBizTier] = useState<'Silver' | 'Gold' | 'Platinum'>('Silver');
   const [showAddBizModal, setShowAddBizModal] = useState(false);
-  const [simulatingLog, setSimulatingLog] = useState(false);
 
   /* ─── LIVE TELEMETRY SIMULATION ─── */
   useEffect(() => {
@@ -147,7 +1010,6 @@ export default function AdminDashboard() {
           status: selected.status,
         });
 
-        // Small probability of generating a new security alert
         if (selected.status === 'flagged' && Math.random() > 0.6) {
           triggerSecurityAlert({
             businessName: businesses[Math.floor(Math.random() * businesses.length)]?.name || 'Unknown Merchant',
@@ -161,1357 +1023,139 @@ export default function AdminDashboard() {
     return () => clearInterval(timer);
   }, [addTelemetryLog, triggerSecurityAlert, businesses]);
 
-  /* ─── CHARTS STATIC DATA ─── */
-  const performanceData = [
-    { name: '08:00', volume: 240, leads: 82, revenue: 12000 },
-    { name: '10:00', volume: 380, leads: 120, revenue: 19000 },
-    { name: '12:00', volume: 450, leads: 154, revenue: 22000 },
-    { name: '14:00', volume: 320, leads: 98, revenue: 16000 },
-    { name: '16:00', volume: 590, leads: 210, revenue: 31000 },
-    { name: '18:00', volume: 680, leads: 245, revenue: 38000 },
-    { name: '20:00', volume: 480, leads: 165, revenue: 24000 },
+  const menuItems = [
+    { id: 'overview', label: 'Overview', icon: BarChart3 },
+    { id: 'gamification', label: 'Gamification Control', icon: Compass },
+    { id: 'campaigns', label: 'Campaign Control', icon: Sliders },
+    { id: 'business', label: 'Business Management', icon: Building2 },
+    { id: 'agents', label: 'Agent Management', icon: UserCheck },
+    { id: 'consumers', label: 'Consumer Monitoring', icon: Users },
+    { id: 'analytics', label: 'Analytics & Reporting', icon: TrendingUp },
+    { id: 'system', label: 'System Settings', icon: Shield },
   ];
-
-  const categoryDistribution = [
-    { name: 'Luxury Fashion', value: 40 },
-    { name: 'Spa Services', value: 20 },
-    { name: 'Consumer Tech', value: 15 },
-    { name: 'Hospitality', value: 25 },
-  ];
-
-  const COLORS = ['#f97316', '#fb923c', '#fdba74', '#fed7aa'];
-
-  /* ─── DYNAMIC COMPONENT HANDLERS ─── */
-  const handleAddNewBusiness = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!newBizName || !newBizEmail || !newBizOwner) return;
-    addBusiness({
-      name: newBizName,
-      email: newBizEmail,
-      owner: newBizOwner,
-      avatar: newBizName.split(' ').map(x => x[0]).join('').substring(0, 2).toUpperCase(),
-      category: newBizCategory,
-      partnerTier: newBizTier,
-      spotlightState: 'inactive',
-      leadConversion: 0,
-    });
-    setNewBizName('');
-    setNewBizEmail('');
-    setNewBizOwner('');
-    setShowAddBizModal(false);
-  };
-
-  const getInspectorData = () => {
-    if (!activeInspectorId) return null;
-    if (activeInspectorType === 'business') {
-      return businesses.find(b => b.id === activeInspectorId);
-    }
-    if (activeInspectorType === 'probability') {
-      return probabilities.find(p => p.id === activeInspectorId);
-    }
-    if (activeInspectorType === 'alert') {
-      return securityAlerts.find(a => a.id === activeInspectorId);
-    }
-    return null;
-  };
-
-  const inspector = getInspectorData();
 
   return (
-    <div className="min-h-screen bg-[#fafaf9] text-[#1a1a1a] flex font-sans selection:bg-[#f97316]/10 selection:text-[#f97316] overflow-hidden h-screen">
+    <div className="min-h-screen bg-[#fafaf9] text-[#1a1a1a] flex font-sans h-screen overflow-hidden">
       
-      {/* GLOW DECORATIONS */}
-      <div className="absolute top-0 left-0 w-[400px] h-[400px] bg-[#f97316]/[0.01] rounded-full blur-[120px] pointer-events-none" />
-      <div className="absolute bottom-0 right-0 w-[500px] h-[500px] bg-[#f97316]/[0.02] rounded-full blur-[150px] pointer-events-none" />
-
-      {/* 1. LEFT SIDEBAR (NAVIGATION) */}
-      <aside className="w-64 bg-white border-r border-[#eee] flex flex-col justify-between h-full z-20 shrink-0">
-        <div>
-          {/* Logo Brand Cap */}
-          <div className="h-16 border-b border-[#eee] px-6 flex items-center gap-2.5">
-            <span className="w-3.5 h-3.5 bg-[#f97316] rounded-full shadow-[0_0_12px_rgba(249,115,22,0.5)]" />
-            <div>
-              <span className="font-display font-extrabold text-base tracking-tight text-[#1a1a1a]">MComSpin</span>
-              <span className="text-[9px] bg-orange-50 text-[#f97316] font-bold px-1.5 py-0.2 rounded-full border border-orange-100/50 ml-1.5">GOV</span>
-            </div>
-          </div>
-
-          {/* Quick Stats Grid */}
-          <div className="p-4 grid grid-cols-2 gap-2 border-b border-[#eee] bg-[#fafaf9]">
-            <div className="p-2 bg-white border border-[#eee] rounded-xl text-center">
-              <span className="text-[10px] text-[#888] font-bold block uppercase tracking-wider">Health</span>
-              <span className="text-[12px] font-extrabold text-emerald-600 font-mono">{systemHealthIndex}%</span>
-            </div>
-            <div className="p-2 bg-white border border-[#eee] rounded-xl text-center">
-              <span className="text-[10px] text-[#888] font-bold block uppercase tracking-wider">Pending</span>
-              <span className="text-[12px] font-extrabold text-[#f97316] font-mono">
-                {businesses.filter(b => b.status === 'pending').length}
-              </span>
-            </div>
-          </div>
-
-          {/* Nav Items List */}
-          <nav className="p-3 space-y-0.5 max-h-[calc(100vh-210px)] overflow-y-auto custom-scrollbar">
-            {menuItems.map((item) => (
+      {/* ─── SIDEBAR ─── */}
+      <aside className="w-64 bg-white border-r border-[#eee] flex flex-col h-full shrink-0">
+        <div className="h-16 border-b border-[#eee] px-6 flex items-center gap-2.5">
+          <span className="w-3.5 h-3.5 bg-[#f97316] rounded-full shadow-[0_0_12px_rgba(249,115,22,0.5)]" />
+          <span className="font-display font-extrabold text-base tracking-tight text-[#1a1a1a]">MComSpin</span>
+        </div>
+        
+        <nav className="p-3 space-y-0.5 flex-1 overflow-y-auto">
+          {menuItems.map((item) => {
+            const Icon = item.icon;
+            return (
               <button
                 key={item.id}
-                onClick={() => {
-                  setActiveTab(item.id);
-                  setInspector(null, null);
-                }}
-                className={`w-full flex items-center justify-between px-3 py-2 rounded-xl text-[12px] font-bold tracking-wide transition-all ${
+                onClick={() => { setActiveTab(item.id); setInspector(null, null); }}
+                className={`w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-[12px] font-bold tracking-wide transition-all ${
                   activeTab === item.id
-                    ? 'bg-gradient-to-r from-orange-50 to-orange-100/30 text-[#f97316] border-l-4 border-[#f97316]'
-                    : 'text-[#666] hover:bg-stone-50 hover:text-[#1a1a1a] border-l-4 border-transparent'
+                    ? 'bg-orange-50 text-[#f97316]'
+                    : 'text-[#666] hover:bg-stone-50 hover:text-[#1a1a1a]'
                 }`}
               >
-                <div className="flex items-center gap-2.5">
-                  <span className={activeTab === item.id ? 'text-[#f97316]' : 'text-stone-400'}>
-                    {getAdminMenuIcon(item.id, "w-4 h-4")}
-                  </span>
-                  <span>{item.label}</span>
-                </div>
-                {item.id === 'alerts' && securityAlerts.filter(a => a.status === 'unresolved').length > 0 && (
-                  <span className="bg-red-500 text-white text-[9px] font-bold px-1.5 py-0.5 rounded-full font-mono scale-90">
-                    {securityAlerts.filter(a => a.status === 'unresolved').length}
-                  </span>
-                )}
+                <Icon className="w-4 h-4" />
+                {item.label}
               </button>
-            ))}
-          </nav>
-        </div>
-
-        {/* User context footer */}
-        <div className="p-4 border-t border-[#eee] bg-[#fafaf9] flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <div className="w-8 h-8 rounded-full bg-gradient-to-br from-[#ea580c] to-[#fb923c] text-white flex items-center justify-center text-xs font-black">
-              EN
-            </div>
-            <div>
-              <p className="text-[11px] font-black text-[#1a1a1a] leading-none">ENI Controller</p>
-              <p className="text-[9px] text-[#888] font-bold uppercase tracking-wider mt-0.5">Ecosystem Admin</p>
-            </div>
-          </div>
-          <span className="w-2.5 h-2.5 bg-emerald-500 rounded-full border-2 border-white ring-2 ring-emerald-200 animate-pulse" />
-        </div>
+            );
+          })}
+        </nav>
       </aside>
 
-      {/* MAIN CONTAINER */}
+      {/* ─── MAIN CONTENT ─── */}
       <div className="flex-1 flex flex-col h-full overflow-hidden">
-        
-        {/* 2. TOP COMMAND BAR */}
-        <header className="h-16 bg-white border-b border-[#eee] px-8 flex items-center justify-between shrink-0 z-10">
-          <div className="flex items-center gap-4 w-96">
-            <div className="relative w-full">
-              <span className="absolute inset-y-0 left-3 flex items-center text-stone-400 text-sm">
-                <Search className="w-3.5 h-3.5 text-stone-400" />
-              </span>
-              <input
-                type="text"
-                placeholder="Search active domains, nodes, alert IDs, partners..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full bg-stone-50 border border-[#eee] rounded-full py-1.5 pl-9 pr-4 text-[12px] font-medium outline-none focus:border-[#f97316] focus:bg-white transition-all placeholder:text-[#bbb]"
-              />
-            </div>
+        <header className="h-16 bg-white border-b border-[#eee] px-8 flex items-center justify-between shrink-0">
+          <div className="relative w-96">
+            <span className="absolute inset-y-0 left-3 flex items-center"><Search className="w-3.5 h-3.5 text-stone-400" /></span>
+            <input
+              type="text"
+              placeholder="Search..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="w-full bg-stone-50 border border-[#eee] rounded-full py-1.5 pl-9 pr-4 text-[12px] outline-none"
+            />
           </div>
-
-          <div className="flex items-center gap-6">
-            <div className="flex items-center gap-4 text-[11px] font-bold uppercase tracking-wider text-[#666]">
-              <div className="flex items-center gap-1.5">
-                <span className="w-2 h-2 bg-emerald-500 rounded-full" />
-                <span>Node Gateway: Active</span>
-              </div>
-              <div className="h-4 w-[1px] bg-stone-200" />
-              <div className="flex items-center gap-1.5">
-                <span className="w-2 h-2 bg-orange-500 rounded-full" />
-                <span>Telemetry: 24.8kbps</span>
-              </div>
-            </div>
-
-            {/* Quick Action Button */}
-            <button
-              onClick={() => setShowAddBizModal(true)}
-              className="bg-[#1a1a1a] hover:bg-[#f97316] text-white text-[11px] font-bold uppercase tracking-[0.08em] px-4 py-2 rounded-full transition-all shadow-md active:scale-95"
-            >
-              + Onboard Business
-            </button>
-          </div>
+          <button
+            onClick={() => setShowAddBizModal(true)}
+            className="bg-[#1a1a1a] hover:bg-[#f97316] text-white text-[11px] font-bold uppercase px-4 py-2 rounded-full transition-all"
+          >
+            + Business
+          </button>
         </header>
 
-        {/* 3. MAIN WORKSPACE CONTENT */}
-        <main className="flex-1 overflow-y-auto p-8 relative max-h-[calc(100vh-64px)]">
+        <main className="flex-1 overflow-y-auto p-8">
           <AnimatePresence mode="wait">
             <motion.div
               key={activeTab}
-              initial={{ opacity: 0, y: 15 }}
+              initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -15 }}
-              transition={{ duration: 0.25 }}
+              exit={{ opacity: 0, y: -10 }}
               className="space-y-8"
             >
-
-              {/* ─── TAB 1: PLATFORM OVERVIEW ─── */}
               {activeTab === 'overview' && (
                 <div className="space-y-8">
-                  {/* Title & Alerts summary */}
-                  <div className="flex justify-between items-start">
-                    <div>
-                      <p className="text-[10px] font-bold tracking-[0.15em] text-[#f97316] uppercase mb-0.5">Mission Control System</p>
-                      <h1 className="text-2xl font-display font-extrabold tracking-tight text-[#1a1a1a]">Ecosystem Intelligence Dashboard</h1>
-                    </div>
-                    <div className="bg-[#fff7ed] border border-orange-100 rounded-2xl p-3 flex items-center gap-3">
-                      <AlertTriangle className="w-5 h-5 text-orange-500 animate-pulse shrink-0" />
-                      <div>
-                        <p className="text-[12px] font-extrabold text-[#1a1a1a]">Anomaly Alert Core Active</p>
-                        <p className="text-[10px] text-[#f97316] font-bold">
-                          {securityAlerts.filter(a => a.status === 'unresolved').length} open threats currently require attention.
-                        </p>
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* 4 KPI Cards Grid */}
-                  <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-                    <div className="bg-white border border-[#eee] rounded-2xl p-5 relative overflow-hidden group hover:border-[#f97316]/30 transition-all shadow-sm">
-                      <div className="text-xl mb-2.5 text-orange-500"><Building2 className="w-5 h-5" /></div>
-                      <span className="text-[10px] text-[#888] font-bold uppercase tracking-wider block">Verified Businesses</span>
-                      <span className="text-2xl font-display font-black text-[#1a1a1a] mt-1 block">
-                        {businesses.filter(b => b.status === 'active').length} <span className="text-[12px] text-[#888] font-normal">Registered</span>
-                      </span>
-                    </div>
-
-                    <div className="bg-white border border-[#eee] rounded-2xl p-5 relative overflow-hidden group hover:border-[#f97316]/30 transition-all shadow-sm">
-                      <div className="text-xl mb-2.5 text-orange-500"><Gift className="w-5 h-5" /></div>
-                      <span className="text-[10px] text-[#888] font-bold uppercase tracking-wider block">Rewards Dispatched</span>
-                      <span className="text-2xl font-display font-black text-[#1a1a1a] mt-1 block">
-                        {totalRewardsAllocated} <span className="text-[12px] text-[#888] font-normal">Instances</span>
-                      </span>
-                    </div>
-
-                    <div className="bg-white border border-[#eee] rounded-2xl p-5 relative overflow-hidden group hover:border-[#f97316]/30 transition-all shadow-sm">
-                      <div className="text-xl mb-2.5 text-emerald-500"><Target className="w-5 h-5" /></div>
-                      <span className="text-[10px] text-[#888] font-bold uppercase tracking-wider block">Lead Match Rate</span>
-                      <span className="text-2xl font-display font-black text-emerald-600 mt-1 block">
-                        {leadConversionRate}% <span className="text-[12px] text-[#888] font-normal">Conversion</span>
-                      </span>
-                    </div>
-
-                    <div className="bg-white border border-[#eee] rounded-2xl p-5 relative overflow-hidden group hover:border-[#f97316]/30 transition-all shadow-sm">
-                      <div className="text-xl mb-2.5 text-orange-500"><Coins className="w-5 h-5" /></div>
-                      <span className="text-[10px] text-[#888] font-bold uppercase tracking-wider block">Platform Revenue Ledger</span>
-                      <span className="text-2xl font-display font-black text-[#1a1a1a] mt-1 block">
-                        £{totalPlatformRevenue.toLocaleString()} <span className="text-[12px] text-[#888] font-normal">GBP</span>
-                      </span>
-                    </div>
-                  </div>
-
-                  {/* Charts row */}
-                  <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                    {/* Area Graph */}
-                    <div className="bg-white border border-[#eee] rounded-2xl p-6 lg:col-span-2 space-y-4 shadow-sm">
-                      <div className="flex justify-between items-center">
-                        <div>
-                          <h3 className="text-sm font-bold text-[#1a1a1a]">Ecosystem Transaction Flow Velocity</h3>
-                          <p className="text-[11px] text-[#888]">Hourly volume activity logs tracked across global partner subnets.</p>
-                        </div>
-                        <span className="text-[10px] font-bold text-[#f97316] bg-orange-50 border border-orange-100 px-2 py-0.5 rounded-full">REAL-TIME</span>
-                      </div>
-                      <div className="h-64">
-                        <ResponsiveContainer width="100%" height="100%">
-                          <AreaChart data={performanceData}>
-                            <defs>
-                              <linearGradient id="colorVolume" x1="0" y1="0" x2="0" y2="1">
-                                <stop offset="5%" stopColor="#f97316" stopOpacity={0.2}/>
-                                <stop offset="95%" stopColor="#f97316" stopOpacity={0}/>
-                              </linearGradient>
-                            </defs>
-                            <XAxis dataKey="name" stroke="#888" fontSize={10} tickLine={false} axisLine={false} />
-                            <YAxis stroke="#888" fontSize={10} tickLine={false} axisLine={false} />
-                            <Tooltip contentStyle={{ fontSize: '11px', borderRadius: '12px', border: '1px solid #eee' }} />
-                            <Area type="monotone" dataKey="volume" stroke="#f97316" strokeWidth={2} fillOpacity={1} fill="url(#colorVolume)" />
-                          </AreaChart>
-                        </ResponsiveContainer>
-                      </div>
-                    </div>
-
-                    {/* Quick activity logs */}
-                    <div className="bg-white border border-[#eee] rounded-2xl p-6 space-y-4 shadow-sm flex flex-col justify-between">
-                      <div className="space-y-1">
-                        <h3 className="text-sm font-bold text-[#1a1a1a]">Live System Telemetry Logs</h3>
-                        <p className="text-[11px] text-[#888]">Continuous trace of routed leads and campaign activities.</p>
-                      </div>
-                      <div className="space-y-3 my-4 overflow-y-auto max-h-56 pr-1 custom-scrollbar">
-                        {telemetryLogs.map((log) => (
-                          <div key={log.id} className="p-2.5 rounded-xl border border-stone-50 bg-[#fafaf9] flex items-start gap-2.5 text-left">
-                            <span className="w-1.5 h-1.5 rounded-full mt-1.5 bg-[#f97316] animate-pulse" />
-                            <div className="space-y-0.5">
-                              <p className="text-[11px] font-bold text-[#1a1a1a] leading-tight">{log.description}</p>
-                              <div className="flex gap-2 text-[9px] font-bold text-[#888]">
-                                <span>{log.nodeOrigin} <ArrowRight className="w-2.5 h-2.5 inline align-middle mx-1 text-stone-400" /> {log.nodeDest}</span>
-                                <span>•</span>
-                                <span>{log.timestamp}</span>
-                              </div>
-                            </div>
+                  <h2 className="text-xl font-bold">Platform Overview</h2>
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
+                    {[
+                      { label: 'Active Businesses', value: '1,284', icon: Building2 },
+                      { label: 'Active Campaigns', value: '452', icon: Target },
+                      { label: 'Rewards Claimed', value: '89.4k', icon: Gift },
+                      { label: 'Games Played', value: '1.2m', icon: Sparkles },
+                      { label: 'Total Consumers', value: '3.4m', icon: Users },
+                      { label: 'Agents Active', value: '142', icon: UserCheck },
+                      { label: 'Pending Agent Requests', value: '28', icon: Bell },
+                      { label: 'High Perf. Campaigns', value: '12', icon: Star },
+                      { label: 'Most Claimed Rewards', value: '45', icon: Coins },
+                      { label: 'Live Engagement', value: '12.4k', icon: TrendingUp },
+                    ].map((card, i) => {
+                      const Icon = card.icon;
+                      return (
+                        <motion.div key={i} whileHover={{ y: -2 }} className="bg-white p-4 rounded-xl border border-stone-100 shadow-sm flex flex-col gap-2">
+                          <div className="flex items-center gap-2 text-stone-500 text-[11px] font-bold uppercase tracking-wider">
+                            <Icon className="w-3.5 h-3.5" /> {card.label}
                           </div>
-                        ))}
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              )}
-
-              {/* ─── TAB 2: LIVE NETWORK MAP ─── */}
-              {activeTab === 'network' && (
-                <div className="space-y-6">
-                  <div>
-                    <p className="text-[10px] font-bold tracking-[0.15em] text-[#f97316] uppercase mb-0.5">Telemetry Visualization</p>
-                    <h1 className="text-2xl font-display font-extrabold tracking-tight text-[#1a1a1a]">Active Commerce Node Topology</h1>
-                    <p className="text-[#888] text-[13px]">Real-time node connections showing lead routing streams and verification pathways.</p>
+                          <div className="text-2xl font-bold">{card.value}</div>
+                        </motion.div>
+                      );
+                    })}
                   </div>
 
-                  <div className="bg-white border border-[#eee] rounded-3xl p-6 shadow-sm flex flex-col lg:flex-row gap-6 relative overflow-hidden h-[460px]">
-                    <div className="flex-1 relative bg-stone-50 border border-stone-200/50 rounded-2xl flex items-center justify-center overflow-hidden">
-                      {/* SVG Canvas Map */}
-                      <svg width="100%" height="100%" viewBox="0 0 800 400" className="absolute inset-0">
-                        {/* Connecting Lines */}
-                        <line x1="400" y1="200" x2="150" y2="100" stroke="#fb923c" strokeWidth="2.5" strokeDasharray="5,5" />
-                        <line x1="400" y1="200" x2="150" y2="300" stroke="#fb923c" strokeWidth="2.5" strokeDasharray="5,5" />
-                        <line x1="400" y1="200" x2="650" y2="100" stroke="#fb923c" strokeWidth="2.5" strokeDasharray="5,5" />
-                        <line x1="400" y1="200" x2="650" y2="300" stroke="#fb923c" strokeWidth="2.5" strokeDasharray="5,5" />
-
-                        {/* Animated Packets */}
-                        <motion.circle r="5" fill="#f97316"
-                          animate={{ cx: [400, 150], cy: [200, 100] }}
-                          transition={{ repeat: Infinity, duration: 3, ease: 'linear' }}
-                        />
-                        <motion.circle r="5" fill="#ea580c"
-                          animate={{ cx: [400, 650], cy: [200, 300] }}
-                          transition={{ repeat: Infinity, duration: 4, ease: 'linear', delay: 1 }}
-                        />
-                        <motion.circle r="5" fill="#f97316"
-                          animate={{ cx: [400, 150], cy: [200, 300] }}
-                          transition={{ repeat: Infinity, duration: 2.5, ease: 'linear', delay: 0.5 }}
-                        />
-                        <motion.circle r="5" fill="#ea580c"
-                          animate={{ cx: [400, 650], cy: [200, 100] }}
-                          transition={{ repeat: Infinity, duration: 3.5, ease: 'linear', delay: 1.5 }}
-                        />
-
-                        {/* Core Gateway Node */}
-                        <circle cx="400" cy="200" r="32" fill="#fff7ed" stroke="#f97316" strokeWidth="3" />
-                        <text x="400" y="204" textAnchor="middle" fill="#f97316" fontSize="10" fontWeight="bold">MCOM CORE</text>
-
-                        {/* Partner Nodes */}
-                        <circle cx="150" cy="100" r="24" fill="#ffffff" stroke="#eee" strokeWidth="2" />
-                        <text x="150" y="103" textAnchor="middle" fill="#1a1a1a" fontSize="8" fontWeight="bold">MERIDIAN</text>
-
-                        <circle cx="150" cy="300" r="24" fill="#ffffff" stroke="#eee" strokeWidth="2" />
-                        <text x="150" y="303" textAnchor="middle" fill="#1a1a1a" fontSize="8" fontWeight="bold">ELARA</text>
-
-                        <circle cx="650" cy="100" r="24" fill="#ffffff" stroke="#eee" strokeWidth="2" />
-                        <text x="650" y="103" textAnchor="middle" fill="#1a1a1a" fontSize="8" fontWeight="bold">VANTAGE</text>
-
-                        <circle cx="650" cy="300" r="24" fill="#ffffff" stroke="#eee" strokeWidth="2" />
-                        <text x="650" y="303" textAnchor="middle" fill="#1a1a1a" fontSize="8" fontWeight="bold">SOLEIL</text>
-                      </svg>
-                    </div>
-
-                    <div className="w-full lg:w-72 space-y-4">
-                      <h3 className="text-sm font-bold text-[#1a1a1a]">Network Telemetry Summary</h3>
-                      <div className="bg-[#fafaf9] border border-[#eee] rounded-2xl p-4 space-y-3 text-[12px]">
-                        <div className="flex justify-between">
-                          <span className="text-[#888]">Active Node Clusters:</span>
-                          <span className="font-bold font-mono text-[#1a1a1a]">4 Node Pools</span>
-                        </div>
-                        <div className="flex justify-between">
-                          <span className="text-[#888]">Network Status:</span>
-                          <span className="font-bold text-emerald-600">Operational</span>
-                        </div>
-                        <div className="flex justify-between">
-                          <span className="text-[#888]">Average Latency:</span>
-                          <span className="font-bold font-mono text-[#1a1a1a]">14ms</span>
-                        </div>
-                        <div className="flex justify-between">
-                          <span className="text-[#888]">Trigger Pulses/Min:</span>
-                          <span className="font-bold font-mono text-[#1a1a1a]">1,842 requests</span>
-                        </div>
-                      </div>
-                      <div className="p-4 bg-orange-50/50 border border-orange-100/50 rounded-2xl text-[11px] leading-relaxed text-[#f97316] font-medium">
-                        ℹ️ Animated packets show live Customer Lead matching signals travelling directly from the gamified spin portal to verified merchant systems.
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              )}
-
-              {/* ─── TAB 3: BUSINESS VERIFICATION ─── */}
-              {activeTab === 'verification' && (
-                <div className="space-y-6">
-                  <div className="flex justify-between items-end">
-                    <div>
-                      <p className="text-[10px] font-bold tracking-[0.15em] text-[#f97316] uppercase mb-0.5">Platform Governance</p>
-                      <h1 className="text-2xl font-display font-extrabold tracking-tight text-[#1a1a1a]">Partner Account Verification Grid</h1>
-                      <p className="text-[#888] text-[13px]">Approve, audit, or suspend business registrations and adjust risk limits.</p>
-                    </div>
-                    
-                    {/* Status filter buttons */}
-                    <div className="bg-stone-100 p-1.5 rounded-full flex gap-1 border border-stone-200/50 text-[11px] font-bold">
-                      {(['all', 'active', 'pending', 'suspended'] as const).map((filter) => (
-                        <button
-                          key={filter}
-                          onClick={() => setBusinessFilter(filter)}
-                          className={`px-3 py-1 rounded-full uppercase tracking-wider transition-all ${
-                            businessFilter === filter ? 'bg-white text-[#f97316] shadow-sm' : 'text-[#666] hover:text-[#1a1a1a]'
-                          }`}
-                        >
-                          {filter}
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-
-                  <div className="bg-white border border-[#eee] rounded-2xl shadow-sm overflow-hidden">
-                    <table className="w-full text-left text-[12px] border-collapse">
-                      <thead>
-                        <tr className="bg-stone-50 text-[#888] border-b border-[#eee] font-bold uppercase tracking-wider">
-                          <th className="p-4 pl-6">Business Node</th>
-                          <th className="p-4">Owner Profile</th>
-                          <th className="p-4">Category Area</th>
-                          <th className="p-4 text-center">Status state</th>
-                          <th className="p-4 text-right">Conversion Match</th>
-                          <th className="p-4 text-right">Risk Factor</th>
-                          <th className="p-4 text-right pr-6">Direct Action Keys</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {businesses
-                          .filter((b) => businessFilter === 'all' || b.status === businessFilter)
-                          .map((biz) => (
-                            <tr key={biz.id} className="border-b border-stone-100 hover:bg-stone-50/50 transition-colors">
-                              <td className="p-4 pl-6 flex items-center gap-3">
-                                <div className="w-8 h-8 rounded-full bg-orange-100 text-[#f97316] flex items-center justify-center font-bold font-display text-[11px] ring-2 ring-orange-50">
-                                  {biz.avatar}
-                                </div>
-                                <div>
-                                  <p className="font-bold text-[#1a1a1a]">{biz.name}</p>
-                                  <p className="text-[10px] text-[#888]">{biz.email}</p>
-                                </div>
-                              </td>
-                              <td className="p-4 text-[#555] font-semibold">{biz.owner}</td>
-                              <td className="p-4">
-                                <span className="bg-stone-100 text-[#555] px-2.5 py-0.5 rounded-full font-bold text-[10px] border border-stone-200">
-                                  {biz.category}
-                                </span>
-                              </td>
-                              <td className="p-4 text-center">
-                                <span className={`px-2 py-0.5 rounded-full text-[9px] font-bold uppercase tracking-wider border ${
-                                  biz.status === 'active'
-                                    ? 'bg-emerald-50 text-emerald-600 border-emerald-100'
-                                    : biz.status === 'pending'
-                                    ? 'bg-amber-50 text-amber-600 border-amber-100'
-                                    : 'bg-red-50 text-red-600 border-red-100'
-                                }`}>
-                                  {biz.status}
-                                </span>
-                              </td>
-                              <td className="p-4 text-right font-mono font-bold text-[#1a1a1a]">{biz.leadConversion}%</td>
-                              <td className="p-4 text-right">
-                                <span className={`font-mono font-bold ${biz.riskScore > 50 ? 'text-red-500' : 'text-stone-600'}`}>
-                                  {biz.riskScore}/100
-                                </span>
-                              </td>
-                              <td className="p-4 text-right pr-6 space-x-2">
-                                <button
-                                  onClick={() => setInspector('business', biz.id)}
-                                  className="text-[10px] bg-stone-100 hover:bg-[#f97316] hover:text-white border border-stone-200 font-bold uppercase px-3 py-1 rounded-full transition-all"
-                                >
-                                  Inspect
-                                </button>
-                                {biz.status === 'pending' && (
-                                  <button
-                                    onClick={() => verifyBusiness(biz.id)}
-                                    className="text-[10px] bg-emerald-600 hover:bg-emerald-700 text-white font-bold uppercase px-3 py-1 rounded-full transition-all shadow-sm"
-                                  >
-                                    Approve
-                                  </button>
-                                )}
-                                {biz.status === 'active' && (
-                                  <button
-                                    onClick={() => suspendBusiness(biz.id)}
-                                    className="text-[10px] bg-red-600 hover:bg-red-700 text-white font-bold uppercase px-3 py-1 rounded-full transition-all shadow-sm"
-                                  >
-                                    Suspend
-                                  </button>
-                                )}
-                              </td>
-                            </tr>
-                          ))}
-                      </tbody>
-                    </table>
-                  </div>
-                </div>
-              )}
-
-              {/* ─── TAB 4: PARTNER ECOSYSTEM ─── */}
-              {activeTab === 'ecosystem' && (
-                <div className="space-y-6">
-                  <div>
-                    <p className="text-[10px] font-bold tracking-[0.15em] text-[#f97316] uppercase mb-0.5">Ecosystem Cluster</p>
-                    <h1 className="text-2xl font-display font-extrabold tracking-tight text-[#1a1a1a]">Collaborative Commerce Ecosystem Map</h1>
-                    <p className="text-[#888] text-[13px]">Analyze collaborative categories, revenue contributions, and category mappings.</p>
-                  </div>
-
-                  <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                    <div className="bg-white border border-[#eee] rounded-2xl p-6 space-y-4 shadow-sm flex flex-col justify-between">
-                      <h3 className="text-sm font-bold text-[#1a1a1a]">Partner Category Distributions</h3>
-                      <div className="h-48 flex justify-center">
-                        <ResponsiveContainer width="100%" height="100%">
-                          <PieChart>
-                            <Pie
-                              data={categoryDistribution}
-                              cx="50%"
-                              cy="50%"
-                              innerRadius={60}
-                              outerRadius={80}
-                              paddingAngle={5}
-                              dataKey="value"
-                            >
-                              {categoryDistribution.map((entry, index) => (
-                                <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                              ))}
-                            </Pie>
-                            <Tooltip />
-                          </PieChart>
-                        </ResponsiveContainer>
-                      </div>
-                      <div className="grid grid-cols-2 gap-2 text-[10px] font-bold text-[#666]">
-                        {categoryDistribution.map((cat, idx) => (
-                          <div key={idx} className="flex items-center gap-1.5">
-                            <span className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: COLORS[idx] }} />
-                            <span>{cat.name} ({cat.value}%)</span>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-
-                    <div className="bg-white border border-[#eee] rounded-2xl p-6 lg:col-span-2 space-y-4 shadow-sm">
-                      <h3 className="text-sm font-bold text-[#1a1a1a]">Partner Volume Contribution Analysis</h3>
-                      <div className="space-y-4">
-                        {businesses.filter(b => b.status === 'active').map((biz, idx) => (
-                          <div key={biz.id} className="space-y-1">
-                            <div className="flex justify-between text-[11px] font-bold text-[#1a1a1a]">
-                              <span>{biz.name} ({biz.partnerTier})</span>
-                              <span>£{(totalPlatformRevenue * (biz.leadConversion / 100) * 0.1).toFixed(2)} Platform Share</span>
-                            </div>
-                            <div className="h-2 bg-[#f5f5f3] rounded-full overflow-hidden">
-                              <div
-                                className="h-full bg-gradient-to-r from-orange-500 to-orange-400 rounded-full"
-                                style={{ width: `${biz.leadConversion * 2.5}%` }}
-                              />
-                            </div>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              )}
-
-              {/* ─── TAB 5: CAMPAIGN ENGINE ─── */}
-              {activeTab === 'campaigns' && (
-                <div className="space-y-6">
-                  <div>
-                    <p className="text-[10px] font-bold tracking-[0.15em] text-[#f97316] uppercase mb-0.5">Campaign Automation</p>
-                    <h1 className="text-2xl font-display font-extrabold tracking-tight text-[#1a1a1a]">Active Campaign Lifecycles</h1>
-                    <p className="text-[#888] text-[13px]">Oversee active partner schedules, validation structures, and rotating rules.</p>
-                  </div>
-
-                  <div className="bg-white border border-[#eee] rounded-2xl p-6 shadow-sm space-y-6">
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                      <div className="p-4 bg-[#fafaf9] border border-[#eee] rounded-xl space-y-2">
-                        <span className="text-[10px] text-[#888] font-bold uppercase tracking-wider">Active Campaigns</span>
-                        <p className="text-xl font-display font-black text-[#1a1a1a]">12 Schedules</p>
-                        <p className="text-[10px] text-emerald-600 font-bold">● Fully aligned without overlaps</p>
-                      </div>
-                      <div className="p-4 bg-[#fafaf9] border border-[#eee] rounded-xl space-y-2">
-                        <span className="text-[10px] text-[#888] font-bold uppercase tracking-wider">Accumulated Impressions</span>
-                        <p className="text-xl font-display font-black text-[#1a1a1a]">142,940 hits</p>
-                        <p className="text-[10px] text-[#888] font-bold">This billing cycle</p>
-                      </div>
-                      <div className="p-4 bg-[#fafaf9] border border-[#eee] rounded-xl space-y-2">
-                        <span className="text-[10px] text-[#888] font-bold uppercase tracking-wider">Active Triggers Rate</span>
-                        <p className="text-xl font-display font-black text-emerald-600">89.4%</p>
-                        <p className="text-[10px] text-[#888] font-bold">Match validity target score</p>
-                      </div>
-                    </div>
-
+                  <div className="bg-white rounded-xl border border-stone-100 shadow-sm p-6">
+                    <h3 className="text-sm font-bold mb-4">Recent Activity</h3>
                     <div className="space-y-3">
-                      <h3 className="text-sm font-bold text-[#1a1a1a]">Dynamic Lifecycle Timeline</h3>
-                      <div className="border border-stone-100 rounded-xl overflow-hidden text-[12px]">
-                        <div className="grid grid-cols-3 bg-stone-50 p-3 font-bold uppercase text-[#888] border-b border-stone-100">
-                          <span>Partner Campaign Name</span>
-                          <span>Rotation Tier</span>
-                          <span className="text-right">Execution Status</span>
-                        </div>
-                        {businesses.filter(b => b.campaignsCount > 0).map((biz) => (
-                          <div key={biz.id} className="grid grid-cols-3 p-3 border-b border-stone-50 items-center">
-                            <span className="font-bold text-[#1a1a1a]">{biz.name} Campaign Pool</span>
-                            <span>
-                              <span className="bg-orange-50 text-[#f97316] font-bold text-[9px] px-2 py-0.5 rounded-full border border-orange-100">
-                                {biz.partnerTier}
-                              </span>
-                            </span>
-                            <span className="text-right text-emerald-600 font-bold">ACTIVE</span>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              )}
-
-              {/* ─── TAB 6: GAMIFICATION ORCHESTRATOR ─── */}
-              {activeTab === 'gamification' && (
-                <div className="space-y-6">
-                  <div>
-                    <p className="text-[10px] font-bold tracking-[0.15em] text-[#f97316] uppercase mb-0.5">Ecosystem Core</p>
-                    <h1 className="text-2xl font-display font-extrabold tracking-tight text-[#1a1a1a]">Gamification & Cooldown Rules</h1>
-                    <p className="text-[#888] text-[13px]">Define spin limitations per consumer IP and adjust verification cooldowns.</p>
-                  </div>
-
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <div className="bg-white border border-[#eee] rounded-2xl p-6 shadow-sm space-y-4">
-                      <h3 className="text-sm font-bold text-[#1a1a1a]">Engagement Cooldown Settings</h3>
-                      <div className="space-y-4 text-[12px]">
-                        <div className="space-y-2">
-                          <label className="font-bold text-[#555] block">Default Spin Cooldown Interval (Hours)</label>
-                          <input type="number" defaultValue="24" className="w-full bg-[#fafaf9] border border-[#eee] rounded-xl px-4 py-2 text-[#1a1a1a] font-mono outline-none" />
-                        </div>
-                        <div className="space-y-2">
-                          <label className="font-bold text-[#555] block">Max Spins per Local IP / Daily limit</label>
-                          <input type="number" defaultValue="3" className="w-full bg-[#fafaf9] border border-[#eee] rounded-xl px-4 py-2 text-[#1a1a1a] font-mono outline-none" />
-                        </div>
-                        <button className="bg-[#1a1a1a] text-white text-[11px] font-bold uppercase tracking-wider py-2.5 px-4 rounded-xl w-full hover:bg-[#f97316] transition-colors">
-                          Apply Cooldown Directives
-                        </button>
-                      </div>
-                    </div>
-
-                    <div className="bg-white border border-[#eee] rounded-2xl p-6 shadow-sm space-y-4">
-                      <h3 className="text-sm font-bold text-[#1a1a1a]">Gamified Experience Templates</h3>
-                      <div className="space-y-2.5 text-[12px]">
-                        <div className="p-3 bg-orange-50/50 border border-orange-100 rounded-xl flex justify-between items-center">
-                          <div>
-                            <p className="font-bold text-[#1a1a1a]">Strategic Spin Wheel (Default)</p>
-                            <p className="text-[10px] text-[#f97316]">Active on landing & customer hub pages</p>
-                          </div>
-                          <span className="bg-[#f97316] text-white text-[9px] font-bold px-2 py-0.5 rounded-full">ACTIVE</span>
-                        </div>
-
-                        <div className="p-3 border border-stone-100 rounded-xl flex justify-between items-center opacity-60">
-                          <div>
-                            <p className="font-bold text-[#1a1a1a]">Scratch & Reveal Voucher</p>
-                            <p className="text-[10px] text-[#888]">Scheduled release for seasonal promotions</p>
-                          </div>
-                          <span className="text-[9px] text-[#888] font-bold uppercase">Disabled</span>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              )}
-
-              {/* ─── TAB 7: REWARD OVERSIGHT ─── */}
-              {activeTab === 'rewards' && (
-                <div className="space-y-6">
-                  <div>
-                    <p className="text-[10px] font-bold tracking-[0.15em] text-[#f97316] uppercase mb-0.5">Reward Infrastructure</p>
-                    <h1 className="text-2xl font-display font-extrabold tracking-tight text-[#1a1a1a]">Platform Reward Allocation Database</h1>
-                    <p className="text-[#888] text-[13px]">Track claimed voucher hashes, expiration parameters, and client allocation status.</p>
-                  </div>
-
-                  <div className="bg-white border border-[#eee] rounded-2xl shadow-sm overflow-hidden text-[12px]">
-                    <div className="p-4 border-b border-[#eee] bg-[#fafaf9] flex justify-between items-center">
-                      <span className="font-bold text-[#1a1a1a]">Voucher Redemptions Registry</span>
-                      <span className="text-[10px] bg-emerald-50 text-emerald-600 border border-emerald-100 px-2.5 py-0.5 rounded-full font-bold">100% AUDITED</span>
-                    </div>
-                    <table className="w-full text-left border-collapse">
-                      <thead>
-                        <tr className="bg-stone-50 border-b border-stone-100 text-[#888] font-bold uppercase tracking-wider">
-                          <th className="p-3 pl-6">Voucher code hash</th>
-                          <th className="p-3">Partner Merchant</th>
-                          <th className="p-3">Reward Value</th>
-                          <th className="p-3">Claim Status</th>
-                          <th className="p-3 text-right pr-6">Expiry Timestamp</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        <tr className="border-b border-stone-50">
-                          <td className="p-3 pl-6 font-mono text-[#f97316] font-semibold">MCS-MERIDIAN-20-DISC</td>
-                          <td className="p-3 font-semibold text-[#1a1a1a]">Meridian Apparel</td>
-                          <td className="p-3 font-semibold">20% Off Session</td>
-                          <td className="p-3">
-                            <span className="bg-emerald-50 text-emerald-600 px-2 py-0.5 rounded-full text-[9px] font-bold border border-emerald-100">REDEEMED</span>
-                          </td>
-                          <td className="p-3 text-right pr-6 font-mono text-[#888]">2026-06-30</td>
-                        </tr>
-                        <tr className="border-b border-stone-50">
-                          <td className="p-3 pl-6 font-mono text-[#f97316] font-semibold">MCS-ELARA-DETOX-FAC</td>
-                          <td className="p-3 font-semibold text-[#1a1a1a]">Elara Wellness</td>
-                          <td className="p-3 font-semibold">Free Detox Facial</td>
-                          <td className="p-3">
-                            <span className="bg-orange-50 text-[#f97316] px-2 py-0.5 rounded-full text-[9px] font-bold border border-orange-100">CLAIMED</span>
-                          </td>
-                          <td className="p-3 text-right pr-6 font-mono text-[#888]">2026-07-15</td>
-                        </tr>
-                        <tr className="border-b border-stone-50">
-                          <td className="p-3 pl-6 font-mono text-[#f97316] font-semibold">MCS-VANTAGE-CHARGER</td>
-                          <td className="p-3 font-semibold text-[#1a1a1a]">Vantage Electronics</td>
-                          <td className="p-3 font-semibold">Free Charger Adapter</td>
-                          <td className="p-3">
-                            <span className="bg-orange-50 text-[#f97316] px-2 py-0.5 rounded-full text-[9px] font-bold border border-orange-100">CLAIMED</span>
-                          </td>
-                          <td className="p-3 text-right pr-6 font-mono text-[#888]">2026-06-15</td>
-                        </tr>
-                      </tbody>
-                    </table>
-                  </div>
-                </div>
-              )}
-
-              {/* ─── TAB 8: PROBABILITY & LOGIC ─── */}
-              {activeTab === 'probability' && (
-                <div className="space-y-6">
-                  <div>
-                    <p className="text-[10px] font-bold tracking-[0.15em] text-[#f97316] uppercase mb-0.5">Ecosystem Governor</p>
-                    <h1 className="text-2xl font-display font-extrabold tracking-tight text-[#1a1a1a]">Outcome Weight Balancing</h1>
-                    <p className="text-[#888] text-[13px]">Tweak weighted values on the fly. The live preview distribution recalibrates instantly.</p>
-                  </div>
-
-                  <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                    {/* Live Recharts preview */}
-                    <div className="bg-white border border-[#eee] rounded-2xl p-6 lg:col-span-2 space-y-4 shadow-sm flex flex-col justify-between">
-                      <div>
-                        <h3 className="text-sm font-bold text-[#1a1a1a]">Expected Outcome Probability Spread</h3>
-                        <p className="text-[11px] text-[#888]">Live bar chart preview generated instantly from sector weights.</p>
-                      </div>
-                      <div className="h-64">
-                        <ResponsiveContainer width="100%" height="100%">
-                          <BarChart data={probabilities}>
-                            <XAxis dataKey="rewardName" stroke="#888" fontSize={9} tickLine={false} axisLine={false} />
-                            <YAxis stroke="#888" fontSize={9} tickLine={false} axisLine={false} />
-                            <Tooltip contentStyle={{ fontSize: '11px', borderRadius: '12px', border: '1px solid #eee' }} />
-                            <Bar dataKey="currentWeight" fill="#f97316" radius={[6, 6, 0, 0]}>
-                              {probabilities.map((entry, index) => (
-                                <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                              ))}
-                            </Bar>
-                          </BarChart>
-                        </ResponsiveContainer>
-                      </div>
-                    </div>
-
-                    {/* Weight Sliders panel */}
-                    <div className="bg-white border border-[#eee] rounded-2xl p-6 space-y-4 shadow-sm">
-                      <h3 className="text-sm font-bold text-[#1a1a1a]">Dynamic Probability Adjusters</h3>
-                      <div className="space-y-4 max-h-[300px] overflow-y-auto pr-1 custom-scrollbar">
-                        {probabilities.map((prob) => (
-                          <div key={prob.id} className="space-y-1">
-                            <div className="flex justify-between text-[11px] font-bold text-[#1a1a1a]">
-                              <span>{prob.rewardName}</span>
-                              <span className="font-mono text-[#f97316]">{prob.currentWeight}W</span>
-                            </div>
-                            <input
-                              type="range"
-                              min="0"
-                              max="100"
-                              value={prob.currentWeight}
-                              onChange={(e) => setProbabilityWeight(prob.id, parseInt(e.target.value))}
-                              className="w-full h-1.5 bg-[#f5f5f3] rounded-lg appearance-none cursor-pointer accent-[#f97316]"
-                            />
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              )}
-
-              {/* ─── TAB 9: ROTATION SPOTLIGHT ─── */}
-              {activeTab === 'spotlight' && (
-                <div className="space-y-6">
-                  <div>
-                    <p className="text-[10px] font-bold tracking-[0.15em] text-[#f97316] uppercase mb-0.5">Orchestrator Scheduler</p>
-                    <h1 className="text-2xl font-display font-extrabold tracking-tight text-[#1a1a1a]">Spotlight Rotation Calendar</h1>
-                    <p className="text-[#888] text-[13px]">Define spotlight campaign weight allocation targets across days of the week.</p>
-                  </div>
-
-                  <div className="bg-white border border-[#eee] rounded-2xl p-6 shadow-sm space-y-4">
-                    <h3 className="text-sm font-bold text-[#1a1a1a]">Weekly Partner Spotlight Allocation</h3>
-                    <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-                      {spotlights.map((spot) => (
-                        <div key={spot.id} className="p-4 bg-[#fafaf9] border border-[#eee] rounded-2xl space-y-3 relative">
-                          <Star className="absolute top-3.5 right-3.5 w-3.5 h-3.5 text-orange-500 fill-orange-500" />
-                          <div>
-                            <span className="text-[10px] text-[#f97316] font-bold uppercase tracking-wider">{spot.day}</span>
-                            <h4 className="text-[13px] font-bold text-[#1a1a1a] mt-0.5">{spot.businessName}</h4>
-                            <p className="text-[10px] text-[#888] leading-tight mt-1">{spot.campaignName}</p>
-                          </div>
-                          <div className="space-y-1">
-                            <div className="flex justify-between text-[10px] font-bold text-[#1a1a1a]">
-                              <span>Visibility weight:</span>
-                              <span>{spot.weight}%</span>
-                            </div>
-                            <input
-                              type="range"
-                              min="0"
-                              max="100"
-                              value={spot.weight}
-                              onChange={(e) => updateSpotlightWeight(spot.id, parseInt(e.target.value))}
-                              className="w-full h-1 bg-[#eee] rounded appearance-none accent-[#f97316]"
-                            />
-                          </div>
+                      {[
+                        'New business request: Elara Wellness (Pending)',
+                        'New campaign submitted: Summer Refresh (Fashion)',
+                        'Agent assignment: John D. -> Meridian Spa',
+                        'Reward spike detected: 20% Voucher (Retail)',
+                        'Fraud alert: High frequency spins - Subnet 0x4',
+                        'High activity business: TechGadgets Inc.',
+                        'Redemption alert: Unusual volume - Cafe Luna',
+                        'Consumer complaint: Reward not applied (User #9982)',
+                      ].map((item, i) => (
+                        <div key={i} className="flex items-center gap-3 text-xs text-stone-600 border-b border-stone-50 last:border-0 pb-2 last:pb-0">
+                          <div className="w-1.5 h-1.5 rounded-full bg-orange-400" />
+                          {item}
                         </div>
                       ))}
                     </div>
                   </div>
                 </div>
               )}
-
-              {/* ─── TAB 10: LEAD ROUTING ─── */}
-              {activeTab === 'routing' && (
-                <div className="space-y-6">
-                  <div>
-                    <p className="text-[10px] font-bold tracking-[0.15em] text-[#f97316] uppercase mb-0.5">Ecosystem Funnel</p>
-                    <h1 className="text-2xl font-display font-extrabold tracking-tight text-[#1a1a1a]">Intelligent Lead Routing pipeline</h1>
-                    <p className="text-[#888] text-[13px]">Track customer verification leads routed dynamically to verified merchant systems.</p>
-                  </div>
-
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                    {/* Column 1: Captured */}
-                    <div className="bg-white border border-[#eee] rounded-2xl p-4 shadow-sm space-y-4">
-                      <div className="flex justify-between items-center border-b border-stone-100 pb-2">
-                        <span className="text-[11px] font-bold uppercase tracking-wider text-[#1a1a1a]">1. Captured Gateway Leads</span>
-                        <span className="bg-orange-50 text-[#f97316] text-[9px] font-bold px-1.5 py-0.5 rounded">4 active</span>
-                      </div>
-                      <div className="space-y-2.5 text-[12px]">
-                        <div className="p-3 bg-[#fafaf9] border border-stone-200/50 rounded-xl space-y-1.5">
-                          <p className="font-bold text-[#1a1a1a]">David K.</p>
-                          <p className="text-[10px] text-[#888]">Captured via Luxury Apparel Spin</p>
-                        </div>
-                        <div className="p-3 bg-[#fafaf9] border border-stone-200/50 rounded-xl space-y-1.5">
-                          <p className="font-bold text-[#1a1a1a]">Elena R.</p>
-                          <p className="text-[10px] text-[#888]">Captured via Wellness Priority Booking</p>
-                        </div>
-                      </div>
-                    </div>
-
-                    {/* Column 2: In-Transit */}
-                    <div className="bg-white border border-[#eee] rounded-2xl p-4 shadow-sm space-y-4">
-                      <div className="flex justify-between items-center border-b border-stone-100 pb-2">
-                        <span className="text-[11px] font-bold uppercase tracking-wider text-[#1a1a1a]">2. Matching / Verification</span>
-                        <span className="bg-orange-50 text-[#f97316] text-[9px] font-bold px-1.5 py-0.5 rounded">2 active</span>
-                      </div>
-                      <div className="space-y-2.5 text-[12px]">
-                        <div className="p-3 bg-orange-50/20 border border-orange-100 rounded-xl space-y-1">
-                          <p className="font-bold text-[#f97316]">Marcus T.</p>
-                          <p className="text-[10px] text-[#ea580c] font-semibold flex items-center gap-1.5">
-                            <span className="w-1.5 h-1.5 rounded-full bg-orange-500 animate-ping" />
-                            Synchronizing API Webhooks
-                          </p>
-                        </div>
-                      </div>
-                    </div>
-
-                    {/* Column 3: Delivered */}
-                    <div className="bg-white border border-[#eee] rounded-2xl p-4 shadow-sm space-y-4">
-                      <div className="flex justify-between items-center border-b border-stone-100 pb-2">
-                        <span className="text-[11px] font-bold uppercase tracking-wider text-[#1a1a1a]">3. Delivered CRM Node</span>
-                        <span className="bg-emerald-50 text-emerald-600 text-[9px] font-bold px-1.5 py-0.5 rounded">142 completed</span>
-                      </div>
-                      <div className="space-y-2.5 text-[12px] opacity-70">
-                        <div className="p-3 bg-emerald-50/10 border border-emerald-100 rounded-xl space-y-1">
-                          <p className="font-bold text-emerald-600">Sarah J.</p>
-                          <p className="text-[10px] text-[#888]">Successfully pushed to Meridian CRM</p>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              )}
-
-              {/* ─── TAB 11: STOREFRONT PREVIEWS ─── */}
-              {activeTab === 'storefront' && (
-                <div className="space-y-6">
-                  <div>
-                    <p className="text-[10px] font-bold tracking-[0.15em] text-[#f97316] uppercase mb-0.5">Partner Sandbox</p>
-                    <h1 className="text-2xl font-display font-extrabold tracking-tight text-[#1a1a1a]">Storefront Widget preview sandbox</h1>
-                    <p className="text-[#888] text-[13px]">Preview responsive widgets in simulated partner storefront containers.</p>
-                  </div>
-
-                  <div className="bg-white border border-[#eee] rounded-2xl p-6 shadow-sm space-y-6">
-                    <div className="flex flex-col lg:flex-row gap-6">
-                      <div className="flex-1 space-y-4 text-[12px]">
-                        <h3 className="text-sm font-bold text-[#1a1a1a]">Client Embed Script Configurations</h3>
-                        <div className="p-4 bg-stone-900 text-[#fdba74] font-mono rounded-xl border border-stone-800 overflow-x-auto text-[11px]">
-                          <code>
-                            {`<!-- MComSpin Gamified Engagement Embed -->\n`}
-                            {`<script \n`}
-                            {`  src="https://cdn.mcomspin.io/widget.v1.js" \n`}
-                            {`  data-client-id="mcs_live_920x841a" \n`}
-                            {`  data-theme="light" \n`}
-                            {`  data-position="bottom-right">\n`}
-                            {`</script>`}
-                          </code>
-                        </div>
-                        <p className="text-[#888] leading-relaxed text-[11px]">
-                          Paste this lightweight asynchronous script tag into partner store HTML layouts to instantiate the high-fidelity floating widget.
-                        </p>
-                      </div>
-
-                      <div className="w-full lg:w-[320px] bg-stone-50 border border-stone-200 rounded-2xl p-4 flex flex-col justify-between h-56 select-none relative">
-                        <span className="text-[10px] text-[#888] font-bold block uppercase tracking-wider">Simulated Checkout Simulator</span>
-                        <div className="border border-stone-200/50 bg-white rounded-xl p-3 text-center my-auto space-y-1">
-                          <p className="font-bold text-[12px]">Luxury Silk Scarf</p>
-                          <p className="text-[10px] text-[#888]">£120.00 GBP</p>
-                        </div>
-                        {/* Simulated widget anchor */}
-                        <div className="absolute bottom-3 right-3 bg-[#f97316] text-white w-9 h-9 rounded-full flex items-center justify-center shadow-md cursor-pointer animate-bounce">
-                          <Sparkles className="w-4 h-4" />
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              )}
-
-              {/* ─── TAB 12: AUTOMATION RULES ─── */}
-              {activeTab === 'automation' && (
-                <div className="space-y-6">
-                  <div>
-                    <p className="text-[10px] font-bold tracking-[0.15em] text-[#f97316] uppercase mb-0.5">Automation Core</p>
-                    <h1 className="text-2xl font-display font-extrabold tracking-tight text-[#1a1a1a]">Dynamic Trigger Rules Configuration</h1>
-                    <p className="text-[#888] text-[13px]">Define backend automated routing logic nodes to keep the platform hyper-active.</p>
-                  </div>
-
-                  <div className="bg-white border border-[#eee] rounded-2xl p-6 shadow-sm space-y-4">
-                    <h3 className="text-sm font-bold text-[#1a1a1a]">Trigger-Condition-Action Directives</h3>
-                    <div className="space-y-3 text-[12px]">
-                      <div className="p-3 bg-[#fafaf9] border border-[#eee] rounded-xl flex items-center justify-between">
-                        <div>
-                          <p className="font-bold text-[#1a1a1a]">
-                            If <span className="text-[#f97316]">Reward Unlocked</span> <ArrowRight className="w-3 h-3 inline align-middle mx-1 text-[#888]" /> Then <span className="text-[#f97316]">Trigger SMS verification alert</span>
-                          </p>
-                          <p className="text-[10px] text-[#888]">Interval cap: 5 minutes. Active since launch.</p>
-                        </div>
-                        <span className="bg-emerald-50 text-emerald-600 font-bold px-2 py-0.5 rounded text-[10px]">ACTIVE</span>
-                      </div>
-
-                      <div className="p-3 bg-[#fafaf9] border border-[#eee] rounded-xl flex items-center justify-between">
-                        <div>
-                          <p className="font-bold text-[#1a1a1a]">
-                            If <span className="text-[#f97316]">Customer completes dining scan</span> <ArrowRight className="w-3 h-3 inline align-middle mx-1 text-[#888]" /> Then <span className="text-[#f97316]">Spotlight partner dining campaign</span>
-                          </p>
-                          <p className="text-[10px] text-[#888]">Weight sync target: +15%. Active since launch.</p>
-                        </div>
-                        <span className="bg-emerald-50 text-emerald-600 font-bold px-2 py-0.5 rounded text-[10px]">ACTIVE</span>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              )}
-
-              {/* ─── TAB 13: ANALYTICS & INTELLIGENCE ─── */}
-              {activeTab === 'analytics' && (
-                <div className="space-y-6">
-                  <div>
-                    <p className="text-[10px] font-bold tracking-[0.15em] text-[#f97316] uppercase mb-0.5">Telemetry Intelligence</p>
-                    <h1 className="text-2xl font-display font-extrabold tracking-tight text-[#1a1a1a]">Conversion Analytics Telemetry</h1>
-                    <p className="text-[#888] text-[13px]">Track platform match success ratios and real-time revenue distributions.</p>
-                  </div>
-
-                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                    <div className="bg-white border border-[#eee] rounded-2xl p-6 shadow-sm space-y-4">
-                      <h3 className="text-sm font-bold text-[#1a1a1a]">Match Success Ratio Trends</h3>
-                      <div className="h-64">
-                        <ResponsiveContainer width="100%" height="100%">
-                          <LineChart data={performanceData}>
-                            <XAxis dataKey="name" stroke="#888" fontSize={10} tickLine={false} axisLine={false} />
-                            <YAxis stroke="#888" fontSize={10} tickLine={false} axisLine={false} />
-                            <Tooltip contentStyle={{ fontSize: '11px', borderRadius: '12px' }} />
-                            <Line type="monotone" dataKey="leads" stroke="#f97316" strokeWidth={2.5} dot={false} />
-                          </LineChart>
-                        </ResponsiveContainer>
-                      </div>
-                    </div>
-
-                    <div className="bg-white border border-[#eee] rounded-2xl p-6 shadow-sm space-y-4">
-                      <h3 className="text-sm font-bold text-[#1a1a1a]">Accumulated Platform Revenue Velocity</h3>
-                      <div className="h-64">
-                        <ResponsiveContainer width="100%" height="100%">
-                          <LineChart data={performanceData}>
-                            <XAxis dataKey="name" stroke="#888" fontSize={10} tickLine={false} axisLine={false} />
-                            <YAxis stroke="#888" fontSize={10} tickLine={false} axisLine={false} />
-                            <Tooltip contentStyle={{ fontSize: '11px', borderRadius: '12px' }} />
-                            <Line type="monotone" dataKey="revenue" stroke="#ea580c" strokeWidth={2.5} dot={false} />
-                          </LineChart>
-                        </ResponsiveContainer>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              )}
-
-              {/* ─── TAB 14: FRAUD & RISK ─── */}
-              {activeTab === 'risk' && (
-                <div className="space-y-6">
-                  <div>
-                    <p className="text-[10px] font-bold tracking-[0.15em] text-[#f97316] uppercase mb-0.5">Security Intelligence</p>
-                    <h1 className="text-2xl font-display font-extrabold tracking-tight text-[#1a1a1a]">Threat Prevention Center</h1>
-                    <p className="text-[#888] text-[13px]">Secure active networks, configure fraud flags, and apply client restrictions.</p>
-                  </div>
-
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                    <div className="bg-white border border-[#eee] rounded-2xl p-5 shadow-sm space-y-2">
-                      <span className="text-[10px] text-[#888] font-bold uppercase tracking-wider block">Local Network Violations</span>
-                      <p className="text-xl font-display font-black text-red-500">1 Incident</p>
-                      <p className="text-[10px] text-[#888] font-bold">Unresolved block queue status</p>
-                    </div>
-
-                    <div className="bg-white border border-[#eee] rounded-2xl p-5 shadow-sm space-y-2">
-                      <span className="text-[10px] text-[#888] font-bold uppercase tracking-wider block">Global Spam Index</span>
-                      <p className="text-xl font-display font-black text-emerald-600">0.02%</p>
-                      <p className="text-[10px] text-emerald-600 font-bold">● Far within normal limits</p>
-                    </div>
-
-                    <div className="bg-white border border-[#eee] rounded-2xl p-5 shadow-sm space-y-2">
-                      <span className="text-[10px] text-[#888] font-bold uppercase tracking-wider block">Blacklisted IP subnets</span>
-                      <p className="text-xl font-display font-black text-[#1a1a1a]">4 Subnets</p>
-                      <p className="text-[10px] text-[#888] font-bold">Assigned at gateway router</p>
-                    </div>
-                  </div>
-                </div>
-              )}
-
-              {/* ─── TAB 15: ALERTS CENTER ─── */}
-              {activeTab === 'alerts' && (
-                <div className="space-y-6">
-                  <div>
-                    <p className="text-[10px] font-bold tracking-[0.15em] text-[#f97316] uppercase mb-0.5">Platform Governance</p>
-                    <h1 className="text-2xl font-display font-extrabold tracking-tight text-[#1a1a1a]">System Governance & Alerts Center</h1>
-                    <p className="text-[#888] text-[13px]">Review live warnings from the WAF Shield and quickly apply corrective bans.</p>
-                  </div>
-
-                  <div className="bg-white border border-[#eee] rounded-2xl shadow-sm overflow-hidden text-[12px]">
-                    <div className="p-4 border-b border-[#eee] bg-stone-50 flex justify-between items-center">
-                      <span className="font-bold text-[#1a1a1a]">Unresolved Threat Ledger</span>
-                      <span className="bg-red-50 text-red-600 border border-red-100 px-2 py-0.5 rounded text-[10px] font-bold">
-                        {securityAlerts.filter(a => a.status === 'unresolved').length} Active Spikes
-                      </span>
-                    </div>
-
-                    <div className="divide-y divide-stone-100">
-                      {securityAlerts.map((alert) => (
-                        <div key={alert.id} className="p-4 flex flex-col md:flex-row md:items-center justify-between gap-4 hover:bg-stone-50/50 transition-colors">
-                          <div className="flex gap-3 items-start">
-                            <span className={`w-2 h-2 rounded-full mt-1.5 shrink-0 ${
-                              alert.severity === 'high' ? 'bg-red-500 animate-pulse' : 'bg-amber-500'
-                            }`} />
-                            <div>
-                              <p className="font-bold text-[#1a1a1a] flex items-center gap-2">
-                                {alert.businessName}
-                                <span className={`text-[9px] font-extrabold uppercase tracking-wide px-2 py-0.2 rounded border ${
-                                  alert.severity === 'high' ? 'bg-red-50 text-red-600 border-red-100' : 'bg-amber-50 text-amber-600 border-amber-100'
-                                }`}>
-                                  {alert.severity}
-                                </span>
-                              </p>
-                              <p className="text-[#888] text-[11px] mt-0.5">{alert.pattern}</p>
-                              <p className="text-[9px] text-[#bbb] font-bold mt-1 font-mono">{alert.timestamp}</p>
-                            </div>
-                          </div>
-                          
-                          <div className="flex items-center gap-2 self-end md:self-auto">
-                            {alert.status === 'unresolved' ? (
-                              <>
-                                <button
-                                  onClick={() => resolveAlert(alert.id)}
-                                  className="text-[10px] bg-emerald-600 hover:bg-emerald-700 text-white font-bold uppercase px-3.5 py-1.5 rounded-full transition-all shadow-sm"
-                                >
-                                  Resolve Incident
-                                </button>
-                                <button
-                                  onClick={() => dismissAlert(alert.id)}
-                                  className="text-[10px] bg-stone-100 hover:bg-stone-200 border border-stone-200 text-[#555] font-bold uppercase px-3.5 py-1.5 rounded-full transition-all"
-                                >
-                                  Dismiss
-                                </button>
-                              </>
-                            ) : (
-                              <span className="inline-flex items-center gap-1 text-[10px] text-stone-400 font-extrabold uppercase tracking-widest bg-stone-50 border border-stone-200/50 px-3 py-1 rounded-full">
-                                Resolved <Check className="w-2.5 h-2.5 text-stone-400" />
-                              </span>
-                            )}
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                </div>
-              )}
-
-              {/* ─── TAB 16: REVENUE CONTROL ─── */}
-              {activeTab === 'revenue' && (
-                <div className="space-y-6">
-                  <div>
-                    <p className="text-[10px] font-bold tracking-[0.15em] text-[#f97316] uppercase mb-0.5">Billing Oversight</p>
-                    <h1 className="text-2xl font-display font-extrabold tracking-tight text-[#1a1a1a]">Revenue Ledger & platform fees</h1>
-                    <p className="text-[#888] text-[13px]">Track transaction commission payouts and dynamic business tier invoicing.</p>
-                  </div>
-
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <div className="bg-white border border-[#eee] rounded-2xl p-6 shadow-sm space-y-4">
-                      <h3 className="text-sm font-bold text-[#1a1a1a]">Accumulated Billing Logs</h3>
-                      <div className="space-y-3 text-[12px]">
-                        <div className="p-3 bg-[#fafaf9] border border-[#eee] rounded-xl flex justify-between items-center">
-                          <div>
-                            <p className="font-bold text-[#1a1a1a]">Meridian Apparel billing ledger</p>
-                            <p className="text-[10px] text-[#888]">Monthly SaaS recurring + 2% transaction commission</p>
-                          </div>
-                          <span className="font-mono font-bold text-[#1a1a1a]">£1,240.80</span>
-                        </div>
-
-                        <div className="p-3 bg-[#fafaf9] border border-[#eee] rounded-xl flex justify-between items-center">
-                          <div>
-                            <p className="font-bold text-[#1a1a1a]">Elara Wellness billing ledger</p>
-                            <p className="text-[10px] text-[#888]">Monthly SaaS recurring + 2% transaction commission</p>
-                          </div>
-                          <span className="font-mono font-bold text-[#1a1a1a]">£842.10</span>
-                        </div>
-                      </div>
-                    </div>
-
-                    <div className="bg-white border border-[#eee] rounded-2xl p-6 shadow-sm space-y-4 flex flex-col justify-between">
-                      <div>
-                        <h3 className="text-sm font-bold text-[#1a1a1a]">Fee Percentage configurations</h3>
-                        <p className="text-[11px] text-[#888] leading-relaxed mt-1">
-                          Dynamic transaction cuts are set to a baseline platform value of <span className="font-bold text-[#f97316]">2.00%</span>. Tier updates apply next billing cycle.
-                        </p>
-                      </div>
-                      <button className="bg-[#1a1a1a] text-white text-[11px] font-bold uppercase tracking-wider py-2.5 px-4 rounded-xl w-full hover:bg-[#f97316] transition-colors">
-                        Tweak Global Ledger Parameters
-                      </button>
-                    </div>
-                  </div>
-                </div>
-              )}
-
+              {activeTab === 'gamification' && <GamificationControl />}
+              {activeTab === 'campaigns' && <CampaignControl />}
+              {activeTab === 'business' && <BusinessManagement />}
+              {activeTab === 'agents' && <AgentManagement />}
+              {activeTab === 'consumers' && <ConsumerMonitoring />}
+              {activeTab === 'analytics' && <AnalyticsReporting />}
+              {activeTab === 'system' && <SystemSettings />}
             </motion.div>
           </AnimatePresence>
         </main>
       </div>
-
-      {/* 4. RIGHT CONTEXTUAL INSPECTOR DRAWER */}
-      <AnimatePresence>
-        {activeInspectorId && inspector && (
-          <motion.div
-            initial={{ opacity: 0, x: 200 }}
-            animate={{ opacity: 1, x: 0 }}
-            exit={{ opacity: 0, x: 200 }}
-            transition={{ duration: 0.3 }}
-            className="w-80 bg-white border-l border-[#eee] h-full shadow-2xl z-30 flex flex-col justify-between shrink-0"
-          >
-            <div>
-              {/* Header Title */}
-              <div className="p-6 border-b border-[#eee] flex justify-between items-center bg-[#fafaf9]">
-                <div>
-                  <span className="text-[10px] text-[#f97316] font-bold uppercase tracking-wider">Governer Node</span>
-                  <h3 className="text-sm font-bold text-[#1a1a1a] mt-0.5">Deep Inspector</h3>
-                </div>
-                <button
-                  onClick={() => setInspector(null, null)}
-                  className="text-stone-400 hover:text-[#1a1a1a] p-1.5 hover:bg-stone-100 rounded-full transition-all"
-                  aria-label="Close Inspector"
-                >
-                  <X className="w-3.5 h-3.5" />
-                </button>
-              </div>
-
-              {/* Inspector Content */}
-              <div className="p-6 space-y-6 text-[12px]">
-                {activeInspectorType === 'business' && (
-                  <>
-                    <div className="text-center space-y-2">
-                      <div className="w-12 h-12 rounded-full bg-orange-100 text-[#f97316] flex items-center justify-center font-display font-extrabold text-sm mx-auto shadow-sm">
-                        {(inspector as AdminBusiness).avatar}
-                      </div>
-                      <h4 className="font-extrabold text-sm text-[#1a1a1a] leading-tight">{(inspector as AdminBusiness).name}</h4>
-                      <p className="text-[10px] text-[#888]">{(inspector as AdminBusiness).email}</p>
-                    </div>
-
-                    <div className="space-y-4">
-                      <div className="bg-stone-50 border border-stone-200/50 rounded-xl p-3 space-y-2 font-medium">
-                        <div className="flex justify-between">
-                          <span className="text-[#888]">Owner Account:</span>
-                          <span className="font-bold text-[#1a1a1a]">{(inspector as AdminBusiness).owner}</span>
-                        </div>
-                        <div className="flex justify-between">
-                          <span className="text-[#888]">Active Tier:</span>
-                          <span className="font-bold text-[#f97316]">{(inspector as AdminBusiness).partnerTier}</span>
-                        </div>
-                        <div className="flex justify-between">
-                          <span className="text-[#888]">Onboarded:</span>
-                          <span className="font-bold text-[#1a1a1a] font-mono">{(inspector as AdminBusiness).registrationDate}</span>
-                        </div>
-                        <div className="flex justify-between">
-                          <span className="text-[#888]">Ecosystem status:</span>
-                          <span className="font-bold uppercase tracking-wider text-emerald-600">{(inspector as AdminBusiness).status}</span>
-                        </div>
-                      </div>
-
-                      <div className="p-4 bg-orange-50/50 border border-orange-100 rounded-xl text-[11px] leading-relaxed text-[#f97316] font-medium flex gap-2 items-start">
-                        <Shield className="w-4 h-4 mt-0.5 shrink-0 text-[#f97316]" />
-                        <span>Governance measures enforce automatic limit locks should threat factors exceed baseline metrics.</span>
-                      </div>
-                    </div>
-                  </>
-                )}
-
-                {activeInspectorType === 'probability' && (
-                  <div className="space-y-4">
-                    <h4 className="font-bold text-sm text-[#1a1a1a]">{(inspector as ProbabilitySegment).rewardName}</h4>
-                    <div className="bg-stone-50 border border-stone-200/50 rounded-xl p-3 space-y-2">
-                      <div className="flex justify-between">
-                        <span className="text-[#888]">Merchant:</span>
-                        <span className="font-bold">{(inspector as ProbabilitySegment).provider}</span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span className="text-[#888]">Allocated Today:</span>
-                        <span className="font-bold">{(inspector as ProbabilitySegment).allocatedToday} / {(inspector as ProbabilitySegment).capPerDay}</span>
-                      </div>
-                    </div>
-                  </div>
-                )}
-              </div>
-            </div>
-
-            {/* Quick action footer */}
-            <div className="p-4 border-t border-[#eee] bg-[#fafaf9]">
-              <button
-                onClick={() => setInspector(null, null)}
-                className="w-full bg-[#1a1a1a] text-white hover:bg-[#f97316] text-[11px] font-bold uppercase tracking-wider py-2.5 rounded-xl transition-all"
-              >
-                Close Audit Logs
-              </button>
-            </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
-
-      {/* ─── ONBOARDING ADD-BUSINESS MODAL ─── */}
-      <AnimatePresence>
-        {showAddBizModal && (
-          <div className="fixed inset-0 z-50 bg-black/30 backdrop-blur-md flex items-center justify-center p-4">
-            <motion.div
-              initial={{ scale: 0.95, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              exit={{ scale: 0.95, opacity: 0 }}
-              className="max-w-md w-full bg-white rounded-3xl border border-[#eee] shadow-2xl p-8 space-y-6"
-            >
-              <div>
-                <p className="text-[10px] font-bold tracking-[0.12em] text-[#f97316] uppercase mb-0.5">Platform Governance</p>
-                <h3 className="text-xl font-display font-extrabold text-[#1a1a1a]">Onboard New Merchant Node</h3>
-                <p className="text-[#888] text-[12px]">Verify credentials to spin up active promotion routing blocks.</p>
-              </div>
-
-              <form onSubmit={handleAddNewBusiness} className="space-y-4 text-[12px]">
-                <div className="space-y-1">
-                  <label className="font-bold text-[#555]">Business Legal Name</label>
-                  <input
-                    type="text"
-                    required
-                    placeholder="e.g. Nebula Coffee Labs"
-                    value={newBizName}
-                    onChange={(e) => setNewBizName(e.target.value)}
-                    className="w-full bg-stone-50 border border-[#eee] rounded-xl px-4 py-2 text-[#1a1a1a] font-medium outline-none focus:border-[#f97316] focus:bg-white transition-all"
-                  />
-                </div>
-
-                <div className="space-y-1">
-                  <label className="font-bold text-[#555]">Administrator Email</label>
-                  <input
-                    type="email"
-                    required
-                    placeholder="e.g. support@nebulacoffee.com"
-                    value={newBizEmail}
-                    onChange={(e) => setNewBizEmail(e.target.value)}
-                    className="w-full bg-stone-50 border border-[#eee] rounded-xl px-4 py-2 text-[#1a1a1a] font-medium outline-none focus:border-[#f97316] focus:bg-white transition-all"
-                  />
-                </div>
-
-                <div className="space-y-1">
-                  <label className="font-bold text-[#555]">Account Owner</label>
-                  <input
-                    type="text"
-                    required
-                    placeholder="e.g. Cassandra Croft"
-                    value={newBizOwner}
-                    onChange={(e) => setNewBizOwner(e.target.value)}
-                    className="w-full bg-stone-50 border border-[#eee] rounded-xl px-4 py-2 text-[#1a1a1a] font-medium outline-none focus:border-[#f97316] focus:bg-white transition-all"
-                  />
-                </div>
-
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="space-y-1">
-                    <label className="font-bold text-[#555]">Category Area</label>
-                    <select
-                      value={newBizCategory}
-                      onChange={(e) => setNewBizCategory(e.target.value)}
-                      className="w-full bg-stone-50 border border-[#eee] rounded-xl px-3 py-2 text-[#1a1a1a] font-medium outline-none focus:border-[#f97316] focus:bg-white transition-all"
-                    >
-                      <option value="Luxury Fashion">Luxury Fashion</option>
-                      <option value="Spa Services">Spa Services</option>
-                      <option value="Consumer Tech">Consumer Tech</option>
-                      <option value="Hospitality">Hospitality</option>
-                    </select>
-                  </div>
-
-                  <div className="space-y-1">
-                    <label className="font-bold text-[#555]">Partner Tier</label>
-                    <select
-                      value={newBizTier}
-                      onChange={(e) => setNewBizTier(e.target.value as any)}
-                      className="w-full bg-stone-50 border border-[#eee] rounded-xl px-3 py-2 text-[#1a1a1a] font-medium outline-none focus:border-[#f97316] focus:bg-white transition-all"
-                    >
-                      <option value="Silver">Silver</option>
-                      <option value="Gold">Gold</option>
-                      <option value="Platinum">Platinum</option>
-                    </select>
-                  </div>
-                </div>
-
-                <div className="flex gap-3 pt-2">
-                  <button
-                    type="button"
-                    onClick={() => setShowAddBizModal(false)}
-                    className="flex-1 bg-stone-100 hover:bg-stone-200 border border-stone-200 text-[#555] font-bold uppercase tracking-wider py-2.5 rounded-xl transition-all"
-                  >
-                    Cancel
-                  </button>
-                  <button
-                    type="submit"
-                    className="flex-1 bg-[#1a1a1a] hover:bg-[#f97316] text-white font-bold uppercase tracking-wider py-2.5 rounded-xl transition-all shadow-md"
-                  >
-                    Submit Node
-                  </button>
-                </div>
-              </form>
-            </motion.div>
-          </div>
-        )}
-      </AnimatePresence>
-
     </div>
   );
 }
