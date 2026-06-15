@@ -1,0 +1,305 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0, viewport-fit=cover" name="viewport"/>
+<title>MCOMSpin - Create Campaign Rules</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&amp;family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@100..900&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            "colors": {
+                    "surface-container-highest": "#f8ddd2",
+                    "on-surface-variant": "#5a4136",
+                    "on-error": "#ffffff",
+                    "on-surface": "#261812",
+                    "on-secondary-fixed": "#351000",
+                    "surface-container-lowest": "#ffffff",
+                    "surface-container": "#ffeae1",
+                    "outline-variant": "#e2bfb1",
+                    "error-container": "#ffdad6",
+                    "tertiary": "#00629f",
+                    "surface-bright": "#fff8f6",
+                    "secondary-container": "#ff9969",
+                    "inverse-surface": "#3d2d26",
+                    "tertiary-container": "#009cf8",
+                    "on-background": "#261812",
+                    "surface-container-low": "#fff1eb",
+                    "on-primary-fixed": "#351000",
+                    "inverse-primary": "#ffb695",
+                    "tertiary-fixed": "#cfe4ff",
+                    "on-primary-container": "#541d00",
+                    "on-tertiary-container": "#003152",
+                    "primary-fixed-dim": "#ffb695",
+                    "on-secondary-fixed-variant": "#793106",
+                    "inverse-on-surface": "#ffede6",
+                    "error": "#ba1a1a",
+                    "background": "#fff8f6",
+                    "surface-container-high": "#fee3d8",
+                    "on-primary-fixed-variant": "#7b2f00",
+                    "primary-container": "#fc6700",
+                    "outline": "#8e7164",
+                    "secondary-fixed": "#ffdbcc",
+                    "on-tertiary-fixed-variant": "#004a79",
+                    "surface": "#fff8f6",
+                    "primary-fixed": "#ffdbcc",
+                    "on-primary": "#ffffff",
+                    "secondary": "#97471d",
+                    "on-tertiary": "#ffffff",
+                    "primary": "#a23f00",
+                    "on-tertiary-fixed": "#001d34",
+                    "surface-tint": "#a23f00",
+                    "surface-dim": "#efd5ca",
+                    "tertiary-fixed-dim": "#9acbff",
+                    "on-secondary": "#ffffff",
+                    "on-error-container": "#93000a",
+                    "secondary-fixed-dim": "#ffb694",
+                    "on-secondary-container": "#772f05",
+                    "surface-variant": "#f8ddd2"
+            },
+            "borderRadius": {
+                    "DEFAULT": "0.25rem",
+                    "lg": "0.5rem",
+                    "xl": "0.75rem",
+                    "full": "9999px"
+            },
+            "spacing": {
+                    "stack-lg": "32px",
+                    "gutter": "16px",
+                    "section-padding": "40px",
+                    "stack-md": "16px",
+                    "base": "8px",
+                    "stack-sm": "8px",
+                    "container-margin": "20px"
+            },
+            "fontFamily": {
+                    "body-lg": ["Inter"],
+                    "headline-lg": ["Inter"],
+                    "label-md": ["Inter"],
+                    "headline-md": ["Inter"],
+                    "display-lg": ["Inter"],
+                    "label-sm": ["Inter"],
+                    "headline-lg-mobile": ["Inter"],
+                    "body-md": ["Inter"]
+            },
+            "fontSize": {
+                    "body-lg": ["18px", {"lineHeight": "1.6", "fontWeight": "400"}],
+                    "headline-lg": ["32px", {"lineHeight": "1.2", "letterSpacing": "-0.02em", "fontWeight": "700"}],
+                    "label-md": ["14px", {"lineHeight": "1.2", "letterSpacing": "0.05em", "fontWeight": "600"}],
+                    "headline-md": ["24px", {"lineHeight": "1.3", "fontWeight": "600"}],
+                    "display-lg": ["48px", {"lineHeight": "1.1", "letterSpacing": "-0.04em", "fontWeight": "800"}],
+                    "label-sm": ["12px", {"lineHeight": "1.2", "fontWeight": "500"}],
+                    "headline-lg-mobile": ["28px", {"lineHeight": "1.2", "fontWeight": "700"}],
+                    "body-md": ["16px", {"lineHeight": "1.6", "fontWeight": "400"}]
+            }
+          },
+        },
+      }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+            display: inline-block;
+            vertical-align: middle;
+        }
+        .kinetic-depth-card {
+            box-shadow: 0 10px 20px -10px rgba(53, 16, 0, 0.15);
+        }
+        .btn-shadow {
+            box-shadow: 0 2px 0 #7b2f00;
+        }
+        .btn-shadow:active {
+            box-shadow: 0 0 0 transparent;
+            transform: translateY(2px);
+        }
+        /* Custom date picker appearance tweak */
+        input[type="date"]::-webkit-calendar-picker-indicator {
+            filter: invert(0.3) sepia(1) saturate(5) hue-rotate(340deg);
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+</head>
+<body class="bg-background text-on-background min-h-screen font-body-md flex flex-col">
+<!-- Top App Bar -->
+<header class="bg-surface shadow-[0_10px_20px_-10px_rgba(53,16,0,0.15)] w-full top-0 sticky flex justify-between items-center px-container-margin py-base w-full max-w-full z-50">
+<div class="flex items-center gap-3">
+<div class="w-10 h-10 rounded-lg bg-primary flex items-center justify-center text-on-primary">
+<span class="material-symbols-outlined">business_chip</span>
+</div>
+<h1 class="font-headline-md text-headline-md font-bold text-primary">MCOMSpin</h1>
+</div>
+<button class="w-10 h-10 rounded-full flex items-center justify-center text-on-surface-variant hover:bg-surface-container-low transition-colors active:scale-95 duration-100">
+<span class="material-symbols-outlined">notifications</span>
+</button>
+</header>
+<main class="flex-1 px-container-margin pb-32">
+<!-- Progress Stepper -->
+<div class="py-stack-lg">
+<div class="flex justify-between items-center mb-base">
+<span class="font-label-md text-label-md text-primary">Step 2 of 4</span>
+<span class="font-label-md text-label-md text-on-surface-variant">Rules &amp; Limits</span>
+</div>
+<div class="flex gap-2 h-1.5 w-full bg-surface-container-high rounded-full overflow-hidden">
+<div class="w-1/4 h-full bg-primary-container"></div>
+<div class="w-1/4 h-full bg-primary-container"></div>
+<div class="w-1/4 h-full bg-surface-container-highest"></div>
+<div class="w-1/4 h-full bg-surface-container-highest"></div>
+</div>
+</div>
+<section class="space-y-stack-lg">
+<!-- Timeframe Section -->
+<div class="kinetic-depth-card bg-surface-container-lowest rounded-xl p-gutter space-y-gutter">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-primary" style="font-variation-settings: 'FILL' 1;">calendar_today</span>
+<h2 class="font-headline-md text-headline-md text-on-surface">Campaign Duration</h2>
+</div>
+<div class="grid grid-cols-2 gap-stack-md">
+<div class="space-y-2">
+<label class="font-label-sm text-label-sm text-on-surface-variant" for="start-date">Start Date</label>
+<input class="w-full h-14 px-4 bg-surface-container-low border-2 border-transparent focus:border-primary rounded-xl font-body-md text-on-surface focus:ring-0 transition-all outline-none" id="start-date" type="date"/>
+</div>
+<div class="space-y-2">
+<label class="font-label-sm text-label-sm text-on-surface-variant" for="end-date">End Date</label>
+<input class="w-full h-14 px-4 bg-surface-container-low border-2 border-transparent focus:border-primary rounded-xl font-body-md text-on-surface focus:ring-0 transition-all outline-none" id="end-date" type="date"/>
+</div>
+</div>
+</div>
+<!-- Play Limits Section -->
+<div class="kinetic-depth-card bg-surface-container-lowest rounded-xl p-gutter space-y-gutter">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-primary" style="font-variation-settings: 'FILL' 1;">speed</span>
+<h2 class="font-headline-md text-headline-md text-on-surface">Play Limits</h2>
+</div>
+<div class="space-y-stack-md">
+<div class="flex items-center justify-between p-4 bg-surface-container-low rounded-xl">
+<div class="flex flex-col">
+<span class="font-label-md text-label-md text-on-surface">Daily Limit</span>
+<span class="font-label-sm text-label-sm text-on-surface-variant">Max drops per day</span>
+</div>
+<input class="w-20 h-12 text-center bg-surface border-2 border-outline-variant focus:border-primary rounded-lg font-body-md text-on-surface" placeholder="5" type="number"/>
+</div>
+<div class="flex items-center justify-between p-4 bg-surface-container-low rounded-xl">
+<div class="flex flex-col">
+<span class="font-label-md text-label-md text-on-surface">Weekly Limit</span>
+<span class="font-label-sm text-label-sm text-on-surface-variant">Max drops per week</span>
+</div>
+<input class="w-20 h-12 text-center bg-surface border-2 border-outline-variant focus:border-primary rounded-lg font-body-md text-on-surface" placeholder="25" type="number"/>
+</div>
+<div class="flex items-center justify-between p-4 bg-surface-container-low rounded-xl">
+<div class="flex flex-col">
+<span class="font-label-md text-label-md text-on-surface">Monthly Limit</span>
+<span class="font-label-sm text-label-sm text-on-surface-variant">Max drops per month</span>
+</div>
+<input class="w-20 h-12 text-center bg-surface border-2 border-outline-variant focus:border-primary rounded-lg font-body-md text-on-surface" placeholder="100" type="number"/>
+</div>
+</div>
+</div>
+<!-- Eligibility Section -->
+<div class="kinetic-depth-card bg-surface-container-lowest rounded-xl p-gutter space-y-gutter">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-primary" style="font-variation-settings: 'FILL' 1;">group</span>
+<h2 class="font-headline-md text-headline-md text-on-surface">Eligibility</h2>
+</div>
+<div class="grid grid-cols-1 gap-base">
+<label class="flex items-center justify-between p-4 rounded-xl border-2 border-transparent bg-surface-container-low cursor-pointer hover:bg-surface-container-high transition-all has-[:checked]:border-primary has-[:checked]:bg-primary-container/10">
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined text-on-surface-variant">groups</span>
+<span class="font-body-md text-on-surface">All Customers</span>
+</div>
+<input checked="" class="w-6 h-6 text-primary focus:ring-primary border-outline" name="eligibility" type="radio"/>
+</label>
+<label class="flex items-center justify-between p-4 rounded-xl border-2 border-transparent bg-surface-container-low cursor-pointer hover:bg-surface-container-high transition-all has-[:checked]:border-primary has-[:checked]:bg-primary-container/10">
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined text-on-surface-variant">person_add</span>
+<span class="font-body-md text-on-surface">New Customers</span>
+</div>
+<input class="w-6 h-6 text-primary focus:ring-primary border-outline" name="eligibility" type="radio"/>
+</label>
+<label class="flex items-center justify-between p-4 rounded-xl border-2 border-transparent bg-surface-container-low cursor-pointer hover:bg-surface-container-high transition-all has-[:checked]:border-primary has-[:checked]:bg-primary-container/10">
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined text-on-surface-variant">person</span>
+<span class="font-body-md text-on-surface">Existing Customers</span>
+</div>
+<input class="w-6 h-6 text-primary focus:ring-primary border-outline" name="eligibility" type="radio"/>
+</label>
+<label class="flex items-center justify-between p-4 rounded-xl border-2 border-transparent bg-surface-container-low cursor-pointer hover:bg-surface-container-high transition-all has-[:checked]:border-primary has-[:checked]:bg-primary-container/10">
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined text-primary" style="font-variation-settings: 'FILL' 1;">military_tech</span>
+<span class="font-body-md text-on-surface">VIP Customers</span>
+</div>
+<input class="w-6 h-6 text-primary focus:ring-primary border-outline" name="eligibility" type="radio"/>
+</label>
+</div>
+</div>
+</section>
+</main>
+<!-- Navigation Shell (Fixed Bottom) -->
+<div class="fixed bottom-0 left-0 w-full z-[60]">
+<!-- Action Buttons Overlay -->
+<div class="px-container-margin py-4 bg-surface/80 backdrop-blur-md flex gap-4">
+<button class="flex-1 h-14 bg-surface-container-highest text-on-surface-variant font-label-md rounded-xl hover:bg-surface-container-high transition-all active:scale-95">
+                Back
+            </button>
+<button class="flex-[2] h-14 bg-primary text-on-primary font-label-md rounded-xl btn-shadow transition-all flex items-center justify-center gap-2">
+                Continue
+                <span class="material-symbols-outlined">arrow_forward</span>
+</button>
+</div>
+<!-- Global Navigation -->
+<nav class="bg-surface dark:bg-surface-container-low shadow-[0_-10px_20px_-10px_rgba(53,16,0,0.15)] flex justify-around items-center px-base py-stack-sm pb-safe w-full">
+<a class="flex flex-col items-center justify-center text-on-surface-variant px-4 py-1 hover:bg-surface-container-high transition-all active:scale-90 duration-200" href="#">
+<span class="material-symbols-outlined" data-icon="dashboard">dashboard</span>
+<span class="font-label-sm text-label-sm">Dashboard</span>
+</a>
+<a class="flex flex-col items-center justify-center bg-secondary-container text-on-secondary-container rounded-full px-4 py-1 transition-all active:scale-90 duration-200" href="#">
+<span class="material-symbols-outlined" data-icon="campaign" style="font-variation-settings: 'FILL' 1;">campaign</span>
+<span class="font-label-sm text-label-sm">Campaigns</span>
+</a>
+<a class="flex flex-col items-center justify-center text-on-surface-variant px-4 py-1 hover:bg-surface-container-high transition-all active:scale-90 duration-200" href="#">
+<span class="material-symbols-outlined" data-icon="military_tech">military_tech</span>
+<span class="font-label-sm text-label-sm">Rewards</span>
+</a>
+<a class="flex flex-col items-center justify-center text-on-surface-variant px-4 py-1 hover:bg-surface-container-high transition-all active:scale-90 duration-200" href="#">
+<span class="material-symbols-outlined" data-icon="group">group</span>
+<span class="font-label-sm text-label-sm">Customers</span>
+</a>
+<a class="flex flex-col items-center justify-center text-on-surface-variant px-4 py-1 hover:bg-surface-container-high transition-all active:scale-90 duration-200" href="#">
+<span class="material-symbols-outlined" data-icon="more_horiz">more_horiz</span>
+<span class="font-label-sm text-label-sm">More</span>
+</a>
+</nav>
+</div>
+<!-- Background Decorative Element -->
+<div class="fixed top-0 left-0 w-full h-full -z-10 opacity-20 pointer-events-none">
+
+</div>
+<script>
+        // Micro-interaction for inputs
+        const inputs = document.querySelectorAll('input[type="number"]');
+        inputs.forEach(input => {
+            input.addEventListener('focus', () => {
+                input.parentElement.classList.add('ring-2', 'ring-primary/20');
+            });
+            input.addEventListener('blur', () => {
+                input.parentElement.classList.remove('ring-2', 'ring-primary/20');
+            });
+        });
+
+        // Simple stepper animation simulation
+        document.querySelector('button.bg-primary').addEventListener('click', function() {
+            this.innerHTML = '<span class="material-symbols-outlined animate-spin">refresh</span> Saving...';
+            setTimeout(() => {
+                this.innerHTML = 'Continue <span class="material-symbols-outlined">arrow_forward</span>';
+            }, 1000);
+        });
+    </script>
+</body></html>

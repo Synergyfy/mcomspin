@@ -1,8 +1,9 @@
 'use client';
 
-import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import React, { useState, useEffect, useCallback, useMemo, useRef, Suspense } from 'react';
+import { useSearchParams } from 'next/navigation';
 import { useCustomerStore } from '@/store/customer-store';
+import { motion, AnimatePresence } from 'framer-motion';
 import {
   Star,
   Volume2,
@@ -466,10 +467,22 @@ const ArcadePlinkoBoard = ({
 
 /* ─── MAIN ARCADE PAGE ─── */
 
-export default function ArcadeGamesPage() {
+function ArcadeGamesPageContent() {
+  const searchParams = useSearchParams();
+  const campaignId = searchParams.get('campaignId');
+  
   const { profile, unlockReward, decrementSpins, addPoints } = useCustomerStore();
 
   const [activeGame, setActiveGame] = useState<Campaign | null>(null);
+  
+  // Auto-select game if campaignId is provided
+  useEffect(() => {
+    if (campaignId) {
+      const foundGame = ACTIVE_CAMPAIGNS.find(c => c.id === campaignId) || null;
+      setActiveGame(foundGame);
+    }
+  }, [campaignId]);
+
   const [wonPrize, setWonPrize] = useState<Prize | null>(null);
   const [showVictoryModal, setShowVictoryModal] = useState(false);
   const [soundEnabled, setSoundEnabled] = useState(true);
@@ -493,11 +506,6 @@ export default function ArcadeGamesPage() {
     }, 5000);
     return () => clearInterval(interval);
   }, []);
-
-  // Default to null to show the home screen
-  // useEffect(() => {
-  //   setActiveGame(ACTIVE_CAMPAIGNS[0]);
-  // }, []);
 
   const playSound = useCallback((type: 'click' | 'victory' | 'suspense') => {
     if (!soundEnabled) return;
@@ -568,15 +576,16 @@ export default function ArcadeGamesPage() {
     playSound('click');
     setWonPrize(null);
     setShowVictoryModal(false);
-    // Hard remount of active game to reset canvas state
+    const currentId = activeGame?.id;
     setActiveGame(null);
-    setTimeout(() => setActiveGame(ACTIVE_CAMPAIGNS[0]), 50);
+    setTimeout(() => {
+        if(currentId) setActiveGame(ACTIVE_CAMPAIGNS.find(c => c.id === currentId) || null);
+    }, 50);
   };
 
   if (!activeGame) {
     return (
       <div className="space-y-8">
-        {/* Top Header with Search */}
         <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-5 bg-white border border-[#eee] rounded-3xl p-6 shadow-sm text-left">
           <div className="space-y-1">
             <h1 className="text-2xl font-display font-bold text-[#1a1a1a]">Active Games</h1>
@@ -595,10 +604,7 @@ export default function ArcadeGamesPage() {
             </div>
           </div>
         </div>
-
-        {/* Categories / Grid */}
         <div className="space-y-8 text-left">
-          {/* Available Reward Games */}
           <section>
             <div className="flex items-center gap-2 mb-4">
               <Zap className="w-5 h-5 text-[#f97316]" />
@@ -639,37 +645,6 @@ export default function ArcadeGamesPage() {
               })}
             </div>
           </section>
-
-          {/* Placeholders matching light style */}
-          <section className="opacity-70 hover:opacity-100 transition-opacity">
-            <div className="flex items-center gap-2 mb-4">
-              <Store className="w-5 h-5 text-blue-500" />
-              <h2 className="text-lg font-display font-bold text-[#1a1a1a]">Featured Businesses</h2>
-            </div>
-            <div className="bg-stone-50 rounded-3xl border border-dashed border-[#ccc] h-32 flex items-center justify-center">
-              <p className="text-[#888] font-bold uppercase tracking-widest text-sm">More campaigns dropping soon</p>
-            </div>
-          </section>
-
-          <section className="opacity-70 hover:opacity-100 transition-opacity">
-            <div className="flex items-center gap-2 mb-4">
-              <Heart className="w-5 h-5 text-pink-500" />
-              <h2 className="text-lg font-display font-bold text-[#1a1a1a]">Youth Offers</h2>
-            </div>
-            <div className="bg-stone-50 rounded-3xl border border-dashed border-[#ccc] h-32 flex items-center justify-center">
-              <p className="text-[#888] font-bold uppercase tracking-widest text-sm">More campaigns dropping soon</p>
-            </div>
-          </section>
-
-          <section className="opacity-70 hover:opacity-100 transition-opacity">
-            <div className="flex items-center gap-2 mb-4">
-              <Ticket className="w-5 h-5 text-green-500" />
-              <h2 className="text-lg font-display font-bold text-[#1a1a1a]">Event Campaigns</h2>
-            </div>
-            <div className="bg-stone-50 rounded-3xl border border-dashed border-[#ccc] h-32 flex items-center justify-center">
-              <p className="text-[#888] font-bold uppercase tracking-widest text-sm">More campaigns dropping soon</p>
-            </div>
-          </section>
         </div>
       </div>
     );
@@ -679,16 +654,11 @@ export default function ArcadeGamesPage() {
 
   return (
     <div className="min-h-screen text-white flex flex-col font-sans overflow-hidden relative selection:bg-purple-500/30">
-      
-      {/* Dynamic Background Image based on Business Theme */}
       <div 
         className="absolute inset-0 z-0 bg-cover bg-center transition-opacity duration-1000"
         style={{ backgroundImage: `url(${currentTheme?.bgImage})` }}
       />
-      {/* Medium overlay to ensure perfect contrast for the neon game elements while keeping image visible */}
       <div className="absolute inset-0 bg-[#0f031c]/60 z-0 pointer-events-none" />
-
-      {/* ════════════ TOP HEADER ════════════ */}
       <header className="relative z-10 flex flex-wrap md:flex-nowrap items-center justify-between px-4 md:px-6 py-3 md:py-4 border-b border-white/5 bg-black/20 backdrop-blur-md gap-4">
         <div className="flex items-center gap-3 md:gap-5 w-full md:w-auto justify-between md:justify-start">
           <button 
@@ -727,14 +697,10 @@ export default function ArcadeGamesPage() {
           </button>
         </div>
       </header>
-
-      {/* ════════════ STATS BAR ════════════ */}
       <div className="relative z-10 flex flex-col md:flex-row items-center justify-between px-4 md:px-8 py-2 md:py-3 bg-black/40 border-b border-purple-900/30 shadow-lg gap-2 md:gap-0">
         <h2 className="text-lg md:text-2xl font-black text-white tracking-widest uppercase text-center md:text-left" style={{ textShadow: '0 0 20px rgba(255,255,255,0.5)' }}>
           WIN AMAZING REWARDS!
         </h2>
-        
-        {/* COMPACTED STOP COIN BUTTON */}
         <button 
           onClick={() => setDropTrigger(d => d + 1)}
           disabled={plinkoState !== 'sweeping'}
@@ -751,11 +717,7 @@ export default function ArcadeGamesPage() {
           STOP COIN!
         </button>
       </div>
-
-      {/* ════════════ 3-COLUMN ARENA ════════════ */}
       <div className="flex-1 relative z-10 flex flex-col md:flex-row px-2 md:px-4 pt-4 md:pt-6 gap-4 md:gap-6 min-h-[400px] md:min-h-[500px]">
-        
-        {/* Left Column: Possible Rewards FAB & Panel */}
         <div className="fixed md:relative bottom-4 left-4 md:bottom-auto md:left-auto z-[60] md:z-50">
           <button 
             onClick={() => setShowRewards(!showRewards)} 
@@ -763,7 +725,6 @@ export default function ArcadeGamesPage() {
           >
             <Gift size={24} className="text-white drop-shadow-md" />
           </button>
-          
           <AnimatePresence>
             {showRewards && (
               <motion.div 
@@ -793,8 +754,6 @@ export default function ArcadeGamesPage() {
             )}
           </AnimatePresence>
         </div>
-
-        {/* Center Column: Plinko Board & Reward Boxes */}
         <div className="flex-1 relative flex flex-col justify-between">
           <ArcadePlinkoBoard 
             activeGame={activeGame} 
@@ -804,8 +763,6 @@ export default function ArcadeGamesPage() {
             onStateChange={setPlinkoState}
           />
         </div>
-
-        {/* Right Column: Live Winners */}
         <div className="hidden lg:flex w-[200px] flex-col relative">
           <div className="absolute -top-3 left-1/2 -translate-x-1/2 bg-green-600 text-white text-[10px] font-black tracking-widest uppercase py-1.5 px-8 rounded-t-md z-20 shadow-[0_4px_10px_rgba(22,163,74,0.5)] whitespace-nowrap border-b-2 border-green-800">
             Live Winners!
@@ -829,10 +786,7 @@ export default function ArcadeGamesPage() {
             </div>
           </div>
         </div>
-
       </div>
-
-      {/* ════════════ BOTTOM FOOTER BAR ════════════ */}
       <footer className="relative z-10 bg-[#0f031c] border-t border-purple-900/50 p-4 flex flex-wrap items-center justify-between gap-4 px-8">
         <button className="flex items-center gap-4 bg-gradient-to-r from-amber-600 to-yellow-500 rounded-full py-2 px-6 pr-2 shadow-[0_0_15px_rgba(245,158,11,0.3)] hover:scale-105 transition-transform border border-yellow-300/30">
           <Trophy className="text-white fill-yellow-200" size={24} />
@@ -842,7 +796,6 @@ export default function ArcadeGamesPage() {
           </div>
           <div className="w-8 h-8 bg-black/20 rounded-full flex items-center justify-center text-white"><ChevronLeft size={16} className="rotate-180" /></div>
         </button>
-
         <div className="flex items-center gap-8">
           <div className="flex items-center gap-3">
             <Gift className="text-pink-500" size={24} />
@@ -860,8 +813,6 @@ export default function ArcadeGamesPage() {
           </div>
         </div>
       </footer>
-
-      {/* ════════════ VICTORY MODAL ════════════ */}
       <AnimatePresence>
         {showVictoryModal && wonPrize && (
           <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 z-[3000] flex items-center justify-center p-4">
@@ -874,7 +825,6 @@ export default function ArcadeGamesPage() {
               className="relative w-full max-w-md bg-gradient-to-b from-[#4c1d95] to-[#2e1065] border border-purple-400/30 rounded-3xl p-8 text-center shadow-[0_0_80px_rgba(147,51,234,0.4)]"
             >
               <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,rgba(255,255,255,0.1)_0%,transparent_60%)]" />
-              
               <div className="relative z-10 space-y-6">
                 <motion.div 
                   initial={{ scale: 0, rotate: -45 }} 
@@ -901,17 +851,14 @@ export default function ArcadeGamesPage() {
                     className="w-full h-full object-contain relative z-10 drop-shadow-[0_15px_30px_rgba(0,0,0,0.6)]"
                   />
                 </motion.div>
-
                 <div>
                   <h3 className="text-yellow-400 font-black text-xl uppercase tracking-widest drop-shadow">You Won!</h3>
                   <h2 className="text-4xl font-black text-white mt-2 leading-tight tracking-tight">{wonPrize.title}</h2>
                   <p className="text-xl font-bold text-yellow-200 mt-2">{wonPrize.value}</p>
                 </div>
-
                 <div className="bg-black/40 rounded-xl p-4 border border-purple-500/30">
                   <p className="text-white/80 text-sm leading-relaxed">{wonPrize.details}</p>
                 </div>
-
                 <button onClick={resetGame} className="w-full py-4 bg-gradient-to-r from-yellow-400 to-yellow-600 rounded-xl font-black text-black text-lg shadow-[0_4px_15px_rgba(250,204,21,0.4)] hover:scale-105 active:scale-95 transition-all uppercase tracking-wider">
                   Claim Reward
                 </button>
@@ -920,7 +867,14 @@ export default function ArcadeGamesPage() {
           </motion.div>
         )}
       </AnimatePresence>
-
     </div>
+  );
+}
+
+export default function ArcadeGamesPage() {
+  return (
+    <Suspense fallback={<div>Loading...</div>}>
+      <ArcadeGamesPageContent />
+    </Suspense>
   );
 }

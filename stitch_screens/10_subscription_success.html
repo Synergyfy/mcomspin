@@ -1,0 +1,248 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Subscription Activated | MCOMSpin</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            "colors": {
+                    "tertiary-fixed": "#cfe4ff",
+                    "outline": "#8e7164",
+                    "surface": "#fff8f6",
+                    "on-error-container": "#93000a",
+                    "on-tertiary": "#ffffff",
+                    "on-primary-container": "#541d00",
+                    "tertiary-container": "#009cf8",
+                    "surface-variant": "#f8ddd2",
+                    "on-background": "#261812",
+                    "secondary-fixed": "#ffdbcc",
+                    "on-tertiary-fixed-variant": "#004a79",
+                    "surface-container-low": "#fff1eb",
+                    "on-secondary-container": "#772f05",
+                    "on-primary": "#ffffff",
+                    "on-surface-variant": "#5a4136",
+                    "on-secondary-fixed-variant": "#793106",
+                    "secondary-container": "#ff9969",
+                    "on-surface": "#261812",
+                    "inverse-on-surface": "#ffede6",
+                    "error": "#ba1a1a",
+                    "surface-container": "#ffeae1",
+                    "on-primary-fixed-variant": "#7b2f00",
+                    "primary-fixed-dim": "#ffb695",
+                    "inverse-surface": "#3d2d26",
+                    "secondary": "#97471d",
+                    "primary": "#a23f00",
+                    "on-secondary-fixed": "#351000",
+                    "on-primary-fixed": "#351000",
+                    "surface-tint": "#a23f00",
+                    "surface-container-lowest": "#ffffff",
+                    "secondary-fixed-dim": "#ffb694",
+                    "on-tertiary-container": "#003152",
+                    "tertiary": "#00629f",
+                    "surface-container-highest": "#f8ddd2",
+                    "outline-variant": "#e2bfb1",
+                    "background": "#fff8f6",
+                    "surface-dim": "#efd5ca",
+                    "on-secondary": "#ffffff",
+                    "on-tertiary-fixed": "#001d34",
+                    "primary-container": "#fc6700",
+                    "surface-container-high": "#fee3d8",
+                    "surface-bright": "#fff8f6",
+                    "tertiary-fixed-dim": "#9acbff",
+                    "on-error": "#ffffff",
+                    "primary-fixed": "#ffdbcc",
+                    "inverse-primary": "#ffb695",
+                    "error-container": "#ffdad6"
+            },
+            "borderRadius": {
+                    "DEFAULT": "0.25rem",
+                    "lg": "0.5rem",
+                    "xl": "0.75rem",
+                    "full": "9999px"
+            },
+            "spacing": {
+                    "stack-sm": "8px",
+                    "gutter": "16px",
+                    "container-margin": "20px",
+                    "section-padding": "40px",
+                    "base": "8px",
+                    "stack-lg": "32px",
+                    "stack-md": "16px"
+            },
+            "fontFamily": {
+                    "label-sm": ["Inter"],
+                    "headline-lg": ["Inter"],
+                    "label-md": ["Inter"],
+                    "body-md": ["Inter"],
+                    "display-lg": ["Inter"],
+                    "body-lg": ["Inter"],
+                    "headline-lg-mobile": ["Inter"],
+                    "headline-md": ["Inter"]
+            },
+            "fontSize": {
+                    "label-sm": ["12px", {"lineHeight": "1.2", "fontWeight": "500"}],
+                    "headline-lg": ["32px", {"lineHeight": "1.2", "letterSpacing": "-0.02em", "fontWeight": "700"}],
+                    "label-md": ["14px", {"lineHeight": "1.2", "letterSpacing": "0.05em", "fontWeight": "600"}],
+                    "body-md": ["16px", {"lineHeight": "1.6", "fontWeight": "400"}],
+                    "display-lg": ["48px", {"lineHeight": "1.1", "letterSpacing": "-0.04em", "fontWeight": "800"}],
+                    "body-lg": ["18px", {"lineHeight": "1.6", "fontWeight": "400"}],
+                    "headline-lg-mobile": ["28px", {"lineHeight": "1.2", "fontWeight": "700"}],
+                    "headline-md": ["24px", {"lineHeight": "1.3", "fontWeight": "600"}]
+            }
+          },
+        },
+      }
+    </script>
+<style>
+        @keyframes confetti-fall {
+            0% { transform: translateY(-100%) rotate(0deg); opacity: 1; }
+            100% { transform: translateY(100vh) rotate(720deg); opacity: 0; }
+        }
+        .confetti {
+            position: fixed;
+            width: 10px;
+            height: 10px;
+            top: -10px;
+            z-index: 10;
+            pointer-events: none;
+            animation: confetti-fall linear forwards;
+        }
+        .glass-card {
+            background: rgba(255, 255, 255, 0.7);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+        }
+        .kinetic-shadow {
+            box-shadow: 0 20px 25px -5px rgba(151, 71, 29, 0.1), 0 10px 10px -5px rgba(151, 71, 29, 0.04);
+        }
+        .press-effect:active {
+            transform: scale(0.96);
+            transition: transform 0.1s ease-out;
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-background text-on-background font-body-md min-h-screen flex flex-col overflow-x-hidden">
+<!-- Top Navigation Suppression: Transactional/Success Screen Priority -->
+<main class="flex-grow flex flex-col items-center justify-center px-container-margin py-section-padding relative overflow-hidden">
+<!-- Canvas Background with Kinematics -->
+<div class="absolute inset-0 z-0 pointer-events-none opacity-20">
+<div class="absolute top-0 left-0 w-full h-full" style="background-image: radial-gradient(circle at 50% 50%, rgba(162, 63, 0, 0.05) 0%, transparent 70%);"></div>
+<!-- Subtle Dot Grid (The Pegboard Rule) -->
+<div class="absolute inset-0" style="background-image: radial-gradient(#8e7164 1px, transparent 1px); background-size: 32px 32px; opacity: 0.1;"></div>
+</div>
+<!-- Success Content Container -->
+<div class="w-full max-w-md z-10 text-center flex flex-col items-center">
+<!-- Animated Check Icon -->
+<div class="w-24 h-24 mb-stack-lg relative">
+<div class="absolute inset-0 bg-primary-container rounded-full scale-110 animate-pulse opacity-20"></div>
+<div class="w-24 h-24 bg-primary text-on-primary rounded-full flex items-center justify-center kinetic-shadow animate-bounce">
+<span class="material-symbols-outlined text-[48px]" style="font-variation-settings: 'FILL' 1;">check_circle</span>
+</div>
+</div>
+<h1 class="font-headline-lg-mobile text-headline-lg-mobile md:font-headline-lg md:text-headline-lg text-primary mb-stack-sm animate-[fadeIn_0.5s_ease-out]">
+                Subscription Activated
+            </h1>
+<p class="text-on-surface-variant font-body-md mb-stack-lg max-w-[280px] mx-auto">
+                Welcome to the next level of business growth and kinetic rewards.
+            </p>
+<!-- Plan Summary Card (Bento/Glassmorphism Style) -->
+<div class="glass-card w-full rounded-xl p-gutter kinetic-shadow border border-white/50 text-left mb-stack-lg">
+<div class="flex justify-between items-start mb-stack-md">
+<div>
+<span class="inline-block px-3 py-1 bg-tertiary-container text-on-tertiary-container font-label-md text-label-md rounded-full mb-stack-sm">
+                            Growth Plan
+                        </span>
+<h3 class="font-headline-md text-headline-md text-on-surface">Premium Active</h3>
+</div>
+<div class="text-right">
+<p class="text-primary font-bold text-headline-md">$49/mo</p>
+<p class="font-label-sm text-label-sm text-on-surface-variant">Next billing: Oct 24</p>
+</div>
+</div>
+<div class="space-y-stack-sm pt-stack-md border-t border-outline-variant">
+<div class="flex items-center gap-stack-sm text-on-surface-variant">
+<span class="material-symbols-outlined text-primary text-[20px]">check</span>
+<p class="font-body-md">50 Monthly Drops included</p>
+</div>
+<div class="flex items-center gap-stack-sm text-on-surface-variant">
+<span class="material-symbols-outlined text-primary text-[20px]">check</span>
+<p class="font-body-md">Advanced Revenue Analytics</p>
+</div>
+<div class="flex items-center gap-stack-sm text-on-surface-variant">
+<span class="material-symbols-outlined text-primary text-[20px]">check</span>
+<p class="font-body-md">Priority Customer Support</p>
+</div>
+</div>
+</div>
+<!-- Action Area -->
+<div class="w-full flex flex-col gap-stack-md">
+<button class="press-effect w-full py-4 bg-primary text-on-primary font-label-md text-label-md rounded-xl kinetic-shadow hover:bg-surface-tint transition-all flex items-center justify-center gap-2 border-b-4 border-primary-fixed-dim" onclick="window.location.reload()">
+                    Continue to Onboarding
+                    <span class="material-symbols-outlined">arrow_forward</span>
+</button>
+<button class="w-full py-4 bg-transparent text-on-surface-variant font-label-md text-label-md hover:bg-surface-container transition-colors rounded-xl">
+                    Download Receipt (PDF)
+                </button>
+</div>
+</div>
+<!-- Supportive Kinetic Visual -->
+<div class="mt-stack-lg opacity-40">
+<div class="flex gap-4">
+<div class="w-3 h-3 bg-primary rounded-full animate-bounce" style="animation-delay: 0.1s"></div>
+<div class="w-3 h-3 bg-secondary rounded-full animate-bounce" style="animation-delay: 0.2s"></div>
+<div class="w-3 h-3 bg-tertiary rounded-full animate-bounce" style="animation-delay: 0.3s"></div>
+</div>
+</div>
+</main>
+<!-- Script for Confetti Logic -->
+<script>
+        function createConfetti() {
+            const colors = ['#a23f00', '#ff9969', '#00629f', '#97471d', '#fc6700'];
+            const container = document.body;
+            
+            for (let i = 0; i < 50; i++) {
+                const confetti = document.createElement('div');
+                confetti.classList.add('confetti');
+                confetti.style.left = Math.random() * 100 + 'vw';
+                confetti.style.backgroundColor = colors[Math.floor(Math.random() * colors.length)];
+                confetti.style.width = Math.random() * 8 + 5 + 'px';
+                confetti.style.height = Math.random() * 10 + 5 + 'px';
+                confetti.style.animationDuration = Math.random() * 3 + 2 + 's';
+                confetti.style.animationDelay = Math.random() * 2 + 's';
+                confetti.style.borderRadius = Math.random() > 0.5 ? '50%' : '2px';
+                container.appendChild(confetti);
+
+                // Remove element after animation ends to clean up DOM
+                setTimeout(() => {
+                    confetti.remove();
+                }, 5000);
+            }
+        }
+
+        // Trigger on load
+        window.addEventListener('load', createConfetti);
+        
+        // Re-trigger on main action for "Dopamine-driven" engagement
+        document.querySelector('button.bg-primary').addEventListener('click', (e) => {
+            e.preventDefault();
+            createConfetti();
+            setTimeout(() => {
+                alert("Redirecting to your Onboarding journey...");
+            }, 1000);
+        });
+    </script>
+<!-- Bottom Nav Suppression: Priority for the Success Focus -->
+</body></html>

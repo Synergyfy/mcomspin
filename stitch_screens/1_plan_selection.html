@@ -1,0 +1,342 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>MCOMSpin - Subscription Plans</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .glass-card {
+            background: rgba(255, 255, 255, 0.8);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+        }
+        .kinetic-shadow {
+            box-shadow: 0 10px 20px -5px rgba(162, 63, 0, 0.15);
+        }
+        .premium-btn-shadow {
+            box-shadow: 0 4px 0px 0px #7b2f00;
+        }
+        .premium-btn-shadow:active {
+            box-shadow: 0 1px 0px 0px #7b2f00;
+            transform: translateY(3px);
+        }
+        .step-gradient {
+            background: linear-gradient(90deg, #a23f00 25%, #e2bfb1 25%);
+        }
+        body {
+            font-family: 'Inter', sans-serif;
+            -webkit-tap-highlight-color: transparent;
+        }
+    </style>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "tertiary-fixed": "#cfe4ff",
+                        "outline": "#8e7164",
+                        "surface": "#fff8f6",
+                        "on-error-container": "#93000a",
+                        "on-tertiary": "#ffffff",
+                        "on-primary-container": "#541d00",
+                        "tertiary-container": "#009cf8",
+                        "surface-variant": "#f8ddd2",
+                        "on-background": "#261812",
+                        "secondary-fixed": "#ffdbcc",
+                        "on-tertiary-fixed-variant": "#004a79",
+                        "surface-container-low": "#fff1eb",
+                        "on-secondary-container": "#772f05",
+                        "on-primary": "#ffffff",
+                        "on-surface-variant": "#5a4136",
+                        "on-secondary-fixed-variant": "#793106",
+                        "secondary-container": "#ff9969",
+                        "on-surface": "#261812",
+                        "inverse-on-surface": "#ffede6",
+                        "error": "#ba1a1a",
+                        "surface-container": "#ffeae1",
+                        "on-primary-fixed-variant": "#7b2f00",
+                        "primary-fixed-dim": "#ffb695",
+                        "inverse-surface": "#3d2d26",
+                        "secondary": "#97471d",
+                        "primary": "#a23f00",
+                        "on-secondary-fixed": "#351000",
+                        "on-primary-fixed": "#351000",
+                        "surface-tint": "#a23f00",
+                        "surface-container-lowest": "#ffffff",
+                        "secondary-fixed-dim": "#ffb694",
+                        "on-tertiary-container": "#003152",
+                        "tertiary": "#00629f",
+                        "surface-container-highest": "#f8ddd2",
+                        "outline-variant": "#e2bfb1",
+                        "background": "#fff8f6",
+                        "surface-dim": "#efd5ca",
+                        "on-secondary": "#ffffff",
+                        "on-tertiary-fixed": "#001d34",
+                        "primary-container": "#fc6700",
+                        "surface-container-high": "#fee3d8",
+                        "surface-bright": "#fff8f6",
+                        "tertiary-fixed-dim": "#9acbff",
+                        "on-error": "#ffffff",
+                        "primary-fixed": "#ffdbcc",
+                        "inverse-primary": "#ffb695",
+                        "error-container": "#ffdad6"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                    "spacing": {
+                        "stack-sm": "8px",
+                        "gutter": "16px",
+                        "container-margin": "20px",
+                        "section-padding": "40px",
+                        "base": "8px",
+                        "stack-lg": "32px",
+                        "stack-md": "16px"
+                    },
+                    "fontFamily": {
+                        "label-sm": ["Inter"],
+                        "headline-lg": ["Inter"],
+                        "label-md": ["Inter"],
+                        "body-md": ["Inter"],
+                        "display-lg": ["Inter"],
+                        "body-lg": ["Inter"],
+                        "headline-lg-mobile": ["Inter"],
+                        "headline-md": ["Inter"]
+                    },
+                    "fontSize": {
+                        "label-sm": ["12px", {"lineHeight": "1.2", "fontWeight": "500"}],
+                        "headline-lg": ["32px", {"lineHeight": "1.2", "letterSpacing": "-0.02em", "fontWeight": "700"}],
+                        "label-md": ["14px", {"lineHeight": "1.2", "letterSpacing": "0.05em", "fontWeight": "600"}],
+                        "body-md": ["16px", {"lineHeight": "1.6", "fontWeight": "400"}],
+                        "display-lg": ["48px", {"lineHeight": "1.1", "letterSpacing": "-0.04em", "fontWeight": "800"}],
+                        "body-lg": ["18px", {"lineHeight": "1.6", "fontWeight": "400"}],
+                        "headline-lg-mobile": ["28px", {"lineHeight": "1.2", "fontWeight": "700"}],
+                        "headline-md": ["24px", {"lineHeight": "1.3", "fontWeight": "600"}]
+                    }
+                }
+            }
+        }
+    </script>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-surface text-on-surface min-h-screen pb-stack-lg">
+<!-- Top Navigation Anchor (Suppressed context check: Checkout/Transactional mode) -->
+<header class="w-full top-0 sticky z-50 bg-surface shadow-sm h-16 flex justify-between items-center px-container-margin">
+<div class="font-display-lg text-headline-md text-primary tracking-tighter">MCOMSpin</div>
+<div class="w-10 h-10 rounded-full bg-surface-container-highest flex items-center justify-center overflow-hidden border border-outline-variant">
+<span class="material-symbols-outlined text-on-surface-variant">person</span>
+</div>
+</header>
+<main class="max-w-screen-xl mx-auto px-container-margin pt-stack-md">
+<!-- Progress Indicator -->
+<div class="mb-stack-lg">
+<div class="flex justify-between items-center mb-2">
+<span class="font-label-md text-label-md text-primary">Step 1 of 4: Subscription</span>
+<span class="font-label-sm text-label-sm text-on-surface-variant">Next: Payment Details</span>
+</div>
+<div class="h-2 w-full bg-surface-container-highest rounded-full overflow-hidden">
+<div class="h-full bg-primary w-1/4 rounded-full transition-all duration-500"></div>
+</div>
+</div>
+<!-- Hero Section -->
+<section class="text-center mb-stack-lg">
+<h1 class="font-headline-lg-mobile text-headline-lg-mobile text-on-surface mb-2">Select Your Power Plan</h1>
+<p class="font-body-md text-body-md text-on-surface-variant">Fuel your arcade growth with unlimited drops and priority support.</p>
+</section>
+<!-- Pricing Cards Grid -->
+<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-gutter">
+<!-- FREE Plan -->
+<div class="bg-surface-container-lowest border border-outline-variant p-stack-md rounded-xl kinetic-shadow transition-transform active:scale-95 duration-200">
+<div class="mb-stack-md">
+<span class="font-label-md text-label-md text-on-surface-variant uppercase tracking-wider">Free</span>
+<div class="mt-2 flex items-baseline">
+<span class="font-headline-lg text-headline-lg">$0</span>
+<span class="font-body-md text-body-md text-on-surface-variant ml-1">/mo</span>
+</div>
+</div>
+<ul class="space-y-4 mb-stack-lg min-h-[140px]">
+<li class="flex items-center gap-2">
+<span class="material-symbols-outlined text-primary text-[20px]">check_circle</span>
+<span class="font-body-md text-body-md">5 Daily Drops</span>
+</li>
+<li class="flex items-center gap-2">
+<span class="material-symbols-outlined text-primary text-[20px]">check_circle</span>
+<span class="font-body-md text-body-md">Basic Leaderboard</span>
+</li>
+<li class="flex items-center gap-2 opacity-40">
+<span class="material-symbols-outlined text-on-surface-variant text-[20px]">lock</span>
+<span class="font-body-md text-body-md">Priority Support</span>
+</li>
+</ul>
+<button class="w-full py-4 bg-surface-container-high text-primary font-label-md text-label-md rounded-lg border-2 border-primary transition-colors hover:bg-primary-fixed">
+                    Select Plan
+                </button>
+</div>
+<!-- STARTER Plan -->
+<div class="bg-surface-container-lowest border border-outline-variant p-stack-md rounded-xl kinetic-shadow transition-transform active:scale-95 duration-200">
+<div class="mb-stack-md">
+<span class="font-label-md text-label-md text-on-surface-variant uppercase tracking-wider">Starter</span>
+<div class="mt-2 flex items-baseline">
+<span class="font-headline-lg text-headline-lg">$29</span>
+<span class="font-body-md text-body-md text-on-surface-variant ml-1">/mo</span>
+</div>
+</div>
+<ul class="space-y-4 mb-stack-lg min-h-[140px]">
+<li class="flex items-center gap-2">
+<span class="material-symbols-outlined text-primary text-[20px]">check_circle</span>
+<span class="font-body-md text-body-md">50 Daily Drops</span>
+</li>
+<li class="flex items-center gap-2">
+<span class="material-symbols-outlined text-primary text-[20px]">check_circle</span>
+<span class="font-body-md text-body-md">Standard Support</span>
+</li>
+<li class="flex items-center gap-2">
+<span class="material-symbols-outlined text-primary text-[20px]">check_circle</span>
+<span class="font-body-md text-body-md">Full Leaderboard</span>
+</li>
+</ul>
+<button class="w-full py-4 bg-surface-container-high text-primary font-label-md text-label-md rounded-lg border-2 border-primary transition-colors hover:bg-primary-fixed">
+                    Select Plan
+                </button>
+</div>
+<!-- GROWTH Plan (Highlighted) -->
+<div class="relative bg-white border-2 border-primary p-stack-md rounded-xl kinetic-shadow scale-105 z-10 ring-4 ring-primary-container ring-opacity-20 transition-transform active:scale-100 duration-200">
+<div class="absolute -top-4 left-1/2 -translate-x-1/2 bg-primary text-on-primary px-4 py-1 rounded-full font-label-md text-label-md shadow-lg">
+                    Most Popular
+                </div>
+<div class="mb-stack-md mt-2">
+<span class="font-label-md text-label-md text-primary uppercase tracking-wider">Growth</span>
+<div class="mt-2 flex items-baseline">
+<span class="font-headline-lg text-headline-lg text-on-primary-container">$79</span>
+<span class="font-body-md text-body-md text-on-surface-variant ml-1">/mo</span>
+</div>
+</div>
+<ul class="space-y-4 mb-stack-lg min-h-[140px]">
+<li class="flex items-center gap-2">
+<span class="material-symbols-outlined text-primary text-[20px]" style="font-variation-settings: 'FILL' 1;">stars</span>
+<span class="font-body-md text-body-md font-semibold">Unlimited Drops</span>
+</li>
+<li class="flex items-center gap-2">
+<span class="material-symbols-outlined text-primary text-[20px]">check_circle</span>
+<span class="font-body-md text-body-md">Priority Response</span>
+</li>
+<li class="flex items-center gap-2">
+<span class="material-symbols-outlined text-primary text-[20px]">check_circle</span>
+<span class="font-body-md text-body-md">Advanced Analytics</span>
+</li>
+</ul>
+<button class="w-full py-4 bg-primary text-on-primary font-label-md text-label-md rounded-lg premium-btn-shadow transition-all hover:bg-on-primary-fixed-variant active:translate-y-1">
+                    Select Plan
+                </button>
+</div>
+<!-- ENTERPRISE Plan -->
+<div class="bg-surface-container-lowest border border-outline-variant p-stack-md rounded-xl kinetic-shadow transition-transform active:scale-95 duration-200">
+<div class="mb-stack-md">
+<span class="font-label-md text-label-md text-on-surface-variant uppercase tracking-wider">Enterprise</span>
+<div class="mt-2 flex items-baseline">
+<span class="font-headline-lg text-headline-lg">Custom</span>
+</div>
+</div>
+<ul class="space-y-4 mb-stack-lg min-h-[140px]">
+<li class="flex items-center gap-2">
+<span class="material-symbols-outlined text-primary text-[20px]">check_circle</span>
+<span class="font-body-md text-body-md">Dedicated Manager</span>
+</li>
+<li class="flex items-center gap-2">
+<span class="material-symbols-outlined text-primary text-[20px]">check_circle</span>
+<span class="font-body-md text-body-md">SLA Guarantee</span>
+</li>
+<li class="flex items-center gap-2">
+<span class="material-symbols-outlined text-primary text-[20px]">check_circle</span>
+<span class="font-body-md text-body-md">Custom Integration</span>
+</li>
+</ul>
+<button class="w-full py-4 bg-surface-container-high text-primary font-label-md text-label-md rounded-lg border-2 border-primary transition-colors hover:bg-primary-fixed">
+                    Select Plan
+                </button>
+</div>
+</div>
+<!-- Illustration Section -->
+<section class="mt-stack-lg grid grid-cols-1 md:grid-cols-2 gap-stack-lg items-center bg-surface-container-low rounded-3xl p-stack-md md:p-12 overflow-hidden border border-outline-variant">
+<div>
+<h2 class="font-headline-md text-headline-md text-on-surface mb-4">Why upgrade to Growth?</h2>
+<div class="space-y-6">
+<div class="flex gap-4">
+<div class="flex-shrink-0 w-12 h-12 rounded-xl bg-primary-container flex items-center justify-center">
+<span class="material-symbols-outlined text-on-primary-container">rocket_launch</span>
+</div>
+<div>
+<p class="font-body-md text-body-md font-bold">Uncapped Kinetic Potential</p>
+<p class="font-label-sm text-label-sm text-on-surface-variant">Never run out of daily drops during peak high-traffic seasons.</p>
+</div>
+</div>
+<div class="flex gap-4">
+<div class="flex-shrink-0 w-12 h-12 rounded-xl bg-tertiary-container flex items-center justify-center">
+<span class="material-symbols-outlined text-white">insights</span>
+</div>
+<div>
+<p class="font-body-md text-body-md font-bold">Real-time Insights</p>
+<p class="font-label-sm text-label-sm text-on-surface-variant">Deep dive into user behavior and conversion mechanics with our SDK.</p>
+</div>
+</div>
+</div>
+</div>
+<div class="relative group">
+<div class="absolute -inset-1 bg-gradient-to-r from-primary to-secondary rounded-2xl blur opacity-25 group-hover:opacity-40 transition duration-1000 group-hover:duration-200"></div>
+<img alt="SaaS Analytics View" class="relative rounded-2xl w-full h-64 object-cover shadow-xl border border-white/20" data-alt="A sophisticated digital dashboard interface showing kinetic arcade gameplay statistics and vibrant orange data visualizations. The aesthetic is clean corporate modern with a playful touch, featuring soft glassmorphic layers and burnt sienna accents over a warm minimal background. The lighting is bright and high-end, evoking a premium SaaS product atmosphere." src="https://lh3.googleusercontent.com/aida-public/AB6AXuAMiWWKv3mKEQTVQ9E0dsayOi3liOJYeMWr9tzkRB80MKQmTQGssWgxvbEdkuIKDuxi96wglxFG0hbqSBzh0HpWcVMayaWiqu99K2q6XfFUT_QnjPbSEduSnFCdvFtBx62fr62D0gzeHYbgyO0ofXlkG2EjMI2tTYUUc-OUnt00Ul5yIBrAkACYsGi30TCGNHnX70FXVrDFPI9glcmfEYjeaqaF8K4e3OL6WJTeVEhI4OgmJu7GmG4vKg"/>
+</div>
+</section>
+<!-- Footer / FAQ Link -->
+<footer class="mt-stack-lg text-center pb-20 md:pb-10">
+<p class="font-body-md text-body-md text-on-surface-variant">
+                Have questions about our plans? 
+                <a class="text-primary font-semibold underline decoration-2 underline-offset-4" href="#">Talk to an expert</a>
+</p>
+</footer>
+</main>
+<!-- Bottom Nav Bar (Visibility check: Suppressed for checkout flow, but following shared components rule for "Top Level" destinations if needed. Here we keep it for user navigation context unless strict suppression applied) -->
+<!-- Applying Suppression Logic: This is Step 1 of 4, a transactional page. We suppress the BottomNavBar to prioritize content focus. -->
+<script>
+        // Micro-interactions for pricing cards
+        document.querySelectorAll('.kinetic-shadow').forEach(card => {
+            card.addEventListener('mouseenter', () => {
+                if (!card.classList.contains('scale-105')) {
+                    card.style.transform = 'translateY(-8px)';
+                }
+            });
+            card.addEventListener('mouseleave', () => {
+                if (!card.classList.contains('scale-105')) {
+                    card.style.transform = 'translateY(0)';
+                }
+            });
+        });
+
+        // CTA Click Effect
+        document.querySelectorAll('button').forEach(btn => {
+            btn.addEventListener('click', function() {
+                const originalText = this.innerText;
+                this.innerText = 'Processing...';
+                this.classList.add('opacity-80');
+                setTimeout(() => {
+                    this.innerText = originalText;
+                    this.classList.remove('opacity-80');
+                }, 1000);
+            });
+        });
+    </script>
+</body></html>
