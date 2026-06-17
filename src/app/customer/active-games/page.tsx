@@ -29,6 +29,8 @@ import confetti from 'canvas-confetti';
 
 /* ─── TYPES & THEMES ─── */
 
+type Rarity = 'common' | 'rare' | 'epic' | 'legendary';
+
 type Prize = {
   title: string;
   value: string;
