@@ -77,9 +77,60 @@ const campaignData = {
   ]
 };
 
+const GiftBox = ({ reward, isRevealed, label, color }: { reward?: any, isRevealed?: boolean, label?: string, color?: string }) => {
+  return (
+    <div className="relative group perspective-1000 w-full h-full">
+      {/* 3D Box Container */}
+      <div className="relative w-full h-full transition-transform duration-500 preserve-3d">
+        {/* Box Shadow */}
+        <div className="absolute -bottom-2 left-1/2 -translate-x-1/2 w-[80%] h-4 bg-black/40 blur-md rounded-full" />
+        
+        {/* Box Body */}
+        <div className={`absolute inset-0 rounded-xl bg-gradient-to-b ${color || 'from-orange-500 to-orange-700'} border-t border-white/20 shadow-xl flex items-center justify-center overflow-hidden`}>
+          {/* Ribbons */}
+          <div className="absolute inset-0 flex items-center justify-center">
+            <div className="w-4 h-full bg-yellow-400/80 shadow-inner" />
+            <div className="w-full h-4 bg-yellow-400/80 shadow-inner" />
+          </div>
+          
+          {/* Label or Reward Content */}
+          <div className="relative z-10 flex flex-col items-center justify-center text-center p-2">
+            {isRevealed && reward ? (
+              <motion.div 
+                initial={{ scale: 0, opacity: 0 }}
+                animate={{ scale: 1, opacity: 1 }}
+                className="flex flex-col items-center"
+              >
+                <div className="text-white drop-shadow-md mb-1">
+                  {reward.icon}
+                </div>
+                <span className="text-[10px] font-black text-white leading-tight uppercase drop-shadow-sm">
+                  {reward.name}
+                </span>
+              </motion.div>
+            ) : (
+              <span className="text-white/90 font-black text-xl drop-shadow-lg">
+                {label || '?'}
+              </span>
+            )}
+          </div>
+
+          {/* Glossy Overlay */}
+          <div className="absolute inset-0 bg-gradient-to-tr from-white/10 to-transparent pointer-events-none" />
+        </div>
+
+        {/* Box Lid (slightly larger) */}
+        <div className={`absolute -top-1 -left-1 -right-1 h-6 rounded-t-xl rounded-b-md bg-gradient-to-b ${color || 'from-orange-400 to-orange-600'} border-t border-white/30 shadow-lg z-20`}>
+          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-4 h-4 bg-yellow-400 rounded-sm shadow-sm" />
+        </div>
+      </div>
+    </div>
+  );
+};
+
 export default function PlayPage() {
   const { profile, completeOnboarding } = useCustomerStore();
-  const [step, setStep] = useState<'landing' | 'eligibility' | 'checking' | 'confirmed' | 'token_check' | 'game_prep' | 'box_shuffle' | 'ready'>('landing');
+  const [step, setStep] = useState<'landing' | 'eligibility' | 'checking' | 'confirmed' | 'token_check' | 'game_prep' | 'reward_reveal' | 'box_shuffle' | 'ready'>('landing');
   const [formData, setFormData] = useState({ name: '', email: '' });
   const [prepStatus, setPrepStatus] = useState('Initializing board...');
   const [boxes, setBoxes] = useState([0, 1, 2, 3, 4, 5]);
@@ -122,10 +173,17 @@ export default function PlayPage() {
           setPrepStatus(statuses[++i]);
         } else {
           clearInterval(interval);
-          setTimeout(() => setStep('box_shuffle'), 800);
+          setTimeout(() => setStep('reward_reveal'), 800);
         }
       }, 1000);
       return () => clearInterval(interval);
+    }
+
+    if (step === 'reward_reveal') {
+      const timer = setTimeout(() => {
+        setStep('box_shuffle');
+      }, 3000);
+      return () => clearTimeout(timer);
     }
 
     if (step === 'box_shuffle') {
@@ -394,16 +452,16 @@ export default function PlayPage() {
               </div>
 
               {/* Reward Boxes visualization */}
-              <div className="grid grid-cols-6 gap-2 px-4 h-24">
+              <div className="grid grid-cols-6 gap-2 px-4 h-20">
                 {['A', 'B', 'C', 'D', 'E', 'F'].map((box, i) => (
                   <motion.div 
                     key={i}
                     initial={{ y: 50, opacity: 0 }}
                     animate={{ y: 0, opacity: 1 }}
                     transition={{ delay: 0.5 + (i * 0.1) }}
-                    className="border-2 border-stone-700 rounded-t-xl bg-stone-800 flex items-center justify-center text-stone-600 font-black text-sm"
+                    className="relative"
                   >
-                    {box}
+                    <GiftBox label={box} />
                   </motion.div>
                 ))}
               </div>
@@ -419,6 +477,28 @@ export default function PlayPage() {
           </motion.div>
         )}
 
+        {/* Step 5: Reward Reveal */}
+        {step === 'reward_reveal' && (
+          <motion.div 
+            key="reward_reveal"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="min-h-screen bg-stone-900 flex flex-col items-center justify-center p-6"
+          >
+            <h2 className="text-white text-2xl font-black uppercase tracking-[0.2em] mb-4">The Rewards...</h2>
+            <p className="text-stone-400 text-xs font-bold uppercase tracking-widest mb-12">Take a look before we hide them!</p>
+            
+            <div className="grid grid-cols-2 sm:grid-cols-3 gap-6 w-full max-w-xl">
+              {campaignData.rewards.map((reward, i) => (
+                <div key={i} className="h-32">
+                  <GiftBox reward={reward} isRevealed={true} />
+                </div>
+              ))}
+            </div>
+          </motion.div>
+        )}
+
         {/* Step 6: Box Shuffle */}
         {step === 'box_shuffle' && (
           <motion.div 
@@ -430,15 +510,15 @@ export default function PlayPage() {
           >
             <h2 className="text-white text-2xl font-black uppercase tracking-[0.2em] mb-12">Watch Closely...</h2>
             
-            <div className="grid grid-cols-3 gap-4 w-full max-w-xs">
+            <div className="grid grid-cols-2 sm:grid-cols-3 gap-6 w-full max-w-xl">
               {boxes.map((boxIndex, i) => (
                 <motion.div
                   key={boxIndex}
                   layoutId={`box-${boxIndex}`}
-                  className="h-24 border-2 border-orange-500 rounded-xl bg-orange-500/20 flex items-center justify-center text-orange-500 font-black text-xl"
+                  className="h-32"
                   transition={{ type: "spring", stiffness: 300, damping: 25 }}
                 >
-                  {String.fromCharCode(65 + boxIndex)}
+                  <GiftBox label={String.fromCharCode(65 + boxIndex)} />
                 </motion.div>
               ))}
             </div>
