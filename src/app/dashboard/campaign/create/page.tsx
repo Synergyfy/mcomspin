@@ -1,0 +1,320 @@
+'use client';
+
+import React, { useState } from 'react';
+import { useRouter } from 'next/navigation';
+import { 
+  ArrowLeft, 
+  ArrowRight, 
+  Image as ImageIcon, 
+  Settings2, 
+  Gift, 
+  Rocket, 
+  Camera, 
+  Plus, 
+  CheckCircle2, 
+  Gamepad2, 
+  Trophy, 
+  CalendarDays,
+  Target
+} from 'lucide-react';
+
+export default function CreateCampaignWizard() {
+  const router = useRouter();
+  const [step, setStep] = useState(1);
+  const totalSteps = 4;
+
+  // Form State
+  const [campaignName, setCampaignName] = useState('');
+  const [campaignDesc, setCampaignDesc] = useState('');
+  const [winProbability, setWinProbability] = useState(30);
+  const [dailyDropLimit, setDailyDropLimit] = useState(500);
+
+  const nextStep = () => setStep(prev => Math.min(prev + 1, totalSteps));
+  const prevStep = () => setStep(prev => Math.max(prev - 1, 1));
+
+  const handleLaunch = () => {
+    // Navigate to campaign details
+    router.push('/dashboard/campaign/123');
+  };
+
+  return (
+    <div className="bg-background text-on-background font-body min-h-screen flex flex-col pb-24">
+      <main className="flex-grow w-full max-w-2xl mx-auto px-container-margin pt-stack-md animate-fade-in-up">
+        {/* Step Indicator */}
+        <div className="mb-stack-lg">
+          <div className="flex justify-between items-end mb-base">
+            <div>
+              <span className="font-label-sm text-label-sm text-secondary uppercase tracking-widest font-bold">Step {step} of {totalSteps}</span>
+              <h2 className="font-display text-headline-lg-mobile md:text-headline-lg text-on-surface font-bold">
+                {step === 1 && "Campaign Information"}
+                {step === 2 && "Game Mechanics"}
+                {step === 3 && "Reward Allocation"}
+                {step === 4 && "Review & Launch"}
+              </h2>
+            </div>
+            {step < 4 && (
+              <div className="bg-white/70 backdrop-blur-md px-4 py-2 rounded-full border border-primary/10 shadow-sm flex items-center gap-2">
+                <Gamepad2 className="w-5 h-5 text-primary" />
+                <span className="font-label-md font-bold text-primary">Ball Drop</span>
+              </div>
+            )}
+          </div>
+          
+          <div className="grid grid-cols-4 gap-2 mb-stack-lg">
+            {[1, 2, 3, 4].map((s) => (
+              <div 
+                key={s} 
+                className={`h-1.5 rounded-full transition-all duration-500 ease-out ${
+                  s <= step ? 'bg-primary shadow-[0_0_8px_rgba(162,63,0,0.5)]' : 'bg-surface-container-highest'
+                }`} 
+              />
+            ))}
+          </div>
+        </div>
+
+        {/* STEP 1: CAMPAIGN INFORMATION */}
+        {step === 1 && (
+          <div className="bg-surface-container-lowest rounded-xl p-stack-md shadow-[0_10px_20px_-10px_rgba(53,16,0,0.15)] border border-surface-container-high relative overflow-hidden">
+            <form className="space-y-stack-md relative z-10" onSubmit={(e) => e.preventDefault()}>
+              <div className="space-y-2 group">
+                <label className="font-label-md font-bold text-on-surface-variant block px-1" htmlFor="campaign-name">Campaign Name</label>
+                <input 
+                  className="w-full h-14 px-4 rounded-xl bg-surface-container-low border-2 border-transparent focus:border-primary focus:bg-white transition-all outline-none text-on-surface font-medium group-focus-within:scale-[1.01]" 
+                  id="campaign-name" 
+                  value={campaignName}
+                  onChange={(e) => setCampaignName(e.target.value)}
+                  placeholder="e.g. Summer Solstice Grand Drop" 
+                  type="text"
+                />
+              </div>
+
+              <div className="space-y-2 group">
+                <label className="font-label-md font-bold text-on-surface-variant block px-1" htmlFor="campaign-desc">Description</label>
+                <textarea 
+                  className="w-full p-4 rounded-xl bg-surface-container-low border-2 border-transparent focus:border-primary focus:bg-white transition-all outline-none text-on-surface font-medium resize-none group-focus-within:scale-[1.01]" 
+                  id="campaign-desc" 
+                  value={campaignDesc}
+                  onChange={(e) => setCampaignDesc(e.target.value)}
+                  placeholder="Describe the excitement! What can customers win?" 
+                  rows={4}
+                />
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-gutter">
+                <div className="space-y-2">
+                  <label className="font-label-md font-bold text-on-surface-variant block px-1">Campaign Banner</label>
+                  <div className="group relative flex flex-col items-center justify-center w-full aspect-video rounded-xl bg-surface-container-high border-2 border-dashed border-outline-variant hover:border-primary hover:bg-surface-container-highest transition-all cursor-pointer overflow-hidden">
+                    <ImageIcon className="w-8 h-8 text-primary mb-2 group-hover:scale-110 transition-transform" />
+                    <span className="font-label-sm font-semibold text-on-surface-variant">Upload Banner (16:9)</span>
+                  </div>
+                </div>
+
+                <div className="space-y-2">
+                  <label className="font-label-md font-bold text-on-surface-variant block px-1">Thumbnail</label>
+                  <div className="group relative flex flex-col items-center justify-center w-full aspect-square md:aspect-video rounded-xl bg-surface-container-high border-2 border-dashed border-outline-variant hover:border-primary hover:bg-surface-container-highest transition-all cursor-pointer overflow-hidden">
+                    <Camera className="w-8 h-8 text-primary mb-2 group-hover:scale-110 transition-transform" />
+                    <span className="font-label-sm font-semibold text-on-surface-variant">Upload Square</span>
+                  </div>
+                </div>
+              </div>
+            </form>
+          </div>
+        )}
+
+        {/* STEP 2: GAME MECHANICS */}
+        {step === 2 && (
+          <div className="space-y-stack-md">
+            <div className="bg-surface-container-lowest rounded-xl p-stack-md shadow-[0_10px_20px_-10px_rgba(53,16,0,0.15)] border border-surface-container-high">
+              <h3 className="font-display font-bold text-lg mb-4 flex items-center gap-2">
+                <Settings2 className="w-5 h-5 text-primary" /> Physics Configuration
+              </h3>
+              
+              <div className="space-y-6">
+                <div>
+                  <div className="flex justify-between mb-2">
+                    <label className="font-label-md font-bold text-on-surface-variant">Base Win Probability</label>
+                    <span className="font-bold text-primary">{winProbability}%</span>
+                  </div>
+                  <input 
+                    type="range" 
+                    min="1" 
+                    max="100" 
+                    value={winProbability}
+                    onChange={(e) => setWinProbability(Number(e.target.value))}
+                    className="w-full accent-primary" 
+                  />
+                  <p className="text-xs text-on-surface-variant mt-2 font-medium">Controls pegboard bounce friction and slot magnetism.</p>
+                </div>
+                
+                <div>
+                  <div className="flex justify-between mb-2">
+                    <label className="font-label-md font-bold text-on-surface-variant">Daily Total Drop Limit</label>
+                    <span className="font-bold text-primary">{dailyDropLimit}</span>
+                  </div>
+                  <input 
+                    type="range" 
+                    min="100" 
+                    max="5000" 
+                    step="100"
+                    value={dailyDropLimit}
+                    onChange={(e) => setDailyDropLimit(Number(e.target.value))}
+                    className="w-full accent-primary" 
+                  />
+                  <p className="text-xs text-on-surface-variant mt-2 font-medium">Cap the total number of plays across all users per day to protect inventory.</p>
+                </div>
+              </div>
+            </div>
+
+            <div className="bg-surface-container-lowest rounded-xl p-stack-md shadow-[0_10px_20px_-10px_rgba(53,16,0,0.15)] border border-surface-container-high">
+              <h3 className="font-display font-bold text-lg mb-4 flex items-center gap-2">
+                <CalendarDays className="w-5 h-5 text-primary" /> Active Schedule
+              </h3>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="font-label-sm font-bold text-on-surface-variant block mb-1">Start Date</label>
+                  <input type="date" className="w-full p-3 rounded-lg bg-surface-container-low border-none font-medium text-sm outline-none focus:ring-2 focus:ring-primary/20" />
+                </div>
+                <div>
+                  <label className="font-label-sm font-bold text-on-surface-variant block mb-1">End Date</label>
+                  <input type="date" className="w-full p-3 rounded-lg bg-surface-container-low border-none font-medium text-sm outline-none focus:ring-2 focus:ring-primary/20" />
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* STEP 3: REWARD ALLOCATION */}
+        {step === 3 && (
+          <div className="bg-surface-container-lowest rounded-xl p-stack-md shadow-[0_10px_20px_-10px_rgba(53,16,0,0.15)] border border-surface-container-high relative overflow-hidden">
+            <div className="flex justify-between items-center mb-6">
+              <h3 className="font-display font-bold text-lg flex items-center gap-2">
+                <Gift className="w-5 h-5 text-primary" /> Pegboard Slots
+              </h3>
+              <button className="text-sm font-bold text-primary bg-primary/10 px-3 py-1.5 rounded-lg flex items-center gap-1 hover:bg-primary/20 transition-colors">
+                <Plus className="w-4 h-4" /> Add Slot
+              </button>
+            </div>
+
+            <div className="space-y-4">
+              {/* Slot 1 */}
+              <div className="flex items-center gap-4 p-4 bg-surface-container-low border border-outline-variant/30 rounded-xl">
+                <div className="w-12 h-12 rounded-lg bg-tertiary-container flex items-center justify-center text-white font-bold font-display shadow-inner">
+                  L1
+                </div>
+                <div className="flex-1">
+                  <h4 className="font-bold text-on-surface">Small Discount</h4>
+                  <p className="text-sm text-on-surface-variant">10% OFF Coupon</p>
+                </div>
+                <div className="text-right">
+                  <span className="block font-bold text-primary">60%</span>
+                  <span className="text-xs text-on-surface-variant">Win Rate</span>
+                </div>
+              </div>
+
+              {/* Slot 2 */}
+              <div className="flex items-center gap-4 p-4 bg-surface-container-low border border-outline-variant/30 rounded-xl">
+                <div className="w-12 h-12 rounded-lg bg-primary flex items-center justify-center text-white font-bold font-display shadow-inner shadow-white/20">
+                  L2
+                </div>
+                <div className="flex-1">
+                  <h4 className="font-bold text-on-surface">Medium Prize</h4>
+                  <p className="text-sm text-on-surface-variant">Free Dessert</p>
+                </div>
+                <div className="text-right">
+                  <span className="block font-bold text-primary">30%</span>
+                  <span className="text-xs text-on-surface-variant">Win Rate</span>
+                </div>
+              </div>
+
+              {/* Slot 3 (Jackpot) */}
+              <div className="flex items-center gap-4 p-4 bg-gradient-to-r from-amber-50 to-orange-50 border-2 border-amber-400/30 rounded-xl relative overflow-hidden">
+                <div className="absolute right-0 top-0 bottom-0 w-32 bg-gradient-to-l from-amber-400/20 to-transparent" />
+                <div className="w-12 h-12 rounded-lg bg-gradient-to-br from-amber-400 to-orange-500 flex items-center justify-center text-white font-bold font-display shadow-inner shadow-white/30 z-10">
+                  <Trophy className="w-6 h-6 fill-white/50" />
+                </div>
+                <div className="flex-1 z-10">
+                  <h4 className="font-bold text-amber-900">GRAND JACKPOT</h4>
+                  <p className="text-sm text-amber-700/80">$100 Gift Card</p>
+                </div>
+                <div className="text-right z-10">
+                  <span className="block font-bold text-amber-600">10%</span>
+                  <span className="text-xs text-amber-700/60">Win Rate</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* STEP 4: REVIEW & LAUNCH */}
+        {step === 4 && (
+          <div className="space-y-stack-md">
+            <div className="bg-gradient-to-br from-primary/10 to-tertiary/10 p-8 rounded-2xl border-2 border-primary/20 text-center relative overflow-hidden shadow-lg">
+              <div className="w-20 h-20 bg-primary rounded-full flex items-center justify-center mx-auto mb-4 shadow-[0_8px_16px_rgba(162,63,0,0.3)]">
+                <Rocket className="w-10 h-10 text-white" />
+              </div>
+              <h3 className="font-display text-2xl font-black text-on-surface mb-2">Ready for Liftoff</h3>
+              <p className="text-on-surface-variant font-medium">
+                {campaignName || 'Your Campaign'} is configured and ready to be launched to your audience.
+              </p>
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div className="bg-surface-container-lowest p-4 rounded-xl border border-outline-variant/30 shadow-sm flex items-start gap-3">
+                <Target className="w-5 h-5 text-primary shrink-0 mt-0.5" />
+                <div>
+                  <h4 className="font-bold text-sm">Win Probability</h4>
+                  <p className="text-on-surface-variant text-sm font-medium">{winProbability}% Base Rate</p>
+                </div>
+              </div>
+              <div className="bg-surface-container-lowest p-4 rounded-xl border border-outline-variant/30 shadow-sm flex items-start gap-3">
+                <Gamepad2 className="w-5 h-5 text-primary shrink-0 mt-0.5" />
+                <div>
+                  <h4 className="font-bold text-sm">Daily Limits</h4>
+                  <p className="text-on-surface-variant text-sm font-medium">{dailyDropLimit} Drops/day</p>
+                </div>
+              </div>
+              <div className="bg-surface-container-lowest p-4 rounded-xl border border-outline-variant/30 shadow-sm flex items-start gap-3 col-span-2">
+                <Trophy className="w-5 h-5 text-primary shrink-0 mt-0.5" />
+                <div>
+                  <h4 className="font-bold text-sm">Rewards Active</h4>
+                  <p className="text-on-surface-variant text-sm font-medium">10% OFF, Free Dessert, $100 Jackpot</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+      </main>
+
+      {/* Sticky Bottom Actions */}
+      <div className="fixed bottom-0 left-0 right-0 p-container-margin bg-gradient-to-t from-surface via-surface/95 to-transparent z-40 pb-8">
+        <div className="max-w-2xl mx-auto flex flex-col md:flex-row gap-3">
+          {step > 1 && (
+            <button 
+              onClick={prevStep}
+              className="w-full md:w-1/3 h-14 bg-surface text-on-surface-variant font-label-md font-bold rounded-full border-2 border-outline-variant hover:border-primary hover:text-primary transition-all active:scale-95 uppercase tracking-widest flex items-center justify-center gap-2"
+            >
+              <ArrowLeft className="w-5 h-5" /> Back
+            </button>
+          )}
+          
+          {step < 4 ? (
+            <button 
+              onClick={nextStep}
+              className="flex-1 h-14 bg-primary text-white font-label-md font-bold rounded-full shadow-[0_4px_0_0_#7b2f00] flex items-center justify-center gap-2 hover:translate-y-[1px] hover:shadow-[0_3px_0_0_#7b2f00] active:translate-y-[3px] active:shadow-[0_1px_0_0_#7b2f00] transition-all uppercase tracking-widest"
+            >
+              Continue <ArrowRight className="w-5 h-5" />
+            </button>
+          ) : (
+            <button 
+              onClick={handleLaunch}
+              className="flex-1 h-14 bg-primary text-white font-label-md font-bold rounded-full shadow-[0_4px_0_0_#7b2f00] flex items-center justify-center gap-2 hover:translate-y-[1px] hover:shadow-[0_3px_0_0_#7b2f00] active:translate-y-[3px] active:shadow-[0_1px_0_0_#7b2f00] transition-all uppercase tracking-widest"
+            >
+              <Rocket className="w-5 h-5" /> Launch Campaign
+            </button>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}

@@ -1,8 +1,9 @@
 'use client';
 
-import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import React, { useState, useEffect, useCallback, useMemo, useRef, Suspense } from 'react';
+import { useSearchParams, useRouter } from 'next/navigation';
 import { useCustomerStore } from '@/store/customer-store';
+import { motion, AnimatePresence } from 'framer-motion';
 import {
   Star,
   Volume2,
@@ -36,6 +37,9 @@ type Prize = {
   type: 'coupon' | 'voucher' | 'product' | 'exclusive' | 'discount' | 'appointment';
   rarity: Rarity;
   details: string;
+  image?: string;
+  expiryDate?: string;
+  terms?: string;
 };
 
 type Campaign = {
@@ -57,6 +61,14 @@ const THEMES = {
   beauty: { accent: '#ec4899', icon: Heart, bgImage: 'https://images.unsplash.com/photo-1522337660859-02fbefca4702?auto=format&fit=crop&q=80' },
   event: { accent: '#eab308', icon: Ticket, bgImage: 'https://images.unsplash.com/photo-1514525253161-7a46d19cd819?auto=format&fit=crop&q=80' },
   mall: { accent: '#10b981', icon: Compass, bgImage: 'https://images.unsplash.com/photo-1519567241046-7f5f4399e098?auto=format&fit=crop&q=80' }
+};
+
+const PRIZE_IMAGES = {
+  appointment: 'https://images.unsplash.com/photo-1599351431202-1e0f0137899a?auto=format&fit=crop&w=400&q=80',
+  discount: 'https://images.unsplash.com/photo-1607082348824-0a96f2a4b9da?auto=format&fit=crop&w=400&q=80',
+  voucher: 'https://images.unsplash.com/photo-1549463591-24c188273390?auto=format&fit=crop&w=400&q=80',
+  product: 'https://images.unsplash.com/photo-1526947425960-945c6e72858f?auto=format&fit=crop&w=400&q=80',
+  exclusive: 'https://images.unsplash.com/photo-1513151233558-d860c5398176?auto=format&fit=crop&w=400&q=80',
 };
 
 const BOX_COLORS = [
@@ -87,14 +99,86 @@ const ACTIVE_CAMPAIGNS: Campaign[] = [
     boxCount: 8,
     description: 'Fresh Cuts. Fresh Confidence.',
     prizes: [
-      { title: 'Free Haircut', value: '100% OFF', type: 'appointment', rarity: 'legendary', details: 'Full signature haircut and styling.' },
-      { title: '20% Discount', value: 'ALL SERVICES', type: 'discount', rarity: 'common', details: 'Apply on any walk-in service.' },
-      { title: '£50 Gift Card', value: 'STORE CREDIT', type: 'voucher', rarity: 'epic', details: 'Spend on premium pomades and kits.' },
-      { title: 'Beard Care Kit', value: 'PREMIUM SET', type: 'product', rarity: 'rare', details: 'Oils, balms, and wooden comb set.' },
-      { title: 'VIP Treatment', value: 'FULL SERVICE', type: 'exclusive', rarity: 'legendary', details: 'Hot towel shave, cut, and facial.' },
-      { title: 'Youth Special', value: '30% OFF', type: 'discount', rarity: 'common', details: 'Valid for anyone under 18.' },
-      { title: 'Hair Products', value: 'PREMIUM', type: 'product', rarity: 'rare', details: 'Choose any product from the shelf.' },
-      { title: 'Mystery Box', value: 'SURPRISE GIFT', type: 'exclusive', rarity: 'epic', details: 'A surprise bundle worth over £40.' },
+      { 
+        title: 'Free Haircut', 
+        value: '100% OFF', 
+        type: 'appointment', 
+        rarity: 'legendary', 
+        details: 'Full signature haircut and styling by a senior barber.',
+        image: PRIZE_IMAGES.appointment,
+        expiryDate: '30 Days from today',
+        terms: 'Valid Monday to Thursday only. Subject to availability.'
+      },
+      { 
+        title: '20% Discount', 
+        value: 'ALL SERVICES', 
+        type: 'discount', 
+        rarity: 'common', 
+        details: 'Apply on any walk-in service including cuts and shaves.',
+        image: PRIZE_IMAGES.discount,
+        expiryDate: '14 Days from today',
+        terms: 'Cannot be combined with other offers. One per customer.'
+      },
+      { 
+        title: '£50 Gift Card', 
+        value: 'STORE CREDIT', 
+        type: 'voucher', 
+        rarity: 'epic', 
+        details: 'Spend on premium pomades, beard oils, and grooming kits.',
+        image: PRIZE_IMAGES.voucher,
+        expiryDate: '90 Days from today',
+        terms: 'Non-transferable. Can be used for products or services.'
+      },
+      { 
+        title: 'Beard Care Kit', 
+        value: 'PREMIUM SET', 
+        type: 'product', 
+        rarity: 'rare', 
+        details: 'Includes luxury beard oil, balm, and a handcrafted wooden comb.',
+        image: PRIZE_IMAGES.product,
+        expiryDate: 'Until stock lasts',
+        terms: 'In-store collection only. While supplies last.'
+      },
+      { 
+        title: 'VIP Treatment', 
+        value: 'FULL SERVICE', 
+        type: 'exclusive', 
+        rarity: 'legendary', 
+        details: 'Ultimate grooming session: Hot towel shave, haircut, and facial.',
+        image: PRIZE_IMAGES.exclusive,
+        expiryDate: '30 Days from today',
+        terms: 'Booking required. Includes complimentary drink.'
+      },
+      { 
+        title: 'Youth Special', 
+        value: '30% OFF', 
+        type: 'discount', 
+        rarity: 'common', 
+        details: '30% off any haircut for young gents under 18.',
+        image: PRIZE_IMAGES.discount,
+        expiryDate: '21 Days from today',
+        terms: 'Valid for under 18s only. ID may be required.'
+      },
+      { 
+        title: 'Hair Products', 
+        value: 'PREMIUM', 
+        type: 'product', 
+        rarity: 'rare', 
+        details: 'Choose any professional hair product from our premium shelf.',
+        image: PRIZE_IMAGES.product,
+        expiryDate: '30 Days from today',
+        terms: 'Subject to stock availability. One product per reward.'
+      },
+      { 
+        title: 'Mystery Box', 
+        value: 'SURPRISE GIFT', 
+        type: 'exclusive', 
+        rarity: 'epic', 
+        details: 'A curated surprise bundle of our best products worth over £40.',
+        image: PRIZE_IMAGES.exclusive,
+        expiryDate: '14 Days from today',
+        terms: 'Content of the box varies. In-store collection only.'
+      },
     ]
   }
 ];
@@ -116,8 +200,22 @@ const ArcadePlinkoBoard = ({
 }) => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
+  const prizeImagesRef = useRef<Record<number, HTMLImageElement>>({});
   
   const [gameState, setGameState] = useState<'sweeping' | 'dropping' | 'landed'>('sweeping');
+
+  useEffect(() => {
+    // Preload prize images
+    activeGame.prizes.forEach((prize, index) => {
+      if (prize.image) {
+        const img = new Image();
+        img.src = prize.image;
+        img.onload = () => {
+          prizeImagesRef.current[index] = img;
+        };
+      }
+    });
+  }, [activeGame]);
 
   useEffect(() => {
     if (onStateChange) onStateChange(gameState);
@@ -203,14 +301,38 @@ const ArcadePlinkoBoard = ({
     const p = physics.current;
 
     const trail: {x: number, y: number, life: number}[] = [];
+    const sparkles: {x: number, y: number, vx: number, vy: number, life: number, color: string}[] = [];
+    let frameCount = 0;
 
     const draw = () => {
       afId = requestAnimationFrame(draw);
+      frameCount++;
+
+      // ── IMMERSIVE GRADIENT BACKGROUND ──
       ctx.clearRect(0, 0, p.width, p.height);
+      const bgGrad = ctx.createLinearGradient(0, 0, 0, p.height);
+      bgGrad.addColorStop(0, 'rgba(255, 255, 255, 0.6)');
+      bgGrad.addColorStop(0.5, 'rgba(255, 247, 237, 0.7)'); // orange-50
+      bgGrad.addColorStop(1, 'rgba(255, 237, 213, 0.85)'); // orange-100
+      ctx.fillStyle = bgGrad;
+      ctx.fillRect(0, 0, p.width, p.height);
+
+      // Subtle animated particles (warm/sunlight particles)
+      ctx.save();
+      for (let s = 0; s < 40; s++) {
+        const sx = ((s * 137.5 + frameCount * 0.1) % p.width);
+        const sy = ((s * 89.3 + frameCount * 0.05) % (p.height * 0.6));
+        const pulse = Math.sin(frameCount * 0.03 + s) * 0.5 + 0.5;
+        ctx.beginPath();
+        ctx.arc(sx, sy, 1 + pulse * 1.5, 0, Math.PI * 2);
+        ctx.fillStyle = `rgba(249, 115, 22, ${0.1 + pulse * 0.2})`; // subtle orange
+        ctx.fill();
+      }
+      ctx.restore();
 
       if (p.ball.isDropping) {
-        p.ball.vy += 0.5; // Gravity
-        p.ball.vy *= 0.99; // Drag
+        p.ball.vy += 0.5;
+        p.ball.vy *= 0.99;
         p.ball.vx *= 0.98;
         if (p.ball.vy > 18) p.ball.vy = 18;
 
@@ -224,12 +346,12 @@ const ArcadePlinkoBoard = ({
 
         // Peg Collisions
         for (const peg of p.pegs) {
-          peg.flash *= 0.85; 
+          peg.flash *= 0.85;
           const dx = p.ball.x - peg.x;
           const dy = p.ball.y - peg.y;
           const dist = Math.sqrt(dx * dx + dy * dy);
           const minDist = p.ball.radius + peg.radius;
-          
+
           if (dist < minDist) {
             const overlap = minDist - dist;
             const nx = dx / dist;
@@ -240,13 +362,23 @@ const ArcadePlinkoBoard = ({
             const dot = p.ball.vx * nx + p.ball.vy * ny;
             p.ball.vx = (p.ball.vx - 2 * dot * nx) * 0.6;
             p.ball.vy = (p.ball.vy - 2 * dot * ny) * 0.6;
-            
-            // Massive unpredictability injection!
-            p.ball.vx += (Math.random() - 0.5) * 16; 
-            p.ball.vy -= Math.random() * 5; // Slight upward kick for chaos and hangtime
-            
+
+            p.ball.vx += (Math.random() - 0.5) * 16;
+            p.ball.vy -= Math.random() * 5;
+
             peg.flash = 1.0;
             playSound('click');
+
+            // Spawn sparkles on collision
+            for (let sp = 0; sp < 5; sp++) {
+              sparkles.push({
+                x: peg.x, y: peg.y,
+                vx: (Math.random() - 0.5) * 6,
+                vy: (Math.random() - 0.5) * 6,
+                life: 1.0,
+                color: ['#facc15', '#f97316', '#a78bfa', '#38bdf8', '#fb7185'][Math.floor(Math.random() * 5)]
+              });
+            }
           }
         }
 
@@ -259,7 +391,7 @@ const ArcadePlinkoBoard = ({
           p.ball.y = p.height - 20;
           p.ball.vy *= -0.3;
           p.ball.vx *= 0.7;
-          
+
           if (Math.abs(p.ball.vy) < 1.0 && Math.abs(p.ball.vx) < 1.0) {
             p.settleTimer++;
             if (p.settleTimer > 30 && gameState !== 'landed') {
@@ -277,100 +409,150 @@ const ArcadePlinkoBoard = ({
         }
       }
 
-      // Draw Trail
+      // ── Draw Sparkles ──
+      for (let i = sparkles.length - 1; i >= 0; i--) {
+        const sp = sparkles[i];
+        sp.x += sp.vx;
+        sp.y += sp.vy;
+        sp.life -= 0.04;
+        if (sp.life <= 0) { sparkles.splice(i, 1); continue; }
+        ctx.beginPath();
+        ctx.arc(sp.x, sp.y, 2 * sp.life, 0, Math.PI * 2);
+        ctx.fillStyle = sp.color;
+        ctx.globalAlpha = sp.life;
+        ctx.shadowColor = sp.color;
+        ctx.shadowBlur = 8;
+        ctx.fill();
+        ctx.globalAlpha = 1;
+        ctx.shadowBlur = 0;
+      }
+
+      // ── Draw Trail ──
       for (let i = trail.length - 1; i >= 0; i--) {
         const t = trail[i];
         t.life -= 0.05;
         if (t.life <= 0) { trail.splice(i, 1); continue; }
-        
+
         ctx.beginPath();
         ctx.arc(t.x, t.y, p.ball.radius * t.life * 0.8, 0, Math.PI * 2);
         ctx.fillStyle = `rgba(250, 204, 21, ${t.life * 0.6})`;
         ctx.shadowColor = '#facc15';
-        ctx.shadowBlur = 10;
+        ctx.shadowBlur = 12;
         ctx.fill();
         ctx.shadowBlur = 0;
       }
 
-      // Draw Top Sweeper Line
+      // ── Sweeper Line (animated glow) ──
       if (gameState === 'sweeping') {
+        const glowPulse = Math.sin(frameCount * 0.08) * 0.3 + 0.7;
+        ctx.save();
         ctx.beginPath();
         ctx.moveTo(20, 35);
         ctx.lineTo(p.width - 20, 35);
-        ctx.strokeStyle = '#5b21b6';
-        ctx.lineWidth = 4;
+        const lineGrad = ctx.createLinearGradient(20, 35, p.width - 20, 35);
+        lineGrad.addColorStop(0, '#f97316'); // orange-500
+        lineGrad.addColorStop(0.5, '#facc15'); // yellow-400
+        lineGrad.addColorStop(1, '#f97316'); // orange-500
+        ctx.strokeStyle = lineGrad;
+        ctx.lineWidth = 3;
         ctx.lineCap = 'round';
+        ctx.shadowColor = '#fb923c';
+        ctx.shadowBlur = 10 * glowPulse;
         ctx.stroke();
+        ctx.restore();
       }
 
-      // Draw Pegs (Glowing White/Silver)
-      for (const peg of p.pegs) {
+      // ── Draw Pegs (Vibrant Light Mode Glow) ──
+      const pegColors = ['#f97316', '#0ea5e9', '#10b981', '#f43f5e', '#8b5cf6'];
+      for (let pi = 0; pi < p.pegs.length; pi++) {
+        const peg = p.pegs[pi];
+        const pegColor = pegColors[pi % pegColors.length];
+        const breathe = Math.sin(frameCount * 0.04 + pi * 0.5) * 0.15 + 0.85;
+
+        // Outer glow
+        ctx.beginPath();
+        ctx.arc(peg.x, peg.y, peg.radius + 4, 0, Math.PI * 2);
+        ctx.fillStyle = `${pegColor}22`; // slightly stronger for light mode
+        ctx.shadowColor = pegColor;
+        ctx.shadowBlur = 8 * breathe;
+        ctx.fill();
+        ctx.shadowBlur = 0;
+
+        // Core peg
         ctx.beginPath();
         ctx.arc(peg.x, peg.y, peg.radius, 0, Math.PI * 2);
-        // Base gradient
         const g = ctx.createRadialGradient(peg.x - 2, peg.y - 2, 0, peg.x, peg.y, peg.radius);
         g.addColorStop(0, '#ffffff');
-        g.addColorStop(1, '#9ca3af');
+        g.addColorStop(0.5, pegColor);
+        g.addColorStop(1, `${pegColor}88`);
         ctx.fillStyle = g;
-        ctx.shadowColor = 'rgba(255,255,255,0.4)';
-        ctx.shadowBlur = 8;
+        ctx.shadowColor = pegColor;
+        ctx.shadowBlur = 6;
         ctx.fill();
-        
+        ctx.shadowBlur = 0;
+
+        // Inner highlight
+        ctx.beginPath();
+        ctx.arc(peg.x - 1.5, peg.y - 1.5, peg.radius * 0.4, 0, Math.PI * 2);
+        ctx.fillStyle = 'rgba(255,255,255,0.7)';
+        ctx.fill();
+
         // Flash overlay when hit
         if (peg.flash > 0.05) {
           ctx.beginPath();
-          ctx.arc(peg.x, peg.y, peg.radius + peg.flash * 10, 0, Math.PI * 2);
-          ctx.fillStyle = `rgba(250, 204, 21, ${peg.flash * 0.7})`; // Gold flash
+          ctx.arc(peg.x, peg.y, peg.radius + peg.flash * 18, 0, Math.PI * 2);
+          ctx.fillStyle = `rgba(250, 204, 21, ${peg.flash * 0.5})`;
           ctx.shadowColor = '#facc15';
-          ctx.shadowBlur = 20;
+          ctx.shadowBlur = 30;
           ctx.fill();
+          ctx.shadowBlur = 0;
         }
-        ctx.shadowBlur = 0;
       }
 
-      // Draw Bins / Guides
-      ctx.lineWidth = 2;
-      ctx.strokeStyle = 'rgba(255, 255, 255, 0.1)';
+      // ── Draw Bins / Guides ──
+      ctx.lineWidth = 1;
       p.bins.forEach((bin, i) => {
         if (i > 0) {
           ctx.beginPath();
-          ctx.moveTo(bin.x, p.height - 120);
+          ctx.moveTo(bin.x, p.height - 110);
           ctx.lineTo(bin.x, p.height);
+          ctx.strokeStyle = 'rgba(249, 115, 22, 0.15)'; // faint orange
           ctx.stroke();
         }
 
-        // DRAW BOX DIRECTLY ON CANVAS (3D VERSION)
-        const boxSize = Math.min(bin.width * 0.75, 55);
+        // 3D Gift Box
+        const boxSize = Math.min(bin.width * 0.7, 48);
         const boxX = bin.x + (bin.width - boxSize) / 2;
-        const boxY = p.height - boxSize - 25;
-        
-        // Dynamic colors from BOX_COLORS array
+        const boxY = p.height - boxSize - 22;
+
         const colorPair = BOX_COLORS[i % BOX_COLORS.length].replace('from-', '').replace('to-', '').split(' ');
-        const mainColor = colorPair[0].replace(/-\d+$/, ''); // e.g., 'red'
-        
-        // Define color mapping for canvas (simplified version of the tailwind classes)
-        const colors: Record<string, { light: string, dark: string }> = {
-          red: { light: '#ef4444', dark: '#991b1b' },
-          purple: { light: '#a855f7', dark: '#6b21a8' },
-          blue: { light: '#3b82f6', dark: '#1e40af' },
-          green: { light: '#22c55e', dark: '#166534' },
-          orange: { light: '#f97316', dark: '#9a3412' },
-          pink: { light: '#ec4899', dark: '#9d174d' },
-          teal: { light: '#14b8a6', dark: '#115e59' },
-          yellow: { light: '#eab308', dark: '#854d0e' }
+        const mainColor = colorPair[0].replace(/-\d+$/, '');
+
+        const colors: Record<string, { light: string, dark: string, glow: string }> = {
+          red: { light: '#ef4444', dark: '#991b1b', glow: '#ef444466' },
+          purple: { light: '#a855f7', dark: '#6b21a8', glow: '#a855f766' },
+          blue: { light: '#3b82f6', dark: '#1e40af', glow: '#3b82f666' },
+          green: { light: '#22c55e', dark: '#166534', glow: '#22c55e66' },
+          orange: { light: '#f97316', dark: '#9a3412', glow: '#f9731666' },
+          pink: { light: '#ec4899', dark: '#9d174d', glow: '#ec489966' },
+          teal: { light: '#14b8a6', dark: '#115e59', glow: '#14b8a666' },
+          yellow: { light: '#eab308', dark: '#854d0e', glow: '#eab30866' }
         };
 
         const theme = colors[mainColor] || colors.yellow;
-        
-        // Box Body (3D Side)
+
+        // Box glow
+        ctx.shadowColor = theme.glow;
+        ctx.shadowBlur = 15;
+
+        // Box body
         ctx.fillStyle = theme.dark;
         const radius = 6;
         ctx.beginPath();
         ctx.roundRect(boxX, boxY, boxSize, boxSize, radius);
         ctx.fill();
 
-        // Box Top (3D perspective feel)
-        const lidHeight = boxSize * 0.2;
+        // Box face gradient
         const boxG = ctx.createLinearGradient(boxX, boxY, boxX, boxY + boxSize);
         boxG.addColorStop(0, theme.light);
         boxG.addColorStop(1, theme.dark);
@@ -378,60 +560,84 @@ const ArcadePlinkoBoard = ({
         ctx.beginPath();
         ctx.roundRect(boxX, boxY, boxSize, boxSize - 4, radius);
         ctx.fill();
-
-        // Ribbon (Gold)
-        ctx.fillStyle = '#facc15';
-        ctx.shadowColor = 'rgba(0,0,0,0.3)';
-        ctx.shadowBlur = 4;
-        // Vertical Ribbon
-        ctx.fillRect(boxX + boxSize/2 - 4, boxY, 8, boxSize - 4);
-        // Horizontal Ribbon
-        ctx.fillRect(boxX, boxY + boxSize/2 - 4, boxSize, 8);
         ctx.shadowBlur = 0;
 
-        // Center Knot/Icon Area
-        ctx.fillStyle = 'rgba(0,0,0,0.2)';
+        // Ribbon
+        ctx.fillStyle = '#facc15';
+        ctx.shadowColor = 'rgba(250,204,21,0.3)';
+        ctx.shadowBlur = 6;
+        ctx.fillRect(boxX + boxSize / 2 - 3, boxY, 6, boxSize - 4);
+        ctx.fillRect(boxX, boxY + boxSize / 2 - 3, boxSize, 6);
+        ctx.shadowBlur = 0;
+
+        // Center knot
+        ctx.fillStyle = 'rgba(0,0,0,0.25)';
         ctx.beginPath();
-        ctx.roundRect(boxX + boxSize/2 - 8, boxY + boxSize/2 - 8, 16, 16, 4);
+        ctx.roundRect(boxX + boxSize / 2 - 7, boxY + boxSize / 2 - 7, 14, 14, 3);
         ctx.fill();
-        
-        // Mini Gift Icon Symbol
+
         ctx.fillStyle = '#ffffff';
-        ctx.font = 'bold 10px Arial';
+        ctx.font = `bold ${Math.max(8, boxSize * 0.2)}px Arial`;
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
-        ctx.fillText('🎁', bin.x + bin.width/2, boxY + boxSize/2);
-        
-        // Draw "Mystery Box" text below box
-        ctx.fillStyle = '#fbbf24';
-        ctx.font = '900 7px "Inter", sans-serif';
+        ctx.fillText('🎁', bin.x + bin.width / 2, boxY + boxSize / 2);
+
+        // Text below box
+        ctx.fillStyle = '#ea580c'; // darker orange
+        ctx.font = `900 ${Math.max(6, boxSize * 0.13)}px "Inter", sans-serif`;
         ctx.textAlign = 'center';
-        ctx.fillText('MYSTERY BOX', bin.x + bin.width/2, p.height - 12);
-        ctx.fillStyle = 'rgba(255,255,255,0.5)';
-        ctx.font = 'bold 5px sans-serif';
-        ctx.fillText('SURPRISE REWARD', bin.x + bin.width/2, p.height - 5);
+        ctx.shadowColor = 'rgba(255, 255, 255, 0.8)';
+        ctx.shadowBlur = 4;
+        ctx.fillText('MYSTERY BOX', bin.x + bin.width / 2, p.height - 10);
+        ctx.shadowBlur = 0;
+        ctx.fillStyle = 'rgba(0,0,0,0.3)'; // dark text
+        ctx.font = `bold ${Math.max(4, boxSize * 0.09)}px sans-serif`;
+        ctx.fillText('SURPRISE REWARD', bin.x + bin.width / 2, p.height - 3);
       });
 
-      // Draw Ball (Gold Coin)
+      // ── Draw Ball (Gold Coin with premium metallic shine) ──
+      // Outer glow ring
       ctx.beginPath();
-      ctx.arc(p.ball.x, p.ball.y, p.ball.radius, 0, Math.PI * 2);
-      const bg = ctx.createRadialGradient(p.ball.x - 4, p.ball.y - 4, 0, p.ball.x, p.ball.y, p.ball.radius);
-      bg.addColorStop(0, '#fef08a');
-      bg.addColorStop(0.6, '#facc15');
-      bg.addColorStop(1, '#ca8a04');
-      ctx.fillStyle = bg;
+      ctx.arc(p.ball.x, p.ball.y, p.ball.radius + 6, 0, Math.PI * 2);
+      ctx.fillStyle = 'rgba(250, 204, 21, 0.15)';
       ctx.shadowColor = '#facc15';
-      ctx.shadowBlur = 25;
+      ctx.shadowBlur = 35;
       ctx.fill();
       ctx.shadowBlur = 0;
 
-      // Inner Star
-      ctx.font = '14px Arial';
+      // Coin body
+      ctx.beginPath();
+      ctx.arc(p.ball.x, p.ball.y, p.ball.radius, 0, Math.PI * 2);
+      const bg = ctx.createRadialGradient(p.ball.x - 3, p.ball.y - 3, 0, p.ball.x, p.ball.y, p.ball.radius);
+      bg.addColorStop(0, '#fef9c3');
+      bg.addColorStop(0.3, '#fde047');
+      bg.addColorStop(0.7, '#f59e0b');
+      bg.addColorStop(1, '#b45309');
+      ctx.fillStyle = bg;
+      ctx.shadowColor = '#f59e0b';
+      ctx.shadowBlur = 20;
+      ctx.fill();
+      ctx.shadowBlur = 0;
+
+      // Coin edge ring
+      ctx.beginPath();
+      ctx.arc(p.ball.x, p.ball.y, p.ball.radius - 1.5, 0, Math.PI * 2);
+      ctx.strokeStyle = 'rgba(255,255,255,0.3)';
+      ctx.lineWidth = 1;
+      ctx.stroke();
+
+      // Inner star
+      ctx.font = `${p.ball.radius}px Arial`;
       ctx.textAlign = 'center';
       ctx.textBaseline = 'middle';
-      ctx.fillStyle = '#a16207';
+      ctx.fillStyle = '#92400e';
       ctx.fillText('★', p.ball.x, p.ball.y + 1);
 
+      // Specular highlight
+      ctx.beginPath();
+      ctx.arc(p.ball.x - p.ball.radius * 0.25, p.ball.y - p.ball.radius * 0.25, p.ball.radius * 0.35, 0, Math.PI * 2);
+      ctx.fillStyle = 'rgba(255,255,255,0.45)';
+      ctx.fill();
     };
 
     afId = requestAnimationFrame(draw);
@@ -448,14 +654,21 @@ const ArcadePlinkoBoard = ({
 
   return (
     <div className="flex flex-col items-center w-full relative h-full">
-      
+
       {gameState === 'sweeping' && (
-        <div className="absolute top-12 left-1/2 -translate-x-1/2 text-yellow-300 font-extrabold text-2xl drop-shadow-[0_0_10px_rgba(250,204,21,0.8)] z-20 whitespace-nowrap">
-          CLICK <span className="text-yellow-100">STOP</span> TO DROP THE COIN!
+        <div className="absolute top-3 left-1/2 -translate-x-1/2 z-20 whitespace-nowrap">
+          <span className="text-orange-900 font-black text-sm md:text-lg tracking-wider uppercase" style={{ textShadow: '0 0 15px rgba(255,255,255,0.9), 0 2px 4px rgba(249,115,22,0.3)' }}>
+            TAP <span className="text-orange-600">STOP</span> TO DROP THE COIN!
+          </span>
         </div>
       )}
 
-      <div ref={containerRef} className="relative w-full flex-1 min-h-[450px]">
+      <div ref={containerRef} className="relative w-full flex-1 min-h-[550px] rounded-2xl overflow-hidden shadow-2xl bg-orange-50/50 border border-orange-100">
+        {/* SECTOR BACKGROUND IMAGE */}
+        <div 
+          className="absolute inset-0 z-0 bg-cover bg-center opacity-30 mix-blend-overlay"
+          style={{ backgroundImage: `url(${THEMES[activeGame.theme as keyof typeof THEMES]?.bgImage})` }}
+        />
         <canvas ref={canvasRef} className="absolute inset-0 w-full h-full touch-none z-10" />
       </div>
 
@@ -466,10 +679,23 @@ const ArcadePlinkoBoard = ({
 
 /* ─── MAIN ARCADE PAGE ─── */
 
-export default function ArcadeGamesPage() {
+function ArcadeGamesPageContent() {
+  const searchParams = useSearchParams();
+  const campaignId = searchParams.get('campaignId');
+  const router = useRouter();
+  
   const { profile, unlockReward, decrementSpins, addPoints } = useCustomerStore();
 
   const [activeGame, setActiveGame] = useState<Campaign | null>(null);
+  
+  // Auto-select game if campaignId is provided
+  useEffect(() => {
+    if (campaignId) {
+      const foundGame = ACTIVE_CAMPAIGNS.find(c => c.id === campaignId) || null;
+      setActiveGame(foundGame);
+    }
+  }, [campaignId]);
+
   const [wonPrize, setWonPrize] = useState<Prize | null>(null);
   const [showVictoryModal, setShowVictoryModal] = useState(false);
   const [soundEnabled, setSoundEnabled] = useState(true);
@@ -493,11 +719,6 @@ export default function ArcadeGamesPage() {
     }, 5000);
     return () => clearInterval(interval);
   }, []);
-
-  // Default to null to show the home screen
-  // useEffect(() => {
-  //   setActiveGame(ACTIVE_CAMPAIGNS[0]);
-  // }, []);
 
   const playSound = useCallback((type: 'click' | 'victory' | 'suspense') => {
     if (!soundEnabled) return;
@@ -568,15 +789,16 @@ export default function ArcadeGamesPage() {
     playSound('click');
     setWonPrize(null);
     setShowVictoryModal(false);
-    // Hard remount of active game to reset canvas state
+    const currentId = activeGame?.id;
     setActiveGame(null);
-    setTimeout(() => setActiveGame(ACTIVE_CAMPAIGNS[0]), 50);
+    setTimeout(() => {
+        if(currentId) setActiveGame(ACTIVE_CAMPAIGNS.find(c => c.id === currentId) || null);
+    }, 50);
   };
 
   if (!activeGame) {
     return (
       <div className="space-y-8">
-        {/* Top Header with Search */}
         <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-5 bg-white border border-[#eee] rounded-3xl p-6 shadow-sm text-left">
           <div className="space-y-1">
             <h1 className="text-2xl font-display font-bold text-[#1a1a1a]">Active Games</h1>
@@ -595,10 +817,7 @@ export default function ArcadeGamesPage() {
             </div>
           </div>
         </div>
-
-        {/* Categories / Grid */}
         <div className="space-y-8 text-left">
-          {/* Available Reward Games */}
           <section>
             <div className="flex items-center gap-2 mb-4">
               <Zap className="w-5 h-5 text-[#f97316]" />
@@ -639,37 +858,6 @@ export default function ArcadeGamesPage() {
               })}
             </div>
           </section>
-
-          {/* Placeholders matching light style */}
-          <section className="opacity-70 hover:opacity-100 transition-opacity">
-            <div className="flex items-center gap-2 mb-4">
-              <Store className="w-5 h-5 text-blue-500" />
-              <h2 className="text-lg font-display font-bold text-[#1a1a1a]">Featured Businesses</h2>
-            </div>
-            <div className="bg-stone-50 rounded-3xl border border-dashed border-[#ccc] h-32 flex items-center justify-center">
-              <p className="text-[#888] font-bold uppercase tracking-widest text-sm">More campaigns dropping soon</p>
-            </div>
-          </section>
-
-          <section className="opacity-70 hover:opacity-100 transition-opacity">
-            <div className="flex items-center gap-2 mb-4">
-              <Heart className="w-5 h-5 text-pink-500" />
-              <h2 className="text-lg font-display font-bold text-[#1a1a1a]">Youth Offers</h2>
-            </div>
-            <div className="bg-stone-50 rounded-3xl border border-dashed border-[#ccc] h-32 flex items-center justify-center">
-              <p className="text-[#888] font-bold uppercase tracking-widest text-sm">More campaigns dropping soon</p>
-            </div>
-          </section>
-
-          <section className="opacity-70 hover:opacity-100 transition-opacity">
-            <div className="flex items-center gap-2 mb-4">
-              <Ticket className="w-5 h-5 text-green-500" />
-              <h2 className="text-lg font-display font-bold text-[#1a1a1a]">Event Campaigns</h2>
-            </div>
-            <div className="bg-stone-50 rounded-3xl border border-dashed border-[#ccc] h-32 flex items-center justify-center">
-              <p className="text-[#888] font-bold uppercase tracking-widest text-sm">More campaigns dropping soon</p>
-            </div>
-          </section>
         </div>
       </div>
     );
@@ -678,150 +866,136 @@ export default function ArcadeGamesPage() {
   const currentTheme = THEMES[activeGame.theme as keyof typeof THEMES];
 
   return (
-    <div className="min-h-screen text-white flex flex-col font-sans overflow-hidden relative selection:bg-purple-500/30">
-      
-      {/* Dynamic Background Image based on Business Theme */}
+    <div className="min-h-screen text-stone-900 flex flex-col font-sans overflow-hidden relative selection:bg-orange-300/30">
+      {/* ── IMMERSIVE VIBRANT BACKGROUND ── */}
+      <div className="absolute inset-0 z-0 bg-gradient-to-br from-orange-50 via-white to-orange-100" />
       <div 
-        className="absolute inset-0 z-0 bg-cover bg-center transition-opacity duration-1000"
+        className="absolute inset-0 z-0 bg-cover bg-center mix-blend-soft-light opacity-30 transition-opacity duration-1000"
         style={{ backgroundImage: `url(${currentTheme?.bgImage})` }}
       />
-      {/* Medium overlay to ensure perfect contrast for the neon game elements while keeping image visible */}
-      <div className="absolute inset-0 bg-[#0f031c]/60 z-0 pointer-events-none" />
+      <div className="absolute inset-0 z-0 bg-gradient-to-t from-white via-white/80 to-white/40 pointer-events-none" />
+      <div className="absolute inset-0 z-0 pointer-events-none opacity-[0.03]" style={{ backgroundImage: 'url("data:image/svg+xml,%3Csvg width=\'60\' height=\'60\' viewBox=\'0 0 60 60\' xmlns=\'http://www.w3.org/2000/svg\'%3E%3Cg fill=\'none\' fill-rule=\'evenodd\'%3E%3Cg fill=\'%23f97316\' fill-opacity=\'1\'%3E%3Cpath d=\'M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z\'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")' }} />
 
-      {/* ════════════ TOP HEADER ════════════ */}
-      <header className="relative z-10 flex flex-wrap md:flex-nowrap items-center justify-between px-4 md:px-6 py-3 md:py-4 border-b border-white/5 bg-black/20 backdrop-blur-md gap-4">
-        <div className="flex items-center gap-3 md:gap-5 w-full md:w-auto justify-between md:justify-start">
-          <button 
-            onClick={() => setActiveGame(null)} 
-            className="w-10 h-10 rounded-xl bg-[#2e1065] border border-[#4c1d95] flex items-center justify-center text-white hover:bg-[#3b0764] transition-colors shadow-inner flex-shrink-0"
+      {/* ── HEADER — Sleek Glassmorphic Light ── */}
+      <header className="relative z-10 flex items-center justify-between px-4 md:px-6 py-3 bg-white/70 backdrop-blur-xl border-b border-orange-100/50 shadow-sm">
+        <div className="flex items-center gap-3">
+          <button
+            onClick={() => setActiveGame(null)}
+            className="w-9 h-9 md:w-10 md:h-10 rounded-xl bg-orange-50 border border-orange-100 flex items-center justify-center text-stone-600 hover:bg-orange-100 hover:text-orange-600 transition-all flex-shrink-0"
           >
-            <ChevronLeft size={24} />
+            <ChevronLeft size={20} />
           </button>
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 md:w-14 md:h-14 rounded-full border-2 border-yellow-500 overflow-hidden shadow-[0_0_15px_rgba(234,179,8,0.3)] bg-[#111] flex items-center justify-center flex-shrink-0">
-              {currentTheme?.icon ? React.createElement(currentTheme.icon, { className: "text-yellow-500", size: 24 }) : <Store className="text-yellow-500" size={24} />}
+          <div className="flex items-center gap-2.5">
+            <div className="w-9 h-9 md:w-11 md:h-11 rounded-full bg-gradient-to-br from-orange-400 to-red-500 flex items-center justify-center shadow-lg shadow-orange-500/20 flex-shrink-0 border border-white">
+              {currentTheme?.icon ? React.createElement(currentTheme.icon, { className: "text-white", size: 18 }) : <Store className="text-white" size={18} />}
             </div>
             <div>
-              <h1 className="text-lg md:text-2xl font-black tracking-wider text-white uppercase leading-tight" style={{ textShadow: '0 2px 4px rgba(0,0,0,0.8)' }}>
+              <h1 className="text-sm md:text-lg font-black tracking-wider text-stone-900 uppercase leading-tight">
                 {activeGame.businessName}
               </h1>
-              <p className="text-yellow-400 text-[10px] md:text-xs italic font-medium tracking-wide hidden sm:block">
-                {activeGame.description}
-              </p>
-              <div className="flex items-center gap-0.5 md:gap-1 mt-0.5 md:mt-1">
-                {[1,2,3,4,5].map(i => <Star key={i} size={8} className="fill-yellow-400 text-yellow-400 md:w-4 md:h-4" />)}
+              <div className="flex items-center gap-0.5 mt-0.5">
+                {[1,2,3,4,5].map(i => <Star key={i} size={10} className="fill-orange-400 text-orange-400" />)}
+                <span className="text-[10px] text-stone-500 ml-1.5 font-medium hidden sm:inline">{activeGame.description}</span>
               </div>
             </div>
           </div>
         </div>
-        <div className="flex items-center gap-4">
-          <div className="flex flex-col items-center justify-center px-6 py-2 rounded-xl border border-yellow-500/30 bg-gradient-to-b from-yellow-500/10 to-transparent shadow-[0_0_20px_rgba(250,204,21,0.15)]">
-            <span className="text-yellow-400 text-[10px] font-bold tracking-widest uppercase">Your Points</span>
-            <div className="flex items-center gap-2 mt-0.5">
-              <div className="w-5 h-5 rounded-full bg-yellow-400 flex items-center justify-center"><Star size={12} className="fill-black text-black" /></div>
-              <span className="text-xl font-black text-white">{profile.totalPoints.toLocaleString()} <span className="text-xs text-yellow-400">PTS</span></span>
-            </div>
-          </div>
-          <button onClick={() => setSoundEnabled(!soundEnabled)} className="w-12 h-12 rounded-xl bg-[#2e1065] border border-[#4c1d95] flex items-center justify-center text-white hover:bg-[#3b0764] transition-colors shadow-inner">
-            {soundEnabled ? <Volume2 size={22} /> : <VolumeX size={22} />}
-          </button>
-        </div>
+        <button onClick={() => setSoundEnabled(!soundEnabled)} className="w-9 h-9 md:w-10 md:h-10 rounded-xl bg-orange-50 border border-orange-100 flex items-center justify-center text-stone-600 hover:bg-orange-100 hover:text-orange-600 transition-all">
+          {soundEnabled ? <Volume2 size={18} /> : <VolumeX size={18} />}
+        </button>
       </header>
 
-      {/* ════════════ STATS BAR ════════════ */}
-      <div className="relative z-10 flex flex-col md:flex-row items-center justify-between px-4 md:px-8 py-2 md:py-3 bg-black/40 border-b border-purple-900/30 shadow-lg gap-2 md:gap-0">
-        <h2 className="text-lg md:text-2xl font-black text-white tracking-widest uppercase text-center md:text-left" style={{ textShadow: '0 0 20px rgba(255,255,255,0.5)' }}>
-          WIN AMAZING REWARDS!
+      {/* ── ACTION BAR — Vivid CTA Light ── */}
+      <div className="relative z-10 flex items-center justify-between px-4 md:px-8 py-2.5 bg-gradient-to-r from-orange-100/80 via-amber-100/60 to-orange-100/80 border-b border-orange-200/50 backdrop-blur-md">
+        <h2 className="text-xs md:text-sm font-black text-orange-900 tracking-[0.2em] uppercase">
+          🎰 Win Amazing Rewards
         </h2>
-        
-        {/* COMPACTED STOP COIN BUTTON */}
-        <button 
+        <button
           onClick={() => setDropTrigger(d => d + 1)}
           disabled={plinkoState !== 'sweeping'}
-          className={`pointer-events-auto w-full md:w-auto relative group px-6 md:px-8 py-2 rounded-full font-black text-base md:text-lg tracking-wider transition-all duration-300 ${
-            plinkoState === 'sweeping' 
-              ? 'bg-gradient-to-b from-yellow-300 via-yellow-500 to-amber-600 text-white shadow-[0_0_20px_rgba(250,204,21,0.6)] cursor-pointer hover:scale-105 active:scale-95' 
-              : 'bg-stone-800 text-stone-500 shadow-none cursor-not-allowed opacity-50'
+          className={`relative group px-5 md:px-8 py-2 md:py-2.5 rounded-full font-black text-sm md:text-base tracking-wider transition-all duration-300 ${
+            plinkoState === 'sweeping'
+              ? 'bg-gradient-to-r from-orange-500 via-red-500 to-orange-500 text-white shadow-[0_4px_20px_rgba(249,115,22,0.4)] cursor-pointer hover:scale-105 active:scale-95 hover:shadow-[0_6px_25px_rgba(249,115,22,0.5)]'
+              : 'bg-stone-200 text-stone-400 shadow-none cursor-not-allowed'
           }`}
-          style={{ textShadow: plinkoState === 'sweeping' ? '0 2px 4px rgba(0,0,0,0.5)' : 'none' }}
+          style={{ textShadow: plinkoState === 'sweeping' ? '0 1px 2px rgba(0,0,0,0.2)' : 'none' }}
         >
           {plinkoState === 'sweeping' && (
-            <div className="absolute inset-0 rounded-full border-2 border-yellow-400 opacity-50 scale-110 group-hover:animate-ping pointer-events-none" />
+            <div className="absolute inset-0 rounded-full border-2 border-orange-300/40 animate-ping pointer-events-none" />
           )}
           STOP COIN!
         </button>
       </div>
 
-      {/* ════════════ 3-COLUMN ARENA ════════════ */}
-      <div className="flex-1 relative z-10 flex flex-col md:flex-row px-2 md:px-4 pt-4 md:pt-6 gap-4 md:gap-6 min-h-[400px] md:min-h-[500px]">
-        
-        {/* Left Column: Possible Rewards FAB & Panel */}
-        <div className="fixed md:relative bottom-4 left-4 md:bottom-auto md:left-auto z-[60] md:z-50">
-          <button 
-            onClick={() => setShowRewards(!showRewards)} 
-            className="absolute top-0 left-0 bg-gradient-to-br from-red-500 to-red-700 w-14 h-14 rounded-full flex items-center justify-center shadow-[0_0_20px_rgba(220,38,38,0.6)] border-2 border-red-300/50 hover:scale-105 active:scale-95 transition-all"
+      {/* ── GAME AREA ── */}
+      <div className="flex-1 relative z-10 flex flex-col md:flex-row px-2 md:px-4 py-3 md:py-4 gap-3 md:gap-4 min-h-[550px] md:min-h-[600px] lg:min-h-[700px]">
+        {/* Rewards FAB */}
+        <div className="fixed bottom-24 left-4 md:bottom-auto md:left-auto md:relative z-[60] md:z-50">
+          <button
+            onClick={() => setShowRewards(!showRewards)}
+            className="absolute top-0 left-0 bg-gradient-to-br from-orange-400 to-red-500 w-12 h-12 md:w-14 md:h-14 rounded-full flex items-center justify-center shadow-lg shadow-orange-500/30 border border-white/50 hover:scale-110 active:scale-95 transition-all"
           >
-            <Gift size={24} className="text-white drop-shadow-md" />
+            <Gift size={22} className="text-white" />
           </button>
-          
           <AnimatePresence>
             {showRewards && (
-              <motion.div 
-                initial={{ opacity: 0, x: -20, scale: 0.9 }} 
-                animate={{ opacity: 1, x: 0, scale: 1 }} 
-                exit={{ opacity: 0, x: -20, scale: 0.9 }} 
-                className="absolute bottom-16 md:bottom-auto md:top-16 left-0 w-[240px] md:w-[260px] flex flex-col mb-2 md:mt-2 origin-bottom-left md:origin-top-left"
+              <motion.div
+                initial={{ opacity: 0, y: 10, scale: 0.95 }}
+                animate={{ opacity: 1, y: 0, scale: 1 }}
+                exit={{ opacity: 0, y: 10, scale: 0.95 }}
+                className="absolute bottom-14 md:bottom-auto md:top-16 left-0 w-[250px] md:w-[270px] flex flex-col origin-bottom-left md:origin-top-left"
               >
-                <div className="absolute -top-3 left-1/2 -translate-x-1/2 bg-red-600 text-white text-[10px] font-black tracking-widest uppercase py-1.5 px-6 rounded-t-md z-20 shadow-[0_4px_10px_rgba(220,38,38,0.5)] whitespace-nowrap border-b-2 border-red-800">
-                  Possible Rewards
-                </div>
-                <div className="bg-gradient-to-b from-[#1c0838] to-[#120424] border border-[#3b1a60] rounded-xl pt-8 p-3 max-h-[400px] overflow-y-auto space-y-2 shadow-2xl relative custom-scrollbar">
-                  {activeGame.prizes.map((p, i) => (
-                    <div key={i} className="flex items-center gap-3 p-3 rounded-lg border border-purple-900/50 bg-black/20 hover:bg-white/5 transition-colors group cursor-default relative overflow-hidden">
-                      <div className="absolute left-0 top-0 bottom-0 w-1 bg-gradient-to-b from-yellow-400 to-yellow-600 opacity-0 group-hover:opacity-100 transition-opacity" />
-                      <div className="w-10 h-10 rounded-md bg-gradient-to-br from-yellow-500 to-yellow-700 flex items-center justify-center shadow-lg border border-yellow-300/30 flex-shrink-0">
-                        <Gift size={20} className="text-white drop-shadow-md" />
+                <div className="bg-white/95 backdrop-blur-xl border border-orange-100 rounded-2xl overflow-hidden shadow-2xl shadow-orange-900/10">
+                  <div className="bg-gradient-to-r from-orange-500 to-red-500 px-4 py-2.5">
+                    <span className="text-white text-[11px] font-black tracking-widest uppercase">🎁 Possible Rewards</span>
+                  </div>
+                  <div className="p-2.5 max-h-[350px] overflow-y-auto space-y-1.5 custom-scrollbar">
+                    {activeGame.prizes.map((p, i) => (
+                      <div key={i} className="flex items-center gap-3 p-2.5 rounded-xl bg-stone-50 hover:bg-orange-50 transition-colors group cursor-default border border-stone-100 hover:border-orange-200">
+                        <div className="w-9 h-9 rounded-lg bg-gradient-to-br from-orange-400 to-red-500 flex items-center justify-center shadow-sm flex-shrink-0">
+                          <Gift size={16} className="text-white" />
+                        </div>
+                        <div className="flex-1 min-w-0 text-left">
+                          <h4 className="text-stone-800 font-bold text-xs truncate leading-tight">{p.title}</h4>
+                          <p className="text-[9px] text-orange-500 font-bold uppercase tracking-wider truncate">{p.value}</p>
+                        </div>
                       </div>
-                      <div className="flex-1 min-w-0">
-                        <h4 className="text-yellow-400 font-bold text-sm truncate leading-tight">{p.title}</h4>
-                        <p className="text-[10px] text-white/70 font-black uppercase tracking-wider truncate">{p.value}</p>
-                      </div>
-                    </div>
-                  ))}
+                    ))}
+                  </div>
                 </div>
               </motion.div>
             )}
           </AnimatePresence>
         </div>
 
-        {/* Center Column: Plinko Board & Reward Boxes */}
+        {/* GAME BOARD */}
         <div className="flex-1 relative flex flex-col justify-between">
-          <ArcadePlinkoBoard 
-            activeGame={activeGame} 
-            onWin={handlePlinkoWin} 
-            playSound={playSound} 
+          <ArcadePlinkoBoard
+            activeGame={activeGame}
+            onWin={handlePlinkoWin}
+            playSound={playSound}
             dropTrigger={dropTrigger}
             onStateChange={setPlinkoState}
           />
         </div>
 
-        {/* Right Column: Live Winners */}
-        <div className="hidden lg:flex w-[200px] flex-col relative">
-          <div className="absolute -top-3 left-1/2 -translate-x-1/2 bg-green-600 text-white text-[10px] font-black tracking-widest uppercase py-1.5 px-8 rounded-t-md z-20 shadow-[0_4px_10px_rgba(22,163,74,0.5)] whitespace-nowrap border-b-2 border-green-800">
-            Live Winners!
-          </div>
-          <div className="flex-1 bg-gradient-to-b from-[#1c0838] to-[#120424] border border-[#3b1a60] rounded-xl pt-8 p-3 overflow-hidden shadow-2xl relative flex flex-col">
-            <div className="space-y-3 flex-1 overflow-hidden">
+        {/* Live Winners — Desktop sidebar */}
+        <div className="hidden lg:flex w-[210px] flex-col relative">
+          <div className="bg-white/90 backdrop-blur-xl border border-orange-100 rounded-2xl overflow-hidden shadow-2xl shadow-orange-900/10 flex-1 flex flex-col">
+            <div className="bg-gradient-to-r from-emerald-400 to-teal-500 px-4 py-2.5">
+              <span className="text-white text-[11px] font-black tracking-widest uppercase">🏆 Live Winners</span>
+            </div>
+            <div className="p-2.5 space-y-2 flex-1 overflow-hidden">
               <AnimatePresence>
                 {activityFeed.map((winner, i) => (
-                  <motion.div key={i + winner.name} initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: i * 0.1 }}
-                    className="flex items-center gap-3 p-2.5 rounded-lg border border-purple-900/30 bg-black/30"
+                  <motion.div key={i + winner.name} initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: i * 0.08 }}
+                    className="flex items-center gap-2.5 p-2 rounded-xl bg-stone-50 border border-stone-100"
                   >
-                    <img src={winner.avatar} alt="Avatar" className="w-8 h-8 rounded-full border border-purple-500/30 object-cover" />
-                    <div className="flex-1 min-w-0">
-                      <h4 className="text-white font-bold text-xs">{winner.name}</h4>
-                      <p className="text-yellow-400 text-[10px] font-semibold truncate">{winner.won}</p>
-                      <p className="text-[8px] text-white/40 uppercase font-medium">{winner.time}</p>
+                    <img src={winner.avatar} alt="Avatar" className="w-7 h-7 rounded-full border border-stone-200 object-cover" />
+                    <div className="flex-1 min-w-0 text-left">
+                      <h4 className="text-stone-800 font-bold text-[11px]">{winner.name}</h4>
+                      <p className="text-orange-500 text-[9px] font-bold truncate">{winner.won}</p>
+                      <p className="text-[7px] text-stone-400 uppercase font-bold">{winner.time}</p>
                     </div>
                   </motion.div>
                 ))}
@@ -829,98 +1003,180 @@ export default function ArcadeGamesPage() {
             </div>
           </div>
         </div>
-
       </div>
 
-      {/* ════════════ BOTTOM FOOTER BAR ════════════ */}
-      <footer className="relative z-10 bg-[#0f031c] border-t border-purple-900/50 p-4 flex flex-wrap items-center justify-between gap-4 px-8">
-        <button className="flex items-center gap-4 bg-gradient-to-r from-amber-600 to-yellow-500 rounded-full py-2 px-6 pr-2 shadow-[0_0_15px_rgba(245,158,11,0.3)] hover:scale-105 transition-transform border border-yellow-300/30">
-          <Trophy className="text-white fill-yellow-200" size={24} />
-          <div className="text-left pr-4">
-            <h4 className="text-white font-black text-sm uppercase tracking-wider leading-tight">Daily Leaderboard</h4>
-            <p className="text-yellow-100 text-[9px] font-medium">Be the fastest to win amazing rewards!</p>
+      {/* ── FOOTER — Minimal ── */}
+      <footer className="relative z-10 bg-white/60 backdrop-blur-sm border-t border-orange-200/50 px-4 md:px-8 py-3 flex items-center justify-between gap-4">
+        <div className="flex items-center gap-6">
+          <div className="flex items-center gap-2">
+            <Gift className="text-orange-500" size={16} />
+            <span className="text-[10px] text-stone-500 font-bold uppercase tracking-wider">Every Drop Wins</span>
           </div>
-          <div className="w-8 h-8 bg-black/20 rounded-full flex items-center justify-center text-white"><ChevronLeft size={16} className="rotate-180" /></div>
-        </button>
-
-        <div className="flex items-center gap-8">
-          <div className="flex items-center gap-3">
-            <Gift className="text-pink-500" size={24} />
-            <div>
-              <h5 className="text-white font-bold text-[10px] uppercase tracking-wider">Exciting Rewards</h5>
-              <p className="text-white/50 text-[9px]">Every Drop Wins!</p>
-            </div>
-          </div>
-          <div className="flex items-center gap-3">
-            <BadgeCheck className="text-green-500" size={24} />
-            <div>
-              <h5 className="text-white font-bold text-[10px] uppercase tracking-wider">Fair & Fun</h5>
-              <p className="text-white/50 text-[9px]">Every Player Wins</p>
-            </div>
+          <div className="hidden sm:flex items-center gap-2">
+            <BadgeCheck className="text-emerald-500" size={16} />
+            <span className="text-[10px] text-stone-500 font-bold uppercase tracking-wider">Fair & Verified</span>
           </div>
         </div>
+        <button className="flex items-center gap-2 bg-gradient-to-r from-orange-500 to-red-500 rounded-full py-1.5 px-4 shadow-lg shadow-orange-500/20 hover:scale-105 transition-transform text-white text-[10px] font-black uppercase tracking-wider border border-orange-400/20">
+          <Trophy size={14} />
+          Leaderboard
+        </button>
       </footer>
-
-      {/* ════════════ VICTORY MODAL ════════════ */}
       <AnimatePresence>
         {showVictoryModal && wonPrize && (
           <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 z-[3000] flex items-center justify-center p-4">
             <div className="absolute inset-0 bg-black/90 backdrop-blur-md" />
             <motion.div
-              initial={{ scale: 0.8, y: 50 }}
-              animate={{ scale: 1, y: 0 }}
-              exit={{ scale: 0.9, y: 20 }}
-              transition={{ type: 'spring', damping: 20 }}
-              className="relative w-full max-w-md bg-gradient-to-b from-[#4c1d95] to-[#2e1065] border border-purple-400/30 rounded-3xl p-8 text-center shadow-[0_0_80px_rgba(147,51,234,0.4)]"
+              initial={{ scale: 0.8, y: 50, opacity: 0 }}
+              animate={{ scale: 1, y: 0, opacity: 1 }}
+              exit={{ scale: 0.9, y: 20, opacity: 0 }}
+              transition={{ type: 'spring', damping: 25, stiffness: 200 }}
+              className="relative w-full max-w-xl bg-white border border-stone-200 rounded-[2rem] md:rounded-[2.5rem] overflow-hidden shadow-[0_20px_60px_rgba(0,0,0,0.15)] flex flex-col md:flex-row max-h-[90vh] md:max-h-none overflow-y-auto md:overflow-visible custom-scrollbar"
             >
-              <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,rgba(255,255,255,0.1)_0%,transparent_60%)]" />
-              
-              <div className="relative z-10 space-y-6">
+              {/* Left Side: Visual Celebration (Orange Gradient) */}
+              <div className="md:w-5/12 relative min-h-[160px] md:min-h-[200px] bg-gradient-to-br from-orange-400 to-orange-600 flex items-center justify-center p-6 md:p-8">
+                <div className="absolute inset-0 opacity-20 bg-[radial-gradient(circle_at_center,white_0%,transparent_70%)]" />
+                
+                {/* Reward Image with Glow */}
                 <motion.div 
-                  initial={{ scale: 0, rotate: -45 }} 
-                  animate={{ 
-                    scale: 1, 
-                    rotate: 0,
-                    y: [0, -10, 0] 
-                  }} 
-                  transition={{ 
-                    type: 'spring', 
-                    delay: 0.2,
-                    y: {
-                      duration: 3,
-                      repeat: Infinity,
-                      ease: "easeInOut"
-                    }
-                  }} 
-                  className="w-44 h-44 mx-auto flex items-center justify-center relative"
+                  initial={{ rotate: -15, scale: 0 }}
+                  animate={{ rotate: 0, scale: 1 }}
+                  transition={{ delay: 0.3, type: "spring" }}
+                  className="relative z-10 w-32 md:w-full aspect-square rounded-2xl md:rounded-3xl overflow-hidden shadow-xl border-4 border-white/40"
                 >
-                  <div className="absolute inset-0 bg-yellow-500/30 blur-3xl rounded-full" />
                   <img 
-                    src="/crown.png" 
-                    alt="Victory Crown" 
-                    className="w-full h-full object-contain relative z-10 drop-shadow-[0_15px_30px_rgba(0,0,0,0.6)]"
+                    src={wonPrize.image || PRIZE_IMAGES.exclusive} 
+                    alt={wonPrize.title} 
+                    className="w-full h-full object-cover"
                   />
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent" />
+                  <div className="absolute bottom-2 md:bottom-4 left-2 md:left-4 right-2 md:right-4 text-left">
+                    <span className={`px-2 md:px-3 py-0.5 md:py-1 rounded-full text-[8px] md:text-[10px] font-black uppercase tracking-widest ${
+                      wonPrize.rarity === 'legendary' ? 'bg-white text-orange-600' :
+                      wonPrize.rarity === 'epic' ? 'bg-stone-900 text-white' :
+                      'bg-orange-100 text-orange-700'
+                    }`}>
+                      {wonPrize.rarity}
+                    </span>
+                  </div>
                 </motion.div>
 
-                <div>
-                  <h3 className="text-yellow-400 font-black text-xl uppercase tracking-widest drop-shadow">You Won!</h3>
-                  <h2 className="text-4xl font-black text-white mt-2 leading-tight tracking-tight">{wonPrize.title}</h2>
-                  <p className="text-xl font-bold text-yellow-200 mt-2">{wonPrize.value}</p>
-                </div>
-
-                <div className="bg-black/40 rounded-xl p-4 border border-purple-500/30">
-                  <p className="text-white/80 text-sm leading-relaxed">{wonPrize.details}</p>
-                </div>
-
-                <button onClick={resetGame} className="w-full py-4 bg-gradient-to-r from-yellow-400 to-yellow-600 rounded-xl font-black text-black text-lg shadow-[0_4px_15px_rgba(250,204,21,0.4)] hover:scale-105 active:scale-95 transition-all uppercase tracking-wider">
-                  Claim Reward
-                </button>
+                {/* Animated Light Orbs */}
+                <motion.div 
+                  animate={{ 
+                    scale: [1, 1.2, 1],
+                    opacity: [0.1, 0.3, 0.1],
+                  }}
+                  transition={{ duration: 4, repeat: Infinity }}
+                  className="absolute top-10 left-10 w-20 h-20 bg-white blur-[40px] rounded-full pointer-events-none"
+                />
               </div>
+
+              {/* Right Side: Info & Actions */}
+              <div className="md:w-7/12 p-6 md:p-10 flex flex-col h-full bg-white">
+                <div className="mb-4 md:mb-6">
+                  <span className="text-orange-500 text-[8px] md:text-[10px] font-black uppercase tracking-[0.3em] block mb-1">Congratulations!</span>
+                  <h2 className="text-2xl md:text-3xl font-black text-stone-900 leading-tight mb-1 uppercase italic tracking-tighter">
+                    {wonPrize.title}
+                  </h2>
+                  <div className="flex items-center gap-2 mb-2 md:mb-4">
+                    <span className="text-xl md:text-2xl font-black text-orange-600">{wonPrize.value}</span>
+                    <span className="text-stone-300 px-1">|</span>
+                    <span className="text-[10px] md:text-xs font-bold text-stone-400 uppercase tracking-widest">{activeGame.businessName}</span>
+                  </div>
+                </div>
+
+                {/* Reward Details Section */}
+                <div className="space-y-3 md:space-y-4 mb-6 md:mb-8">
+                  <div className="space-y-1">
+                    <span className="text-[8px] md:text-[10px] font-black text-stone-300 uppercase tracking-widest">What you won</span>
+                    <p className="text-stone-600 text-xs md:text-sm font-medium leading-relaxed">{wonPrize.details}</p>
+                  </div>
+                  
+                  <div className="grid grid-cols-2 gap-4 pt-3 border-t border-stone-100">
+                    <div className="space-y-1">
+                      <span className="text-[8px] md:text-[10px] font-black text-stone-300 uppercase tracking-widest">Valid Until</span>
+                      <div className="flex items-center gap-1.5 text-orange-600">
+                        <Clock size={12} />
+                        <span className="text-[10px] md:text-xs font-bold">{wonPrize.expiryDate}</span>
+                      </div>
+                    </div>
+                    <div className="space-y-1 text-right">
+                      <span className="text-[8px] md:text-[10px] font-black text-stone-300 uppercase tracking-widest">Terms & Conditions</span>
+                      <p className="text-[8px] md:text-[9px] text-stone-400 leading-tight">{wonPrize.terms}</p>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Buttons Grid */}
+                <div className="grid grid-cols-2 gap-2 md:gap-3 mt-auto">
+                  {/* Primary Action */}
+                  <button 
+                    onClick={() => {
+                      const newReward = {
+                        title: wonPrize.title,
+                        provider: activeGame.businessName,
+                        providerLogo: activeGame.businessName.substring(0, 2),
+                        type: wonPrize.type as any,
+                        value: wonPrize.value,
+                        details: wonPrize.details,
+                      };
+                      unlockReward(newReward);
+                      router.push('/customer/wallet');
+                    }}
+                    className="col-span-2 py-3.5 md:py-4 bg-orange-500 hover:bg-orange-600 rounded-xl md:rounded-2xl font-black text-white text-xs md:text-sm uppercase tracking-widest shadow-lg shadow-orange-500/20 hover:scale-[1.02] active:scale-[0.98] transition-all"
+                  >
+                    Redeem Reward
+                  </button>
+
+                  {/* Secondary Actions */}
+                  <button 
+                    onClick={() => {
+                      alert('Reward saved to your wallet!');
+                    }}
+                    className="flex items-center justify-center gap-2 py-2.5 md:py-3 bg-stone-50 border border-stone-200 rounded-xl md:rounded-2xl text-[9px] md:text-[10px] font-black text-stone-600 uppercase tracking-widest hover:bg-stone-100 transition-all"
+                  >
+                    <Star size={12} className="fill-orange-400 text-orange-400" />
+                    Save
+                  </button>
+                  <button 
+                    onClick={() => {
+                      alert('Sharing link copied!');
+                    }}
+                    className="flex items-center justify-center gap-2 py-2.5 md:py-3 bg-stone-50 border border-stone-200 rounded-xl md:rounded-2xl text-[9px] md:text-[10px] font-black text-stone-600 uppercase tracking-widest hover:bg-stone-100 transition-all"
+                  >
+                    <Zap size={12} className="text-orange-500" />
+                    Share
+                  </button>
+
+                  <button 
+                    onClick={resetGame}
+                    className="col-span-2 mt-1 md:mt-2 text-[9px] md:text-[10px] font-black text-stone-400 uppercase tracking-[0.2em] hover:text-orange-500 transition-colors py-2"
+                  >
+                    Return to Game
+                  </button>
+                </div>
+              </div>
+
+              {/* Close Button */}
+              <button 
+                onClick={resetGame} 
+                className="absolute top-4 right-4 md:top-6 md:right-6 w-8 h-8 md:w-10 md:h-10 rounded-full bg-stone-100 border border-stone-200 flex items-center justify-center text-stone-500 hover:bg-orange-500 hover:text-white transition-all z-[3010]"
+              >
+                <X size={16} />
+              </button>
             </motion.div>
           </motion.div>
         )}
       </AnimatePresence>
-
     </div>
+  );
+}
+
+export default function ArcadeGamesPage() {
+  return (
+    <Suspense fallback={<div>Loading...</div>}>
+      <ArcadeGamesPageContent />
+    </Suspense>
   );
 }

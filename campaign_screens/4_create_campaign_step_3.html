@@ -1,0 +1,307 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" name="viewport"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            "colors": {
+                    "surface-container-highest": "#f8ddd2",
+                    "on-surface-variant": "#5a4136",
+                    "on-error": "#ffffff",
+                    "on-surface": "#261812",
+                    "on-secondary-fixed": "#351000",
+                    "surface-container-lowest": "#ffffff",
+                    "surface-container": "#ffeae1",
+                    "outline-variant": "#e2bfb1",
+                    "error-container": "#ffdad6",
+                    "tertiary": "#00629f",
+                    "surface-bright": "#fff8f6",
+                    "secondary-container": "#ff9969",
+                    "inverse-surface": "#3d2d26",
+                    "tertiary-container": "#009cf8",
+                    "on-background": "#261812",
+                    "surface-container-low": "#fff1eb",
+                    "on-primary-fixed": "#351000",
+                    "inverse-primary": "#ffb695",
+                    "tertiary-fixed": "#cfe4ff",
+                    "on-primary-container": "#541d00",
+                    "on-tertiary-container": "#003152",
+                    "primary-fixed-dim": "#ffb695",
+                    "on-secondary-fixed-variant": "#793106",
+                    "inverse-on-surface": "#ffede6",
+                    "error": "#ba1a1a",
+                    "background": "#fff8f6",
+                    "surface-container-high": "#fee3d8",
+                    "on-primary-fixed-variant": "#7b2f00",
+                    "primary-container": "#fc6700",
+                    "outline": "#8e7164",
+                    "secondary-fixed": "#ffdbcc",
+                    "on-tertiary-fixed-variant": "#004a79",
+                    "surface": "#fff8f6",
+                    "primary-fixed": "#ffdbcc",
+                    "on-primary": "#ffffff",
+                    "secondary": "#97471d",
+                    "on-tertiary": "#ffffff",
+                    "primary": "#a23f00",
+                    "on-tertiary-fixed": "#001d34",
+                    "surface-tint": "#a23f00",
+                    "surface-dim": "#efd5ca",
+                    "tertiary-fixed-dim": "#9acbff",
+                    "on-secondary": "#ffffff",
+                    "on-error-container": "#93000a",
+                    "secondary-fixed-dim": "#ffb694",
+                    "on-secondary-container": "#772f05",
+                    "surface-variant": "#f8ddd2"
+            },
+            "borderRadius": {
+                    "DEFAULT": "0.25rem",
+                    "lg": "0.5rem",
+                    "xl": "0.75rem",
+                    "full": "9999px"
+            },
+            "spacing": {
+                    "stack-lg": "32px",
+                    "gutter": "16px",
+                    "section-padding": "40px",
+                    "stack-md": "16px",
+                    "base": "8px",
+                    "stack-sm": "8px",
+                    "container-margin": "20px"
+            },
+            "fontFamily": {
+                    "body-lg": ["Inter"],
+                    "headline-lg": ["Inter"],
+                    "label-md": ["Inter"],
+                    "headline-md": ["Inter"],
+                    "display-lg": ["Inter"],
+                    "label-sm": ["Inter"],
+                    "headline-lg-mobile": ["Inter"],
+                    "body-md": ["Inter"]
+            },
+            "fontSize": {
+                    "body-lg": ["18px", {"lineHeight": "1.6", "fontWeight": "400"}],
+                    "headline-lg": ["32px", {"lineHeight": "1.2", "letterSpacing": "-0.02em", "fontWeight": "700"}],
+                    "label-md": ["14px", {"lineHeight": "1.2", "letterSpacing": "0.05em", "fontWeight": "600"}],
+                    "headline-md": ["24px", {"lineHeight": "1.3", "fontWeight": "600"}],
+                    "display-lg": ["48px", {"lineHeight": "1.1", "letterSpacing": "-0.04em", "fontWeight": "800"}],
+                    "label-sm": ["12px", {"lineHeight": "1.2", "fontWeight": "500"}],
+                    "headline-lg-mobile": ["28px", {"lineHeight": "1.2", "fontWeight": "700"}],
+                    "body-md": ["16px", {"lineHeight": "1.6", "fontWeight": "400"}]
+            }
+          },
+        },
+      }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .kinetic-shadow {
+            box-shadow: 0 10px 20px -10px rgba(53, 16, 0, 0.15);
+        }
+        .action-button-depth {
+            box-shadow: 0 4px 0 0 #7b2f00;
+        }
+        .action-button-depth:active {
+            transform: translateY(2px);
+            box-shadow: 0 2px 0 0 #7b2f00;
+        }
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #fff8f6;
+        }
+        .peg-grid {
+            background-image: radial-gradient(#8e7164 1px, transparent 1px);
+            background-size: 24px 24px;
+            opacity: 0.1;
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-background text-on-background min-h-screen pb-32">
+<!-- Top Navigation Bar -->
+<header class="bg-surface sticky top-0 w-full z-50 flex justify-between items-center px-container-margin py-base shadow-[0_10px_20px_-10px_rgba(53,16,0,0.15)]">
+<div class="flex items-center gap-3">
+<div class="w-10 h-10 bg-primary-container rounded-lg flex items-center justify-center">
+<span class="material-symbols-outlined text-on-primary-container" style="font-variation-settings: 'FILL' 1;">business_center</span>
+</div>
+<h1 class="font-headline-md text-headline-md font-bold text-primary tracking-tight">MCOMSpin</h1>
+</div>
+<div class="w-10 h-10 flex items-center justify-center rounded-full hover:bg-surface-container-low transition-colors active:scale-95 duration-100">
+<span class="material-symbols-outlined text-primary">notifications</span>
+</div>
+</header>
+<main class="px-container-margin mt-stack-lg relative">
+<!-- Background Peg Decoration -->
+<div class="absolute inset-0 peg-grid pointer-events-none -z-10"></div>
+<!-- Progress Stepper -->
+<div class="flex items-center justify-between mb-stack-lg">
+<div class="flex items-center gap-2">
+<div class="w-8 h-8 rounded-full bg-secondary text-on-secondary flex items-center justify-center font-label-md text-label-md">3</div>
+<div class="flex flex-col">
+<span class="font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider">Step 3 of 4</span>
+<span class="font-headline-md text-headline-md text-on-surface">Attach Rewards</span>
+</div>
+</div>
+<div class="flex gap-1">
+<div class="w-2 h-2 rounded-full bg-outline-variant"></div>
+<div class="w-2 h-2 rounded-full bg-outline-variant"></div>
+<div class="w-6 h-2 rounded-full bg-primary"></div>
+<div class="w-2 h-2 rounded-full bg-outline-variant"></div>
+</div>
+</div>
+<!-- Search & Filter Area -->
+<div class="mb-stack-md flex gap-base">
+<div class="relative flex-grow">
+<span class="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-outline">search</span>
+<input class="w-full pl-12 pr-4 py-4 bg-surface-container-low border-none rounded-xl focus:ring-2 focus:ring-primary text-body-md placeholder-outline" placeholder="Search rewards..." type="text"/>
+</div>
+<button class="w-14 h-14 bg-surface-container-high rounded-xl flex items-center justify-center text-on-surface-variant active:scale-95 transition-transform">
+<span class="material-symbols-outlined">filter_list</span>
+</button>
+</div>
+<!-- Reward Selection List -->
+<div class="space-y-stack-md">
+<!-- Reward Card 1 -->
+<label class="block relative">
+<input checked="" class="peer hidden" type="checkbox"/>
+<div class="p-stack-md bg-surface-container-lowest rounded-2xl border-2 border-transparent peer-checked:border-primary kinetic-shadow transition-all flex gap-stack-md items-center cursor-pointer">
+<div class="relative w-20 h-20 rounded-xl overflow-hidden bg-surface-container shrink-0">
+<img class="w-full h-full object-cover" data-alt="A high-quality studio photograph of a premium corporate gift set featuring a metallic water bottle and a leather journal, set against a warm minimalist background with Ember Orange lighting accents to reflect a professional yet playful B2B SaaS aesthetic. Soft shadows create a sense of depth and quality." src="https://lh3.googleusercontent.com/aida-public/AB6AXuDOEBpQMRsBo6QDkHhTb2SQYRFR4PRM6daWydFzYT_pitr0ugpotp2fL4Z_NIMMWy2wESSqQ3GrcoPRLPhHuBDCTlW7p3DqxhSucwswym7Z67lQmW-BW9W5-iqaDuhzaA_MS0BDRnBEZIsGzBAhGDBhDg6m4NbYIMKd4KvgrUyLdrhOXLvTkcC0CGqqdn1HiAQ8As7Yx5BhfBGLWTdmfruwKbi3W9h63ng1Ogupz4LhwEuIbJ81vXf-SA"/>
+</div>
+<div class="flex-grow">
+<div class="flex justify-between items-start">
+<h3 class="font-headline-md text-[18px] text-on-surface leading-tight">Deluxe Gift Hamper</h3>
+<div class="w-6 h-6 rounded-full border-2 border-outline-variant peer-checked:bg-primary peer-checked:border-primary flex items-center justify-center">
+<span class="material-symbols-outlined text-[16px] text-white hidden peer-checked:block">check</span>
+</div>
+</div>
+<p class="font-body-md text-label-sm text-on-surface-variant mt-1">Premium Collection</p>
+<div class="mt-2 flex items-center gap-base">
+<span class="px-2 py-0.5 bg-surface-container-high rounded-full font-label-sm text-label-sm text-secondary">
+                                142 in stock
+                            </span>
+</div>
+</div>
+</div>
+</label>
+<!-- Reward Card 2 -->
+<label class="block relative">
+<input class="peer hidden" type="checkbox"/>
+<div class="p-stack-md bg-surface-container-lowest rounded-2xl border-2 border-transparent peer-checked:border-primary kinetic-shadow transition-all flex gap-stack-md items-center cursor-pointer">
+<div class="relative w-20 h-20 rounded-xl overflow-hidden bg-surface-container shrink-0">
+<img class="w-full h-full object-cover" data-alt="A vibrant digital gift card illustration featuring abstract kinetic energy swirls in Burnt Sienna and Ember Orange. The image is clean and modern, representing a high-value digital asset in a professional arcade ecosystem with glassmorphic reflections and premium textures." src="https://lh3.googleusercontent.com/aida-public/AB6AXuA-JDlSBnreVWhT5l1lf0R21eJkKF66abMDv_vJRLHkbufoQNodC_IIeY0jpqlZm9KFDaKINNzjaEr6rRpihpPTLoIdos0nr6CSbaBB_CmD4Vl-jBz3tC7Rl6kmYbUM_AKAK5EAD0N2e7RxIV3vtnXQ6CUdsLKkqOSoxyaiY0wLcTomNGzzdMKlHS949Lub2Bl7S2M3CM4NUE4ZKPjLbdr7NCk1taLCJpPdTXxShvu2eSNZx57p27YK4Q"/>
+</div>
+<div class="flex-grow">
+<div class="flex justify-between items-start">
+<h3 class="font-headline-md text-[18px] text-on-surface leading-tight">$50 Digital Voucher</h3>
+<div class="w-6 h-6 rounded-full border-2 border-outline-variant peer-checked:bg-primary flex items-center justify-center">
+<span class="material-symbols-outlined text-[16px] text-white hidden peer-checked:block">check</span>
+</div>
+</div>
+<p class="font-body-md text-label-sm text-on-surface-variant mt-1">Digital Asset</p>
+<div class="mt-2 flex items-center gap-base">
+<span class="px-2 py-0.5 bg-surface-container-high rounded-full font-label-sm text-label-sm text-secondary">
+                                Unlimited
+                            </span>
+</div>
+</div>
+</div>
+</label>
+<!-- Reward Card 3 -->
+<label class="block relative">
+<input checked="" class="peer hidden" type="checkbox"/>
+<div class="p-stack-md bg-surface-container-lowest rounded-2xl border-2 border-transparent peer-checked:border-primary kinetic-shadow transition-all flex gap-stack-md items-center cursor-pointer">
+<div class="relative w-20 h-20 rounded-xl overflow-hidden bg-surface-container shrink-0">
+<img class="w-full h-full object-cover" data-alt="A sleek, modern designer watch presented in its luxury packaging. The scene uses soft-focus studio lighting to emphasize premium metallic textures and high-end finishes, aligned with a corporate reward system's prestige. Warm ambient highlights complement the Ember Orange brand theme." src="https://lh3.googleusercontent.com/aida-public/AB6AXuBBYypLrx2S4Oguu0dLOKT13lExaQoDmtv5wGCVvyr6z_lhxO8k3DNODiXrX56Lqi2Cf83L8ceIY4sSziwSgzlsxsFsA9M4Rw_jVru1UYsG9U6CXUaST6xsogaK3HwEFyIGtHDboD-jyULQgPZebTmST4qgQuMCiytxE07OzStetJ6PkQ2cwHzultyBTH-4ELzgIIjHfqR1LaDTkezrEtattiSYz56ZSs1DJzyTQZZQFrkluRenNiVt8w"/>
+</div>
+<div class="flex-grow">
+<div class="flex justify-between items-start">
+<h3 class="font-headline-md text-[18px] text-on-surface leading-tight">Executive Smart Watch</h3>
+<div class="w-6 h-6 rounded-full border-2 border-outline-variant peer-checked:bg-primary flex items-center justify-center">
+<span class="material-symbols-outlined text-[16px] text-white hidden peer-checked:block">check</span>
+</div>
+</div>
+<p class="font-body-md text-label-sm text-on-surface-variant mt-1">Hardware &amp; Tech</p>
+<div class="mt-2 flex items-center gap-base">
+<span class="px-2 py-0.5 bg-error-container rounded-full font-label-sm text-label-sm text-error">
+                                12 remaining
+                            </span>
+</div>
+</div>
+</div>
+</label>
+</div>
+<!-- Create New Reward Button (Dashed) -->
+<button class="mt-stack-md w-full py-6 border-2 border-dashed border-outline rounded-2xl flex flex-col items-center justify-center gap-2 text-outline hover:bg-surface-container-low transition-colors active:scale-98">
+<span class="material-symbols-outlined text-3xl">add_circle</span>
+<span class="font-label-md text-label-md uppercase">Create New Reward</span>
+</button>
+</main>
+<!-- Bottom Action Bar -->
+<div class="fixed bottom-0 left-0 w-full bg-surface-container-lowest px-container-margin py-6 pb-10 flex gap-4 shadow-[0_-10px_20px_-10px_rgba(53,16,0,0.15)] z-40">
+<button class="flex-1 py-4 border-2 border-outline-variant rounded-2xl font-label-md text-label-md text-on-surface active:scale-95 transition-transform flex items-center justify-center gap-2">
+<span class="material-symbols-outlined text-[20px]">arrow_back</span>
+            BACK
+        </button>
+<button class="flex-[2] py-4 bg-primary text-white rounded-2xl font-label-md text-label-md uppercase tracking-widest action-button-depth active:scale-95 transition-all flex items-center justify-center gap-2">
+            CONTINUE
+            <span class="material-symbols-outlined text-[20px]">arrow_forward</span>
+</button>
+</div>
+<!-- Footer Mobile Nav -->
+<nav class="fixed bottom-0 left-0 w-full flex justify-around items-center px-base py-stack-sm pb-safe bg-surface shadow-lg z-50 md:hidden rounded-t-xl">
+<div class="flex flex-col items-center justify-center text-on-surface-variant px-4 py-1">
+<span class="material-symbols-outlined">dashboard</span>
+<span class="font-label-sm text-label-sm">Dashboard</span>
+</div>
+<div class="flex flex-col items-center justify-center bg-secondary-container text-on-secondary-container rounded-full px-4 py-1">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">campaign</span>
+<span class="font-label-sm text-label-sm">Campaigns</span>
+</div>
+<div class="flex flex-col items-center justify-center text-on-surface-variant px-4 py-1">
+<span class="material-symbols-outlined">military_tech</span>
+<span class="font-label-sm text-label-sm">Rewards</span>
+</div>
+<div class="flex flex-col items-center justify-center text-on-surface-variant px-4 py-1">
+<span class="material-symbols-outlined">group</span>
+<span class="font-label-sm text-label-sm">Customers</span>
+</div>
+<div class="flex flex-col items-center justify-center text-on-surface-variant px-4 py-1">
+<span class="material-symbols-outlined">more_horiz</span>
+<span class="font-label-sm text-label-sm">More</span>
+</div>
+</nav>
+<script>
+        // Simple micro-interaction for checkboxes
+        const cards = document.querySelectorAll('label');
+        cards.forEach(card => {
+            const checkbox = card.querySelector('input');
+            const checkIcon = card.querySelector('.material-symbols-outlined.text-white');
+            const innerContainer = card.querySelector('.bg-surface-container-lowest');
+            
+            const updateState = () => {
+                if (checkbox.checked) {
+                    checkIcon.style.display = 'block';
+                } else {
+                    checkIcon.style.display = 'none';
+                }
+            };
+            
+            checkbox.addEventListener('change', updateState);
+            updateState();
+        });
+    </script>
+</body></html>

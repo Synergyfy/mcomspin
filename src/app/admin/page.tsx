@@ -612,7 +612,7 @@ const ConsumerMonitoring = () => {
                   {[
                     { label: 'Voucher Redemption Rate', val: '72%', status: 'green' },
                     { label: 'Avg Claim to Use Time', val: '4.2h', status: 'green' },
-                    { label: 'Unclaimed Prize Volume', val: '$1,240', status: 'yellow' },
+                    { label: 'Unclaimed Prize Volume', val: '£1,240', status: 'yellow' },
                     { label: 'QR Scan Success Rate', val: '99.2%', status: 'green' },
                   ].map((metric, i) => (
                     <div key={i} className="flex justify-between items-center p-3 border border-stone-100 rounded-lg">
@@ -731,13 +731,13 @@ const AnalyticsReporting = () => {
             <div className="space-y-6">
               <div className="grid grid-cols-3 gap-6">
                 <Card title="Total Platform Revenue">
-                  <div className="text-3xl font-black text-stone-900 mb-1">$428,590</div>
+                  <div className="text-3xl font-black text-stone-900 mb-1">£428,590</div>
                   <div className="text-[10px] font-bold text-green-600 flex items-center gap-1">
                     <TrendingUp className="w-3 h-3" /> +12.4% vs last month
                   </div>
                 </Card>
                 <Card title="Lead Conversion Value">
-                  <div className="text-3xl font-black text-stone-900 mb-1">$124,102</div>
+                  <div className="text-3xl font-black text-stone-900 mb-1">£124,102</div>
                   <div className="text-[10px] font-bold text-stone-400 uppercase">Averaging $12.50 per lead</div>
                 </Card>
                 <Card title="Sponsored Contribution">

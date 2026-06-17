@@ -2,58 +2,30 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
-import { Zap } from 'lucide-react';
+import { Zap, Users, Box, Clock, Route, HelpCircle, Trophy, BarChart3, ArrowRight, ShieldCheck, ArrowUpRight, Menu, X, Sparkles, CheckCircle2 } from 'lucide-react';
+
+/* ─── Types ─── */
+interface PlinkoEvent {
+  id: string;
+  time: string;
+  message: string;
+  bin: string;
+  type: string;
+}
 
 export default function LandingPage() {
-  /* ─── State ─── */
-  const [isSpinning, setIsSpinning] = useState(false);
-  const [rotation, setRotation] = useState(0);
-  const [prizeResult, setPrizeResult] = useState<string | null>(null);
-  const [activePartnerIndex, setActivePartnerIndex] = useState(0);
-  const [probValue, setProbValue] = useState(65);
+  /* ─── Navigation State ─── */
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
-  /* Intersection observer for scroll-reveal */
-  const [visibleSections, setVisibleSections] = useState<Set<string>>(new Set());
-  const sectionRefs = useRef<{ [key: string]: HTMLElement | null }>({});
+  /* ─── Interactive States ─── */
+  const [probValue, setProbValue] = useState(65);
+  const [activePartnerIndex, setActivePartnerIndex] = useState(0);
+  const [simulationEvents, setSimulationEvents] = useState<PlinkoEvent[]>([
+    { id: '1', time: '10:24:15', message: 'Lead routed to Meridian Apparel CRM', bin: 'LEADS', type: 'leads' },
+    { id: '2', time: '10:24:18', message: 'Stock cleared for Vantage Electronics', bin: 'STOCK', type: 'stock' }
+  ]);
 
-  useEffect(() => {
-    const observer = new IntersectionObserver(
-      (entries) => {
-        entries.forEach((entry) => {
-          if (entry.isIntersecting) {
-            setVisibleSections((prev) => new Set(prev).add(entry.target.id));
-          }
-        });
-      },
-      { threshold: 0.15, rootMargin: '0px 0px -60px 0px' }
-    );
-    Object.values(sectionRefs.current).forEach((el) => {
-      if (el) observer.observe(el);
-    });
-    return () => observer.disconnect();
-  }, []);
-
-  const setSectionRef = (id: string) => (el: HTMLElement | null) => {
-    sectionRefs.current[id] = el;
-  };
-
-  const sectionClass = (id: string) =>
-    visibleSections.has(id)
-      ? 'opacity-100 translate-y-0 transition-all duration-[900ms] ease-out'
-      : 'opacity-0 translate-y-8 transition-all duration-[900ms] ease-out';
-
-  /* ─── Teaser wheel data ─── */
-  const teaserPrizes: { labelTop: string; labelBottom: string; icon: string }[] = [
-    { labelTop: 'LEADS', labelBottom: 'CAPTURED', icon: 'users' },
-    { labelTop: 'STOCK', labelBottom: 'CLEARED', icon: 'box' },
-    { labelTop: 'SLOTS', labelBottom: 'BOOKED', icon: 'clock' },
-    { labelTop: 'TRAFFIC', labelBottom: 'ROUTED', icon: 'route' },
-    { labelTop: 'REVENUE', labelBottom: 'EARNED', icon: 'pound' },
-    { labelTop: 'VOUCHER', labelBottom: 'ISSUED', icon: 'ticket' },
-  ];
-
-  /* ─── Partner rotation data ─── */
+  /* ─── Partners Data ─── */
   const partners = [
     { name: 'Meridian Apparel', category: 'Luxury Fashion & Excess Stock', leads: 412, conversion: '18.4%', revenue: '£32,490' },
     { name: 'Elara Wellness', category: 'Premium Spa & Booking Services', leads: 589, conversion: '22.1%', revenue: '£45,800' },
@@ -68,334 +40,474 @@ export default function LandingPage() {
     return () => clearInterval(timer);
   }, []);
 
-  /* ─── Teaser spin handler ─── */
-  const handleTeaserSpin = () => {
-    if (isSpinning) return;
-    setIsSpinning(true);
-    setPrizeResult(null);
+  /* ─── Intersection Observer for reveal-on-scroll ─── */
+  const [visibleSections, setVisibleSections] = useState<Set<string>>(new Set());
+  const sectionRefs = useRef<{ [key: string]: HTMLElement | null }>({});
 
-    const extraSpins = 5 + Math.floor(Math.random() * 5);
-    const sectorAngle = 60;
-    const targetSectorIndex = Math.floor(Math.random() * 6);
-    const targetAngle = extraSpins * 360 + (360 - targetSectorIndex * sectorAngle);
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting) {
+            setVisibleSections((prev) => new Set(prev).add(entry.target.id));
+          }
+        });
+      },
+      { threshold: 0.1, rootMargin: '0px 0px -50px 0px' }
+    );
+    Object.values(sectionRefs.current).forEach((el) => {
+      if (el) observer.observe(el);
+    });
+    return () => observer.disconnect();
+  }, []);
 
-    setRotation(targetAngle);
-
-    setTimeout(() => {
-      setIsSpinning(false);
-      const outcomes = [
-        'Lead captured and routed to Meridian Apparel CRM — 120 new prospects queued',
-        'Inventory clearance triggered — 45 surplus items moved through Vantage Electronics',
-        'High-value booking slot reserved — Elara Wellness timetable updated',
-        'Customer session redirected — storefront traffic routed to Meridian Apparel',
-        'Partner collaboration verified — $2,400 in B2B ecosystem revenue recorded',
-        'Digital voucher allocated and logged — partner ledger updated automatically',
-      ];
-      setPrizeResult(outcomes[targetSectorIndex]);
-    }, 4500);
+  const setSectionRef = (id: string) => (el: HTMLElement | null) => {
+    sectionRefs.current[id] = el;
   };
 
-  /* ─── Icon helper ─── */
-  const getIcon = (type: string) => {
-    const cls = "w-4 h-4";
-    switch (type) {
-      case 'users':
-        return (<svg className={cls} fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M15 19.128a9.38 9.38 0 002.625.372 9.337 9.337 0 004.121-.952 4.125 4.125 0 00-7.533-2.493M15 19.128v-.003c0-1.113-.285-2.16-.786-3.07M15 19.128v.106A12.318 12.318 0 018.624 21c-2.331 0-4.512-.645-6.374-1.766l-.001-.109a6.375 6.375 0 0111.964-3.07M12 6.375a3.375 3.375 0 11-6.75 0 3.375 3.375 0 016.75 0zm8.25 2.25a2.625 2.625 0 11-5.25 0 2.625 2.625 0 015.25 0z" /></svg>);
-      case 'box':
-        return (<svg className={cls} fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" /></svg>);
-      case 'clock':
-        return (<svg className={cls} fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>);
-      case 'route':
-        return (<svg className={cls} fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M7.5 21L3 16.5m0 0L7.5 12M3 16.5h13.5m0-13.5L21 7.5m0 0L16.5 12M21 7.5H7.5" /></svg>);
-      case 'pound':
-        return (<svg className={cls} fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" d="M18 7c0-5.333-8-5.333-8 0 M10 7v14 M6 21h12 M6 13h10" />
-        </svg>);
-      case 'ticket':
-        return (<svg className={cls} fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M16.5 6v.75m0 3v.75m0 3v.75m0 3V18m-9-5.25h5.25M7.5 15h3M3.375 5.25c-.621 0-1.125.504-1.125 1.125v3.026a2.999 2.999 0 010 5.198v3.026c0 .621.504 1.125 1.125 1.125h17.25c.621 0 1.125-.504 1.125-1.125v-3.026a2.999 2.999 0 010-5.198V6.375c0-.621-.504-1.125-1.125-1.125H3.375z" /></svg>);
-      default:
-        return null;
-    }
+  const sectionClass = (id: string) =>
+    visibleSections.has(id)
+      ? 'opacity-100 translate-y-0 transition-all duration-[800ms] ease-out'
+      : 'opacity-0 translate-y-6 transition-all duration-[800ms] ease-out';
+
+  /* ─── Self-Running Plinko Simulation Engine ─── */
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
+  
+  // Ref to hold simulation values for access in loop
+  const simulationRef = useRef({
+    probValue: 65,
+    ball: null as any,
+    pegs: [] as { x: number; y: number; radius: number; flash: number }[],
+    bins: [] as { x: number; width: number; label: string; icon: string; flash: number }[],
+    activeLogs: [] as PlinkoEvent[]
+  });
+
+  // Keep ref up to date
+  useEffect(() => {
+    simulationRef.current.probValue = probValue;
+  }, [probValue]);
+
+  // Set up bins list
+  const plinkoBins = [
+    { label: 'LEADS', icon: 'users', color: '#f97316' },
+    { label: 'STOCK', icon: 'box', color: '#1a1a1a' },
+    { label: 'SLOTS', icon: 'clock', color: '#f97316' },
+    { label: 'TRAFFIC', icon: 'route', color: '#1a1a1a' },
+    { label: 'REVENUE', icon: 'pound', color: '#f97316' },
+    { label: 'VOUCHER', icon: 'ticket', color: '#1a1a1a' },
+  ];
+
+  const triggerEventLog = (binLabel: string) => {
+    const outcomes: { [key: string]: string[] } = {
+      LEADS: ['Lead captured & routed to Meridian Apparel CRM', 'New customer prospect added to queue'],
+      STOCK: ['Inventory clearance triggered at Vantage Tech', 'Excess product voucher issued successfully'],
+      SLOTS: ['High-value booking slot reserved at Elara Wellness', 'Timetable optimization path verified'],
+      TRAFFIC: ['Ecommerce storefront redirection completed', 'Customer routed to Soleil Dining campaign'],
+      REVENUE: ['B2B ecosystem revenue logged (+£120.00)', 'Ecosystem partner fee cleared'],
+      VOUCHER: ['Digital partner reward allocated in wallet', 'Reward verification token distributed']
+    };
+    const messages = outcomes[binLabel] || ['Telemetry event recorded'];
+    const randomMsg = messages[Math.floor(Math.random() * messages.length)];
+    const timeString = new Date().toTimeString().split(' ')[0];
+    
+    setSimulationEvents((prev) => [
+      {
+        id: Math.random().toString(),
+        time: timeString,
+        message: randomMsg,
+        bin: binLabel,
+        type: binLabel.toLowerCase()
+      },
+      ...prev
+    ].slice(0, 5));
   };
+
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    if (!canvas || !containerRef.current) return;
+
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
+
+    let animId: number;
+    let spawnTimer = 0;
+
+    const initPhysics = () => {
+      const w = containerRef.current?.clientWidth || 340;
+      const h = 380;
+      canvas.width = w;
+      canvas.height = h;
+
+      // Peg grid setup
+      const pegs: { x: number; y: number; radius: number; flash: number }[] = [];
+      const rows = 8;
+      const startY = 60;
+      const endY = h - 60;
+      const spacingY = (endY - startY) / rows;
+
+      for (let r = 0; r < rows; r++) {
+        const isOffset = r % 2 !== 0;
+        const cols = isOffset ? 6 : 7;
+        const spacingX = w / (cols + 1);
+
+        for (let c = 0; c < cols; c++) {
+          const x = spacingX * (c + 1) + (isOffset ? spacingX / 2 : 0);
+          pegs.push({
+            x,
+            y: startY + r * spacingY,
+            radius: 4.5,
+            flash: 0
+          });
+        }
+      }
+
+      // Bins setup
+      const binWidth = w / 6;
+      const bins = plinkoBins.map((bin, i) => ({
+        x: i * binWidth,
+        width: binWidth,
+        label: bin.label,
+        icon: bin.icon,
+        flash: 0
+      }));
+
+      simulationRef.current.pegs = pegs;
+      simulationRef.current.bins = bins;
+    };
+
+    initPhysics();
+
+    const resizeObserver = new ResizeObserver(() => {
+      initPhysics();
+    });
+    if (containerRef.current) resizeObserver.observe(containerRef.current);
+
+    const draw = () => {
+      const w = canvas.width;
+      const h = canvas.height;
+      ctx.clearRect(0, 0, w, h);
+
+      // Draw background board detail
+      ctx.fillStyle = '#fafaf9';
+      ctx.fillRect(0, 0, w, h);
+
+      // Draw vertical bin dividers
+      ctx.strokeStyle = '#e8e8e5';
+      ctx.lineWidth = 1;
+      const binWidth = w / 6;
+      for (let i = 1; i < 6; i++) {
+        ctx.beginPath();
+        ctx.moveTo(i * binWidth, h - 50);
+        ctx.lineTo(i * binWidth, h);
+        ctx.stroke();
+      }
+
+      // Draw top launch point container details
+      ctx.strokeStyle = '#e8e8e5';
+      ctx.strokeRect(w / 2 - 20, 10, 40, 20);
+
+      // Draw pegs
+      const pegs = simulationRef.current.pegs;
+      pegs.forEach((peg) => {
+        // Fade flashes
+        if (peg.flash > 0) peg.flash -= 0.08;
+        
+        ctx.beginPath();
+        ctx.arc(peg.x, peg.y, peg.radius, 0, Math.PI * 2);
+        ctx.fillStyle = peg.flash > 0 
+          ? `rgba(249, 115, 22, ${0.4 + peg.flash * 0.6})` 
+          : '#1a1a1a';
+        ctx.shadowBlur = peg.flash > 0 ? peg.flash * 10 : 0;
+        ctx.shadowColor = '#f97316';
+        ctx.fill();
+        ctx.shadowBlur = 0; // reset
+      });
+
+      // Draw Bins base fills
+      const bins = simulationRef.current.bins;
+      bins.forEach((bin) => {
+        if (bin.flash > 0) {
+          bin.flash -= 0.05;
+          ctx.fillStyle = `rgba(249, 115, 22, ${bin.flash * 0.08})`;
+          ctx.fillRect(bin.x, h - 50, bin.width, 50);
+        }
+      });
+
+      // Physics logic & draw ball
+      let ball = simulationRef.current.ball;
+      if (ball) {
+        // Gravity & speed limits
+        ball.vy += 0.28; 
+        ball.vy = Math.min(ball.vy, 6.5);
+        ball.vx = Math.min(Math.max(ball.vx, -3.5), 3.5);
+
+        // Apply config slider priority: nudge ball left or right depending on priority weight
+        const curProb = simulationRef.current.probValue;
+        if (curProb > 60 && ball.y < h / 2) {
+          // Nudge towards first and third bins (LEADS / SLOTS)
+          const targetX = w * 0.25;
+          ball.vx += (targetX - ball.x) * 0.0015;
+        } else if (curProb < 40 && ball.y < h / 2) {
+          // Nudge towards right side
+          const targetX = w * 0.75;
+          ball.vx += (targetX - ball.x) * 0.0015;
+        }
+
+        // Apply velocity
+        ball.x += ball.vx;
+        ball.y += ball.vy;
+
+        // Wall collisions
+        if (ball.x - ball.radius < 0) {
+          ball.x = ball.radius;
+          ball.vx *= -0.5;
+        } else if (ball.x + ball.radius > w) {
+          ball.x = w - ball.radius;
+          ball.vx *= -0.5;
+        }
+
+        // Peg collisions
+        pegs.forEach((peg) => {
+          const dx = ball.x - peg.x;
+          const dy = ball.y - peg.y;
+          const dist = Math.sqrt(dx * dx + dy * dy);
+          const minDist = ball.radius + peg.radius;
+
+          if (dist < minDist) {
+            // Push ball out
+            const angle = Math.atan2(dy, dx);
+            ball.x = peg.x + Math.cos(angle) * minDist;
+            ball.y = peg.y + Math.sin(angle) * minDist;
+
+            // Bounce mechanics
+            const speed = Math.sqrt(ball.vx * ball.vx + ball.vy * ball.vy);
+            const bounceStrength = 0.55;
+            ball.vx = Math.cos(angle) * speed * bounceStrength + (Math.random() - 0.5) * 1.5;
+            ball.vy = Math.sin(angle) * speed * bounceStrength + 0.5; // push down
+
+            // Flash peg
+            peg.flash = 1.0;
+          }
+        });
+
+        // Bin landing
+        if (ball.y + ball.radius >= h - 25) {
+          const binIdx = Math.min(5, Math.max(0, Math.floor(ball.x / binWidth)));
+          const landedBin = bins[binIdx];
+          
+          if (landedBin) {
+            landedBin.flash = 1.0;
+            triggerEventLog(landedBin.label);
+          }
+
+          simulationRef.current.ball = null;
+        } else {
+          // Draw the ball
+          ctx.beginPath();
+          ctx.arc(ball.x, ball.y, ball.radius, 0, Math.PI * 2);
+          ctx.fillStyle = '#f97316';
+          ctx.shadowBlur = 12;
+          ctx.shadowColor = '#f97316';
+          ctx.fill();
+          ctx.shadowBlur = 0;
+        }
+      } else {
+        // Spawn interval
+        spawnTimer++;
+        if (spawnTimer > 100) {
+          const startX = w / 2 + (Math.random() - 0.5) * 12;
+          simulationRef.current.ball = {
+            x: startX,
+            y: 20,
+            vx: (Math.random() - 0.5) * 1.5,
+            vy: 1.0,
+            radius: 8.5
+          };
+          spawnTimer = 0;
+        }
+      }
+
+      animId = requestAnimationFrame(draw);
+    };
+
+    draw();
+
+    return () => {
+      cancelAnimationFrame(animId);
+      resizeObserver.disconnect();
+    };
+  }, []);
 
   return (
-    <div className="min-h-screen bg-white text-[#1a1a1a] selection:bg-[#f97316] selection:text-white relative overflow-hidden font-body">
+    <div className="min-h-screen bg-white text-[#1a1a1a] selection:bg-[#f97316] selection:text-white relative overflow-hidden font-body luxury-gradient">
+      {/* Ambient Radial Backgrounds */}
+      <div className="fixed top-0 right-0 w-[900px] h-[900px] bg-[#f97316]/[0.03] rounded-full blur-[240px] pointer-events-none" />
+      <div className="fixed bottom-[-15%] left-[-10%] w-[700px] h-[700px] bg-[#f97316]/[0.02] rounded-full blur-[200px] pointer-events-none" />
 
       {/* ═══════════════════════════════════════════════════
-          AMBIENT BACKGROUND GLOWS
+          NAVIGATION BAR
       ═══════════════════════════════════════════════════ */}
-      <div className="fixed top-0 right-0 w-[800px] h-[800px] bg-[#f97316]/[0.04] rounded-full blur-[200px] pointer-events-none" />
-      <div className="fixed bottom-[-20%] left-[-10%] w-[600px] h-[600px] bg-[#f97316]/[0.03] rounded-full blur-[180px] pointer-events-none" />
-
-      {/* ═══════════════════════════════════════════════════
-          NAVIGATION
-      ═══════════════════════════════════════════════════ */}
-      <header className="sticky top-0 z-50 w-full bg-white/90 backdrop-blur-xl border-b border-[#e8e8e5]/80">
+      <header className="sticky top-0 z-50 w-full bg-white/70 backdrop-blur-xl border-b border-[#e8e8e5]/60 transition-all duration-300">
         <div className="max-w-7xl mx-auto px-6 lg:px-12 py-4 flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <span className="w-2.5 h-2.5 bg-[#f97316] rounded-full shadow-[0_0_12px_rgba(249,115,22,0.4)]" />
-            <span className="font-display font-bold text-lg tracking-tight text-[#1a1a1a]">MComSpin</span>
-          </div>
+          <Link href="/" className="flex items-center gap-3 group">
+            <span className="w-2.5 h-2.5 bg-[#f97316] rounded-full shadow-[0_0_12px_rgba(249,115,22,0.6)] group-hover:scale-125 transition-transform duration-300" />
+            <span className="font-display font-black text-xl tracking-tight text-[#1a1a1a] uppercase">MComSpin</span>
+          </Link>
 
-          <nav className="hidden lg:flex items-center gap-10 text-[11px] font-semibold uppercase tracking-[0.15em] text-[#888]">
-            <a href="#how-it-works" className="hover:text-[#f97316] transition-colors duration-200">How It Works</a>
-            <a href="#engine" className="hover:text-[#f97316] transition-colors duration-200">Engine</a>
-            <a href="#partners" className="hover:text-[#f97316] transition-colors duration-200">Partners</a>
-            <a href="#embed" className="hover:text-[#f97316] transition-colors duration-200">Embed</a>
-            <a href="#analytics" className="hover:text-[#f97316] transition-colors duration-200">Analytics</a>
-            <Link href="/customer" className="text-[#f97316] font-bold hover:text-orange-600 transition-colors duration-200 flex items-center gap-1">
+          <nav className="hidden lg:flex items-center gap-9 text-[11px] font-bold uppercase tracking-[0.18em] text-[#888]">
+            <a href="#how-it-works" className="hover:text-[#f97316] transition-colors">How It Works</a>
+            <a href="#engine" className="hover:text-[#f97316] transition-colors">Engine</a>
+            <a href="#partners" className="hover:text-[#f97316] transition-colors">Partners</a>
+            <a href="#embed" className="hover:text-[#f97316] transition-colors">Embed</a>
+            <a href="#analytics" className="hover:text-[#f97316] transition-colors">Analytics</a>
+            <Link href="/customer" className="text-[#f97316] hover:text-orange-600 transition-colors flex items-center gap-1.5 font-extrabold">
               Customer Hub
-              <span className="text-[9px] bg-orange-100 text-[#f97316] px-1.5 py-0.5 rounded font-extrabold tracking-normal">NEW</span>
+              <span className="text-[8px] bg-orange-100 text-[#f97316] px-1.5 py-0.5 rounded-sm font-extrabold tracking-normal">NEW</span>
             </Link>
           </nav>
 
           <div className="flex items-center gap-3">
-            <Link href="/auth" className="hidden sm:inline-flex text-[11px] font-bold tracking-[0.12em] uppercase text-[#1a1a1a] hover:text-[#f97316] transition-colors">
+            <Link href="/auth" className="hidden sm:inline-flex text-[11px] font-bold tracking-[0.15em] uppercase text-[#1a1a1a] hover:text-[#f97316] transition-colors px-4 py-2">
               Sign In
             </Link>
-            <Link href="/auth" className="text-[11px] font-bold tracking-[0.12em] bg-[#1a1a1a] text-white px-5 py-2.5 rounded-full hover:bg-[#f97316] transition-all duration-300 uppercase">
+            <Link href="/acquire" className="text-[11px] font-bold tracking-[0.15em] bg-[#1a1a1a] text-white px-6 py-3 rounded-xl hover:bg-[#f97316] hover:shadow-lg hover:shadow-black/10 transition-all duration-300 uppercase">
               Get Started
             </Link>
 
-            {/* Mobile menu toggle */}
+            {/* Mobile Hamburger */}
             <button
-              className="lg:hidden p-2"
+              className="lg:hidden p-2 text-[#1a1a1a] hover:text-[#f97316] transition-colors"
               onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-              aria-label="Toggle menu"
+              aria-label="Toggle Navigation"
             >
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
-                {mobileMenuOpen
-                  ? <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
-                  : <path strokeLinecap="round" strokeLinejoin="round" d="M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25h16.5" />}
-              </svg>
+              {mobileMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
             </button>
           </div>
         </div>
 
-        {/* Mobile menu */}
+        {/* Mobile Dropdown Panel */}
         {mobileMenuOpen && (
-          <div className="lg:hidden border-t border-[#e8e8e5] bg-white px-6 py-4 space-y-3">
-            <a href="#how-it-works" onClick={() => setMobileMenuOpen(false)} className="block text-sm font-semibold text-[#555] hover:text-[#f97316]">How It Works</a>
-            <a href="#engine" onClick={() => setMobileMenuOpen(false)} className="block text-sm font-semibold text-[#555] hover:text-[#f97316]">Engine</a>
-            <a href="#partners" onClick={() => setMobileMenuOpen(false)} className="block text-sm font-semibold text-[#555] hover:text-[#f97316]">Partners</a>
-            <a href="#embed" onClick={() => setMobileMenuOpen(false)} className="block text-sm font-semibold text-[#555] hover:text-[#f97316]">Embed</a>
-            <a href="#analytics" onClick={() => setMobileMenuOpen(false)} className="block text-sm font-semibold text-[#555] hover:text-[#f97316]">Analytics</a>
-            <Link href="/customer" onClick={() => setMobileMenuOpen(false)} className="flex items-center gap-1.5 text-sm font-bold text-[#f97316] hover:text-orange-600 transition-colors">
-              Customer Hub (Premium Flow) <Zap className="w-3.5 h-3.5 fill-[#f97316] text-[#f97316]" />
+          <div className="lg:hidden border-t border-[#e8e8e5] bg-white/95 backdrop-blur-md px-6 py-6 space-y-4 animate-fade-in-up">
+            <a href="#how-it-works" onClick={() => setMobileMenuOpen(false)} className="block text-sm font-semibold tracking-wide text-[#555] hover:text-[#f97316]">How It Works</a>
+            <a href="#engine" onClick={() => setMobileMenuOpen(false)} className="block text-sm font-semibold tracking-wide text-[#555] hover:text-[#f97316]">Engine</a>
+            <a href="#partners" onClick={() => setMobileMenuOpen(false)} className="block text-sm font-semibold tracking-wide text-[#555] hover:text-[#f97316]">Partners</a>
+            <a href="#embed" onClick={() => setMobileMenuOpen(false)} className="block text-sm font-semibold tracking-wide text-[#555] hover:text-[#f97316]">Embed</a>
+            <a href="#analytics" onClick={() => setMobileMenuOpen(false)} className="block text-sm font-semibold tracking-wide text-[#555] hover:text-[#f97316]">Analytics</a>
+            <Link href="/customer" onClick={() => setMobileMenuOpen(false)} className="flex items-center gap-1.5 text-sm font-bold text-[#f97316] hover:text-orange-600">
+              Customer Hub <Zap className="w-3.5 h-3.5 fill-[#f97316]" />
             </Link>
           </div>
         )}
       </header>
 
       {/* ═══════════════════════════════════════════════════
-          SECTION 1 — HERO
+          SECTION 1 — HERO SECTION
       ═══════════════════════════════════════════════════ */}
       <section
         id="hero"
         ref={setSectionRef('hero')}
-        className={`px-6 lg:px-12 pt-24 pb-32 max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-2 gap-20 items-center relative z-10 ${sectionClass('hero')}`}
+        className={`px-6 lg:px-12 pt-20 pb-28 max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-2 gap-16 lg:gap-24 items-center relative z-10 ${sectionClass('hero')}`}
       >
-        {/* Left — Copy */}
+        {/* Left copy */}
         <div className="flex flex-col items-start space-y-8">
-          <div className="inline-flex items-center gap-2.5 px-4 py-1.5 rounded-full bg-[#f97316]/[0.07] border border-[#f97316]/[0.12]">
-            <span className="w-1.5 h-1.5 rounded-full bg-[#f97316] animate-pulse" />
-            <span className="text-[10px] font-bold tracking-[0.2em] text-[#f97316] uppercase">Engagement Infrastructure</span>
+          <div className="inline-flex items-center gap-2.5 px-3.5 py-1.5 rounded-full bg-[#f97316]/[0.06] border border-[#f97316]/[0.12]">
+            <Sparkles className="w-3.5 h-3.5 text-[#f97316]" />
+            <span className="text-[9px] font-extrabold tracking-[0.2em] text-[#f97316] uppercase">Engagement Infrastructure</span>
           </div>
 
-          <h1 className="text-[2.75rem] lg:text-[3.75rem] font-display font-black tracking-[-0.025em] leading-[1.08] luxury-text-gradient">
-            Turn Controlled Engagement Into Predictable Revenue
+          <h1 className="text-[2.65rem] sm:text-5xl lg:text-[3.8rem] font-display font-black tracking-[-0.035em] leading-[1.05] luxury-text-gradient">
+            Turn Controlled Gamification Into Predictable Revenue
           </h1>
 
-          <p className="text-[#666] text-[15px] lg:text-base leading-[1.75] max-w-lg">
-            MComSpin is a business engagement and monetization platform. Embed controlled gamification into your commerce environment to automate lead capture, distribute rewards intelligently, and build collaborative partner ecosystems — all from a single infrastructure layer.
+          <p className="text-[#666] text-sm lg:text-[15px] leading-[1.75] max-w-lg">
+            MComSpin integrates enterprise-grade gamification directly into your commerce environments. Capture high-intent profile data, optimize surplus asset allocation, and direct collaborative traffic within your partner ecosystem.
           </p>
 
-          <div className="flex flex-col sm:flex-row gap-4 pt-2">
-            <Link href="/play" className="flex items-center justify-center text-[11px] font-bold tracking-[0.15em] bg-[#f97316] text-white px-8 py-4 rounded-full hover:bg-[#ea580c] hover:shadow-lg hover:shadow-[#f97316]/20 transition-all duration-300 uppercase">
-              See It In Action
+          <div className="flex flex-col sm:flex-row gap-3.5 pt-2 w-full sm:w-auto">
+            <Link href="/play" className="flex items-center justify-center text-[11px] font-bold tracking-[0.15em] bg-[#f97316] text-white px-8 py-4 rounded-xl hover:bg-[#ea580c] hover:shadow-lg hover:shadow-[#f97316]/20 transition-all duration-300 uppercase">
+              Launch Live Portal
             </Link>
-            <a href="#how-it-works" className="flex items-center justify-center text-[11px] font-bold tracking-[0.15em] border border-[#e0e0e0] bg-white text-[#1a1a1a] px-8 py-4 rounded-full hover:border-[#f97316]/30 hover:bg-[#fefcfa] transition-all duration-300 uppercase">
-              Explore Platform
+            <a href="#how-it-works" className="flex items-center justify-center text-[11px] font-bold tracking-[0.15em] border border-[#e0e0e0] bg-white/85 text-[#1a1a1a] px-8 py-4 rounded-xl hover:border-[#f97316]/30 hover:bg-[#fafaf9] transition-all duration-300 uppercase">
+              Explore Architecture
             </a>
           </div>
 
-          {/* Trust metrics */}
-          <div className="grid grid-cols-3 gap-10 pt-10 border-t border-[#eee] w-full">
+          {/* Trust stats */}
+          <div className="grid grid-cols-3 gap-8 pt-10 border-t border-[#eee] w-full">
             <div>
               <p className="text-2xl lg:text-3xl font-black font-display text-[#1a1a1a]">100%</p>
-              <p className="text-[10px] text-[#999] font-semibold mt-1.5 uppercase tracking-[0.12em] leading-snug">Automated<br />Lead Routing</p>
+              <p className="text-[9px] text-[#999] font-bold mt-1.5 uppercase tracking-[0.12em] leading-normal">Automated<br />Lead Dispatch</p>
             </div>
             <div>
               <p className="text-2xl lg:text-3xl font-black font-display text-[#1a1a1a]">Weekly</p>
-              <p className="text-[10px] text-[#999] font-semibold mt-1.5 uppercase tracking-[0.12em] leading-snug">Partner<br />Spotlight Cycles</p>
+              <p className="text-[9px] text-[#999] font-bold mt-1.5 uppercase tracking-[0.12em] leading-normal">Spotlight<br />Equity Cycles</p>
             </div>
             <div>
-              <p className="text-2xl lg:text-3xl font-black font-display text-[#1a1a1a]">86%</p>
-              <p className="text-[10px] text-[#999] font-semibold mt-1.5 uppercase tracking-[0.12em] leading-snug">Inventory<br />Clearance Rate</p>
+              <p className="text-2xl lg:text-3xl font-black font-display text-[#1a1a1a]">86.2%</p>
+              <p className="text-[9px] text-[#999] font-bold mt-1.5 uppercase tracking-[0.12em] leading-normal">Surplus Asset<br />Liquidated</p>
             </div>
           </div>
         </div>
 
-        {/* Right — Interactive Micro-Demo Wheel */}
-        <div className="flex flex-col items-center justify-center relative">
-          {/* Background ecosystem cards */}
-          <div className="absolute -top-4 -left-4 z-20 bg-white border border-[#eee] shadow-lg shadow-black/[0.04] p-3.5 rounded-xl flex items-center gap-3 select-none pointer-events-none animate-luxury-float">
-            <div className="w-2 h-2 rounded-full bg-[#f97316]" />
-            <div>
-              <span className="text-[8px] font-bold text-[#aaa] uppercase tracking-[0.12em] block">Lead Velocity</span>
-              <span className="text-[11px] font-extrabold text-[#1a1a1a]">+18.4% this week</span>
-            </div>
-          </div>
-
-          <div className="absolute -bottom-4 -right-4 z-20 bg-white border border-[#eee] shadow-lg shadow-black/[0.04] p-3.5 rounded-xl flex items-center gap-3 select-none pointer-events-none animate-luxury-float" style={{ animationDelay: '3s' }}>
+        {/* Right - Live Plinko Demo Dashboard */}
+        <div className="flex flex-col items-center justify-center relative w-full">
+          {/* Floating cards */}
+          <div className="absolute -top-6 -left-6 z-20 bg-white/90 border border-[#eee] shadow-lg shadow-black/[0.03] px-4 py-3 rounded-xl flex items-center gap-3 pointer-events-none animate-luxury-float">
             <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
             <div>
-              <span className="text-[8px] font-bold text-[#aaa] uppercase tracking-[0.12em] block">Routing Queue</span>
-              <span className="text-[11px] font-extrabold text-[#1a1a1a]">3 partners active</span>
+              <span className="text-[8px] font-bold text-[#aaa] uppercase tracking-[0.15em] block">Active Streams</span>
+              <span className="text-[11px] font-black text-[#1a1a1a]">+1,840 conversions</span>
             </div>
           </div>
 
-          {/* Wheel container */}
-          <div className="w-full max-w-[420px] p-7 rounded-2xl border border-[#e8e8e5] bg-white shadow-xl shadow-black/[0.04] relative z-10">
-            <div className="absolute top-0 left-0 w-8 h-8 border-t-2 border-l-2 border-[#f97316]/20 rounded-tl-2xl pointer-events-none" />
-            <div className="absolute bottom-0 right-0 w-8 h-8 border-b-2 border-r-2 border-[#f97316]/20 rounded-br-2xl pointer-events-none" />
+          <div className="absolute -bottom-6 -right-6 z-20 bg-white/90 border border-[#eee] shadow-lg shadow-black/[0.03] px-4 py-3 rounded-xl flex items-center gap-3 pointer-events-none animate-luxury-float-delayed">
+            <Zap className="w-3.5 h-3.5 text-[#f97316]" />
+            <div>
+              <span className="text-[8px] font-bold text-[#aaa] uppercase tracking-[0.15em] block">System Capacity</span>
+              <span className="text-[11px] font-black text-[#1a1a1a]">Optimal Allocation</span>
+            </div>
+          </div>
 
-            <div className="text-center mb-5">
-              <span className="text-[10px] font-bold tracking-[0.15em] text-[#aaa] uppercase">Interactive Demo</span>
-              <h3 className="text-sm font-display font-extrabold mt-1 text-[#1a1a1a]">Controlled Engagement Preview</h3>
+          {/* Plinko Board Wrapper */}
+          <div className="w-full max-w-[400px] rounded-2xl border border-[#e8e8e5] bg-white shadow-xl shadow-black/[0.04] p-5 relative overflow-hidden">
+            <div className="absolute top-0 left-0 w-8 h-8 border-t border-l border-[#f97316]/30 rounded-tl-2xl pointer-events-none" />
+            <div className="absolute bottom-0 right-0 w-8 h-8 border-b border-r border-[#f97316]/30 rounded-br-2xl pointer-events-none" />
+
+            <div className="text-center mb-4">
+              <span className="text-[9px] font-extrabold tracking-[0.2em] text-[#aaa] uppercase">Ecosystem Demo</span>
+              <h3 className="text-sm font-display font-extrabold mt-0.5 text-[#1a1a1a]">Real-Time Plinko Simulation</h3>
             </div>
 
-            {/* Spinner */}
-            <div className="relative w-[260px] h-[260px] mx-auto flex items-center justify-center select-none">
-              {/* Outer subtle ring */}
-              <div className="absolute inset-0 rounded-full border border-[#eee] bg-[#fafaf9]" />
-
-              {/* Watch-face ticks */}
-              <svg className="absolute inset-0 w-full h-full pointer-events-none z-0 animate-[spin_180s_linear_infinite]" viewBox="0 0 100 100">
-                <circle cx="50" cy="50" r="48" fill="none" stroke="#eee" strokeWidth="0.15" />
-                {Array.from({ length: 60 }).map((_, idx) => {
-                  const angle = idx * 6;
-                  const isMajor = idx % 5 === 0;
-                  const isSector = idx % 10 === 0;
-                  const r1 = isMajor ? (isSector ? 44.5 : 45.2) : 46;
-                  const r2 = 48;
-                  const rad = (angle * Math.PI) / 180;
-                  return (
-                    <line
-                      key={idx}
-                      x1={50 + r1 * Math.cos(rad)}
-                      y1={50 + r1 * Math.sin(rad)}
-                      x2={50 + r2 * Math.cos(rad)}
-                      y2={50 + r2 * Math.sin(rad)}
-                      stroke={isSector ? '#f97316' : isMajor ? '#999' : '#ddd'}
-                      strokeWidth={isSector ? '0.4' : isMajor ? '0.25' : '0.15'}
-                    />
-                  );
-                })}
-              </svg>
-
-              {/* Pointer */}
-              <div className="absolute -top-[14px] z-30 flex flex-col items-center pointer-events-none drop-shadow-md">
-                <div className="w-3.5 h-1 bg-[#1a1a1a] rounded-t-sm" />
-                <svg width="14" height="24" viewBox="0 0 18 30" fill="none">
-                  <path d="M9 28L1 1L17 1L9 28Z" fill="#1a1a1a" />
-                  <path d="M9 22L3.5 3L14.5 3L9 22Z" fill="#f97316" />
-                  <circle cx="9" cy="3" r="1" fill="white" />
-                </svg>
-              </div>
-
-              {/* Inner bezel + spinning dial */}
-              <div className="relative w-[215px] h-[215px] rounded-full bg-white border-[3px] border-[#1a1a1a] shadow-[0_6px_20px_rgba(0,0,0,0.06),inset_0_2px_8px_rgba(0,0,0,0.1)] flex items-center justify-center z-10 overflow-hidden">
-                <div
-                  className="w-full h-full rounded-full overflow-hidden transition-transform ease-out relative"
-                  style={{
-                    transform: `rotate(${rotation}deg)`,
-                    transitionDuration: isSpinning ? '4.5s' : '0s',
-                  }}
-                >
-                  <svg viewBox="0 0 100 100" className="w-full h-full -rotate-90">
-                    <defs>
-                      <radialGradient id="lw" cx="50%" cy="50%" r="50%">
-                        <stop offset="0%" stopColor="#fff" />
-                        <stop offset="100%" stopColor="#f5f5f0" />
-                      </radialGradient>
-                      <radialGradient id="dw" cx="50%" cy="50%" r="50%">
-                        <stop offset="0%" stopColor="#2a2a2a" />
-                        <stop offset="100%" stopColor="#161616" />
-                      </radialGradient>
-                    </defs>
-                    <path d="M50,50 L50,0 A50,50 0 0,1 93.3,25 Z" fill="url(#lw)" stroke="#eee" strokeWidth="0.3" />
-                    <path d="M50,50 L93.3,25 A50,50 0 0,1 93.3,75 Z" fill="url(#dw)" stroke="rgba(255,255,255,0.04)" strokeWidth="0.3" />
-                    <path d="M50,50 L93.3,75 A50,50 0 0,1 50,100 Z" fill="url(#lw)" stroke="#eee" strokeWidth="0.3" />
-                    <path d="M50,50 L50,100 A50,50 0 0,1 6.7,75 Z" fill="url(#dw)" stroke="rgba(255,255,255,0.04)" strokeWidth="0.3" />
-                    <path d="M50,50 L6.7,75 A50,50 0 0,1 6.7,25 Z" fill="url(#lw)" stroke="#eee" strokeWidth="0.3" />
-                    <path d="M50,50 L6.7,25 A50,50 0 0,1 50,0 Z" fill="url(#dw)" stroke="rgba(255,255,255,0.04)" strokeWidth="0.3" />
-                  </svg>
-
-                  {teaserPrizes.map((prize, idx) => {
-                    const labelAngle = idx * 60 + 30;
-                    const isDark = idx % 2 === 1;
-                    return (
-                      <div
-                        key={idx}
-                        className="absolute top-0 left-1/2 h-1/2 origin-bottom -translate-x-1/2 flex flex-col items-center justify-start pt-4 select-none"
-                        style={{ transform: `rotate(${labelAngle}deg)`, width: '65px' }}
-                      >
-                        <div className={`p-1.5 rounded-full border shadow-sm mb-1 ${isDark ? 'bg-[#1a1a1a] border-white/10 text-[#ffa15f]' : 'bg-[#fafaf9] border-[#eee] text-[#f97316]'}`}>
-                          {getIcon(prize.icon)}
-                        </div>
-                        <span className={`text-[7px] font-black tracking-[0.06em] text-center uppercase leading-tight ${isDark ? 'text-white' : 'text-[#1a1a1a]'}`}>
-                          {prize.labelTop}
-                        </span>
-                        <span className={`w-3 h-[1px] my-0.5 ${isDark ? 'bg-white/15' : 'bg-[#ddd]'}`} />
-                        <span className={`text-[5px] font-black tracking-[0.15em] text-center uppercase ${isDark ? 'text-[#ffa15f]' : 'text-[#f97316]'}`}>
-                          {prize.labelBottom}
-                        </span>
-                      </div>
-                    );
-                  })}
-                </div>
-
-                {/* Sapphire glass */}
-                <div className="absolute inset-0 rounded-full pointer-events-none z-[15] bg-gradient-to-tr from-transparent via-white/[0.06] to-white/[0.15]" />
-
-                {/* Center hub */}
-                <div className="absolute w-11 h-11 rounded-full bg-white shadow-[0_4px_14px_rgba(0,0,0,0.15)] flex items-center justify-center border-[3px] border-[#1a1a1a] z-20">
-                  <div className="w-7 h-7 rounded-full bg-gradient-to-br from-stone-50 to-stone-200 border border-stone-300 flex items-center justify-center">
-                    <div className="w-4 h-4 rounded-full bg-white border-2 border-[#1a1a1a] flex items-center justify-center">
-                      <span className="w-1.5 h-1.5 bg-[#f97316] rounded-full shadow-[0_0_6px_#f97316] animate-pulse" />
-                    </div>
+            {/* Board Container */}
+            <div ref={containerRef} className="relative w-full h-[380px] rounded-xl overflow-hidden border border-[#eee]">
+              <canvas ref={canvasRef} className="w-full h-full block" />
+              
+              {/* Bins labels overlays */}
+              <div className="absolute bottom-0 inset-x-0 h-10 flex border-t border-[#e8e8e5]/60 pointer-events-none select-none bg-white">
+                {plinkoBins.map((bin, i) => (
+                  <div key={i} className="flex-1 flex flex-col items-center justify-center border-r border-[#e8e8e5]/40 last:border-r-0">
+                    <span className="text-[7px] font-black tracking-wider text-[#1a1a1a]">{bin.label}</span>
+                    <span className="text-[6px] font-extrabold tracking-widest text-[#f97316] uppercase mt-0.5">{i % 2 === 0 ? 'Tier 1' : 'Tier 2'}</span>
                   </div>
-                </div>
+                ))}
               </div>
             </div>
 
-            {/* Spin button */}
-            <div className="mt-5 flex flex-col items-center w-full">
-              <button
-                onClick={handleTeaserSpin}
-                disabled={isSpinning}
-                className="w-full bg-[#1a1a1a] hover:bg-[#f97316] text-white py-3.5 rounded-xl font-bold tracking-[0.12em] text-[11px] uppercase transition-all duration-300 disabled:bg-[#aaa] disabled:cursor-not-allowed shadow-sm active:scale-[0.98] flex items-center justify-center gap-2"
-              >
-                {isSpinning ? 'Processing...' : 'Activate Engagement Demo'}
-                {!isSpinning && (
-                  <svg className="w-3.5 h-3.5 text-[#f97316] group-hover:text-white" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M13 5l7 7-7 7M5 5l7 7-7 7" />
-                  </svg>
-                )}
-              </button>
-
-              <div className="w-full mt-4 min-h-[48px] flex items-center justify-center">
-                {prizeResult ? (
-                  <div className="text-center p-3.5 rounded-xl bg-[#f97316]/[0.06] border border-[#f97316]/[0.12] w-full animate-fade-in-up">
-                    <p className="text-[9px] uppercase font-bold tracking-[0.15em] text-[#f97316]">Ecosystem Event Recorded</p>
-                    <p className="text-xs font-semibold mt-1 text-[#1a1a1a] leading-relaxed">{prizeResult}</p>
+            {/* Telemetry Logger */}
+            <div className="mt-4 bg-[#1a1a1a] rounded-xl p-3.5 space-y-2">
+              <div className="flex items-center justify-between border-b border-white/5 pb-2">
+                <span className="text-[8px] font-bold text-[#f97316] tracking-[0.15em] uppercase">Ecosystem Logs</span>
+                <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+              </div>
+              <div className="font-mono text-[9px] space-y-1.5 max-h-[72px] overflow-y-hidden text-zinc-300">
+                {simulationEvents.map((evt) => (
+                  <div key={evt.id} className="flex items-start justify-between gap-1 opacity-90 animate-fade-in-up">
+                    <span className="text-stone-400 text-[8px] flex-shrink-0">{evt.time}</span>
+                    <span className="flex-1 truncate pl-1">{evt.message}</span>
+                    <span className="text-[#f97316] text-[8px] flex-shrink-0 font-bold uppercase">{evt.bin}</span>
                   </div>
-                ) : (
-                  <p className="text-[11px] text-[#aaa] text-center leading-relaxed">
-                    {isSpinning ? 'Evaluating active partner allocations...' : 'Outcomes are determined by backend probability weights, not chance.'}
-                  </p>
-                )}
+                ))}
               </div>
             </div>
           </div>
@@ -403,48 +515,48 @@ export default function LandingPage() {
       </section>
 
       {/* ═══════════════════════════════════════════════════
-          SECTION 2 — THE PROBLEM
+          SECTION 2 — THE GROWTH BOTTLENECK
       ═══════════════════════════════════════════════════ */}
       <section
         id="problem"
         ref={setSectionRef('problem')}
-        className={`py-28 px-6 lg:px-12 bg-[#fafaf9] border-y border-[#eee] ${sectionClass('problem')}`}
+        className={`py-28 px-6 lg:px-12 bg-[#fafaf9] border-y border-[#eee]/60 relative z-10 ${sectionClass('problem')}`}
       >
         <div className="max-w-7xl mx-auto">
           <div className="max-w-2xl mb-16 space-y-4">
-            <span className="text-[10px] font-bold tracking-[0.2em] text-[#f97316] uppercase">The Growth Bottleneck</span>
-            <h2 className="text-3xl lg:text-[2.75rem] font-display font-black tracking-[-0.02em] text-[#1a1a1a] leading-tight">
-              Traditional Marketing Leaves Revenue on the Table
+            <span className="text-[10px] font-bold tracking-[0.2em] text-[#f97316] uppercase">The Leakage</span>
+            <h2 className="text-3xl lg:text-[2.75rem] font-display font-black tracking-[-0.03em] text-[#1a1a1a] leading-tight">
+              Traditional Engagement Bleeds Merchant Value
             </h2>
-            <p className="text-[#777] text-[15px] leading-[1.75]">
-              Businesses pour capital into disconnected campaigns, static loyalty programs, and isolated storefronts. The result: low conversion, wasted inventory, and zero collaboration between complementary brands.
+            <p className="text-[#666] text-sm lg:text-[15px] leading-[1.75]">
+              Most customer capture campaigns run on isolated silos. Customer data hits cold forms, surplus capacity lies dormant, and complementary brands spend independently on redundant user acquisition.
             </p>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6 lg:gap-8">
             {[
               {
-                title: 'Wasted Capacity',
-                desc: 'Unused booking slots, quiet retail hours, and surplus stock cost businesses thousands every week. Legacy tools cannot redistribute these assets dynamically to meet real-time demand.',
-                icon: <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126z" /></svg>,
+                title: 'Unutilized Stock & Slots',
+                desc: 'Unallocated appointment slots, off-peak hours, and surplus inventory cost merchants billions. Legacy solutions lack the dynamic routing required to liquidate these assets programmatically.',
+                icon: <Box className="w-5 h-5" />,
               },
               {
-                title: 'High-Friction Lead Capture',
-                desc: 'Customers skip cold sign-up forms and generic newsletters. Without an immediate value exchange, prospects stay anonymous — and acquisition costs keep climbing.',
-                icon: <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636" /></svg>,
+                title: 'Friction-Heavy Capture',
+                desc: 'Cold forms and pop-up newsletters receive dwindling conversion. Without an immediate high-end gamification loop, shoppers remain anonymous and customer lifetime value stays flat.',
+                icon: <Users className="w-5 h-5" />,
               },
               {
-                title: 'Siloed Partnerships',
-                desc: 'Local businesses spend marketing budgets independently, competing for the same audience. They share customers but never share infrastructure, traffic, or lead intelligence.',
-                icon: <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M13.19 8.688a4.5 4.5 0 011.242 7.244l-4.5 4.5a4.5 4.5 0 01-6.364-6.364l1.757-1.757m9.86-3.128a4.5 4.5 0 00-6.364 0l-4.5 4.5a4.5 4.5 0 001.242 7.244" /></svg>,
+                title: 'Isolated Marketing Budgets',
+                desc: 'Local storefronts and online stores buy traffic independently, paying maximum rates. Collaborative networks utilize shared infrastructure to swap leads at point of sale.',
+                icon: <Route className="w-5 h-5" />,
               },
             ].map((item, idx) => (
-              <div key={idx} className="bg-white p-8 rounded-2xl border border-[#eee] shadow-sm hover:shadow-md hover:translate-y-[-3px] transition-all duration-300 space-y-5">
-                <div className="w-10 h-10 rounded-xl bg-[#f97316]/[0.08] flex items-center justify-center text-[#f97316]">
+              <div key={idx} className="bg-white p-8 rounded-xl border border-[#eee] shadow-sm hover:shadow-md hover:translate-y-[-2px] transition-all duration-300 space-y-5">
+                <div className="w-10 h-10 rounded-lg bg-[#f97316]/[0.06] flex items-center justify-center text-[#f97316]">
                   {item.icon}
                 </div>
-                <h3 className="text-sm font-bold font-display text-[#1a1a1a] uppercase tracking-[0.08em]">{item.title}</h3>
-                <p className="text-[#888] text-[13px] leading-[1.7]">{item.desc}</p>
+                <h3 className="text-xs font-bold font-display text-[#1a1a1a] uppercase tracking-[0.1em]">{item.title}</h3>
+                <p className="text-[#888] text-xs lg:text-[13px] leading-[1.7]">{item.desc}</p>
               </div>
             ))}
           </div>
@@ -452,44 +564,44 @@ export default function LandingPage() {
       </section>
 
       {/* ═══════════════════════════════════════════════════
-          SECTION 3 — HOW IT WORKS
+          SECTION 3 — PLATFORM FLOW / PROCESS
       ═══════════════════════════════════════════════════ */}
       <section
         id="how-it-works"
         ref={setSectionRef('how-it-works')}
-        className={`py-28 px-6 lg:px-12 max-w-7xl mx-auto text-center space-y-16 ${sectionClass('how-it-works')}`}
+        className={`py-28 px-6 lg:px-12 max-w-7xl mx-auto space-y-16 ${sectionClass('how-it-works')}`}
       >
-        <div className="max-w-2xl mx-auto space-y-4">
+        <div className="max-w-2xl mx-auto text-center space-y-4">
           <span className="text-[10px] font-bold tracking-[0.2em] text-[#f97316] uppercase">Platform Architecture</span>
-          <h2 className="text-3xl lg:text-[2.75rem] font-display font-black tracking-[-0.02em] text-[#1a1a1a] leading-tight">
+          <h2 className="text-3xl lg:text-[2.75rem] font-display font-black tracking-[-0.03em] text-[#1a1a1a] leading-tight">
             Six Steps From Asset to Revenue
           </h2>
-          <p className="text-[#777] text-[15px] leading-[1.75]">
-            A unified commerce pipeline that ingests merchant assets, activates customer engagement, and distributes qualified opportunities across your entire partner network.
+          <p className="text-[#777] text-sm lg:text-[15px] leading-[1.75]">
+            MComSpin provides a unified commerce loop that ingests merchant inventories, drives user action, and balances benefit returns throughout the partner web.
           </p>
         </div>
 
         <div className="relative p-6 lg:p-10 border border-[#eee] rounded-2xl bg-[#fafaf9]/50 overflow-hidden">
-          {/* Flow line */}
-          <div className="absolute inset-0 z-0 pointer-events-none hidden md:flex items-center">
-            <svg width="100%" height="4" className="mx-16">
-              <line x1="0" y1="2" x2="100%" y2="2" stroke="#f97316" strokeOpacity="0.15" strokeWidth="2" className="animate-flow-dash" />
+          {/* Connector Flow Line */}
+          <div className="absolute inset-x-0 top-1/2 -translate-y-1/2 z-0 pointer-events-none hidden lg:flex items-center px-16">
+            <svg width="100%" height="4">
+              <line x1="0" y1="2" x2="100%" y2="2" stroke="#f97316" strokeOpacity="0.1" strokeWidth="2" className="animate-flow-dash" />
             </svg>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-6 gap-5 relative z-10">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-6 gap-6 relative z-10">
             {[
-              { step: '01', title: 'Contribute', desc: 'Businesses pool stock, booking slots, and promotional assets into the shared network.' },
-              { step: '02', title: 'Structure', desc: 'Assets are organized into weighted reward tiers inside the centralized engine.' },
-              { step: '03', title: 'Calibrate', desc: 'Administrators configure probability weights, frequency caps, and distribution rules.' },
-              { step: '04', title: 'Engage', desc: 'Customers interact through embedded storefront widgets and controlled engagement loops.' },
-              { step: '05', title: 'Route', desc: 'Captured leads and qualified prospects are automatically routed to the right partner.' },
-              { step: '06', title: 'Convert', desc: 'Revenue is recorded, partner payouts are verified, and the cycle begins again.' },
+              { step: '01', title: 'Asset Pooling', desc: 'Participating brands list idle inventories and premium vouchers into the network.' },
+              { step: '02', title: 'Campaign Setup', desc: 'Assets are structured into themed campaigns using customizable Plinko setups.' },
+              { step: '03', title: 'Calibration', desc: 'Set admin control values, probability allocations, and partner weight parameters.' },
+              { step: '04', title: 'User Drop', desc: 'Customers access the Plinko gateway on checkout screens and play to unlock gifts.' },
+              { step: '05', title: 'Lead Routing', desc: 'Captured client profiles are automatically distributed to the active spotlight partner.' },
+              { step: '06', title: 'Conversions', desc: 'Physical check-ins are tracked, ROI calculations are generated, and loop repeats.' },
             ].map((item, idx) => (
-              <div key={idx} className="bg-white p-5 rounded-xl border border-[#eee] shadow-sm flex flex-col items-center text-center min-h-[165px] hover:shadow-md transition-shadow">
-                <span className="text-[10px] font-extrabold text-[#f97316] mb-3">{item.step}</span>
-                <h4 className="text-xs font-bold text-[#1a1a1a] uppercase tracking-[0.1em] mb-2">{item.title}</h4>
-                <p className="text-[11px] text-[#999] leading-[1.6]">{item.desc}</p>
+              <div key={idx} className="bg-white p-5 rounded-xl border border-[#eee] shadow-sm hover:shadow-md transition-all duration-300 flex flex-col items-center text-center">
+                <span className="text-[10px] font-black text-[#f97316] mb-3">{item.step}</span>
+                <h4 className="text-[11px] font-bold text-[#1a1a1a] uppercase tracking-[0.1em] mb-2">{item.title}</h4>
+                <p className="text-[11px] text-[#999] leading-relaxed">{item.desc}</p>
               </div>
             ))}
           </div>
@@ -497,76 +609,76 @@ export default function LandingPage() {
       </section>
 
       {/* ═══════════════════════════════════════════════════
-          SECTION 4 — GAMIFICATION ENGINE
+          SECTION 4 — PROBABILITY CALIBRATION
       ═══════════════════════════════════════════════════ */}
       <section
         id="engine"
         ref={setSectionRef('engine')}
-        className={`py-28 px-6 lg:px-12 bg-[#fafaf9] border-y border-[#eee] ${sectionClass('engine')}`}
+        className={`py-28 px-6 lg:px-12 bg-[#fafaf9] border-y border-[#eee]/60 ${sectionClass('engine')}`}
       >
         <div className="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-2 gap-16 items-center">
-          {/* Left — Copy */}
-          <div className="space-y-7">
+          {/* Left copy */}
+          <div className="space-y-6">
             <span className="text-[10px] font-bold tracking-[0.2em] text-[#f97316] uppercase">Probability Engine</span>
-            <h2 className="text-3xl lg:text-[2.75rem] font-display font-black tracking-[-0.02em] text-[#1a1a1a] leading-tight">
-              Complete Control Over Every Outcome
+            <h2 className="text-3xl lg:text-[2.75rem] font-display font-black tracking-[-0.03em] text-[#1a1a1a] leading-tight">
+              Complete Sovereignty Over Every Outcome
             </h2>
-            <p className="text-[#777] text-[15px] leading-[1.75]">
-              This is not random. MComSpin gives network administrators sovereign control over outcome probabilities. Adjust reward frequency, weight featured partners, set engagement caps, and fine-tune distribution logic — all through a real-time administrative console.
+            <p className="text-[#666] text-sm lg:text-[15px] leading-[1.75]">
+              MComSpin is not random chance. Operators set precise allocation structures to ensure budget safety. Programmatically boost priority weights for spotlight partners, caps daily distributions, and direct conversions to active targets in real-time.
             </p>
 
-            {/* Interactive slider */}
+            {/* Slider Widget */}
             <div className="space-y-4 bg-white p-6 rounded-xl border border-[#eee] shadow-sm">
-              <div className="flex items-center justify-between text-[11px] font-bold tracking-[0.1em] uppercase">
-                <span className="text-[#1a1a1a]">Spotlight Priority Weight</span>
+              <div className="flex items-center justify-between text-[10px] font-bold tracking-[0.15em] uppercase">
+                <span className="text-[#1a1a1a]">Spotlight Weight priority</span>
                 <span className="text-[#f97316]">{probValue}%</span>
               </div>
               <input
                 type="range"
-                min="0"
-                max="100"
+                min="10"
+                max="90"
                 value={probValue}
                 onChange={(e) => setProbValue(parseInt(e.target.value))}
                 className="w-full h-1.5 bg-stone-200 rounded-lg appearance-none cursor-pointer accent-[#f97316]"
               />
-              <div className="flex justify-between text-[9px] text-[#aaa] uppercase tracking-[0.1em] font-bold">
-                <span>Balanced</span>
-                <span>Medium</span>
-                <span>Maximum</span>
+              <div className="flex justify-between text-[8px] text-[#aaa] uppercase tracking-[0.15em] font-bold">
+                <span>Balanced Distribution</span>
+                <span>Spotlight Bias (L)</span>
+                <span>Maximum Bias (R)</span>
               </div>
             </div>
           </div>
 
-          {/* Right — Config panel mockup */}
+          {/* Right config preview */}
           <div>
-            <div className="bg-white p-7 rounded-2xl border border-[#eee] shadow-md space-y-5">
+            <div className="bg-white p-6 lg:p-8 rounded-xl border border-[#eee] shadow-md space-y-6">
               <div className="flex items-center justify-between border-b border-[#eee] pb-4">
                 <div>
-                  <h3 className="text-sm font-bold font-display text-[#1a1a1a] uppercase tracking-[0.06em]">Probability Configuration</h3>
-                  <p className="text-[10px] text-[#aaa] mt-0.5">Live outcome allocations across reward pool</p>
+                  <h3 className="text-xs font-bold font-display text-[#1a1a1a] uppercase tracking-[0.1em]">Allocation Matrix</h3>
+                  <p className="text-[9px] text-[#aaa] mt-0.5">Live outcome allocations across active prize bins</p>
                 </div>
                 <span className="w-2 h-2 rounded-full bg-[#f97316] animate-pulse" />
               </div>
 
-              <div className="space-y-3 text-xs">
+              <div className="space-y-3">
                 {[
-                  { label: 'Gift Voucher Distribution', weight: '15%', featured: false },
-                  { label: 'Lead Routing Dispatch', weight: `${probValue}%`, featured: true },
-                  { label: 'Surplus Stock Clearance', weight: '15%', featured: false },
-                  { label: 'Booking Slot Allocation', weight: `${Math.max(0, 100 - 30 - probValue)}%`, featured: false },
+                  { label: 'Featured B2B Voucher', weight: `${probValue > 60 ? '45%' : '15%'}`, featured: probValue > 60 },
+                  { label: 'Lead Capture Gate Routing', weight: `${probValue}%`, featured: true },
+                  { label: 'Surplus Excess Clearance', weight: `${Math.max(10, 100 - probValue - 20)}%`, featured: false },
+                  { label: 'Booking Time Allocation', weight: '20%', featured: false },
                 ].map((row, idx) => (
                   <div
                     key={idx}
-                    className={`flex justify-between items-center p-3.5 rounded-xl border transition-all duration-300 ${
+                    className={`flex justify-between items-center p-3.5 rounded-lg border transition-all duration-300 ${
                       row.featured
-                        ? 'bg-[#f97316]/[0.05] border-[#f97316]/[0.15]'
+                        ? 'bg-[#f97316]/[0.05] border-[#f97316]/[0.2] shadow-sm'
                         : 'bg-[#fafaf9] border-[#eee]'
                     }`}
                   >
-                    <span className={`font-semibold uppercase tracking-[0.08em] text-[10px] ${row.featured ? 'text-[#f97316] font-bold' : 'text-[#555]'}`}>
-                      {row.label}{row.featured ? ' (Featured)' : ''}
+                    <span className={`font-bold uppercase tracking-[0.1em] text-[9px] ${row.featured ? 'text-[#f97316]' : 'text-[#666]'}`}>
+                      {row.label} {row.featured && '(Featured)'}
                     </span>
-                    <span className={`font-bold ${row.featured ? 'text-[#f97316] text-[13px]' : 'text-[#888]'}`}>{row.weight}</span>
+                    <span className={`font-black text-xs ${row.featured ? 'text-[#f97316]' : 'text-[#1a1a1a]'}`}>{row.weight}</span>
                   </div>
                 ))}
               </div>
@@ -584,30 +696,28 @@ export default function LandingPage() {
         className={`py-28 px-6 lg:px-12 max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-12 gap-16 items-center ${sectionClass('partners')}`}
       >
         <div className="lg:col-span-5 space-y-6">
-          <span className="text-[10px] font-bold tracking-[0.2em] text-[#f97316] uppercase">Collaborative Rotation</span>
-          <h2 className="text-3xl lg:text-[2.75rem] font-display font-black tracking-[-0.02em] text-[#1a1a1a] leading-tight">
-            Every Partner Gets the Spotlight
+          <span className="text-[10px] font-bold tracking-[0.2em] text-[#f97316] uppercase">Round-Robin Equity</span>
+          <h2 className="text-3xl lg:text-[2.75rem] font-display font-black tracking-[-0.03em] text-[#1a1a1a] leading-tight">
+            Every Merchant Shares the Spotlight
           </h2>
-          <p className="text-[#777] text-[15px] leading-[1.75]">
-            Multiple businesses contribute assets into a single shared network. Each week, the system automatically shifts the spotlight to a new featured partner — routing all captured leads, foot traffic, and digital conversions their way.
+          <p className="text-[#666] text-sm lg:text-[15px] leading-[1.75]">
+            Ecosystem campaigns work best when everyone gains. The automated rotation engine shifts the spotlight target on program cycles, driving targeted peaks of consumer attention, store visits, and email list expansion to each member brand.
           </p>
-          <p className="text-[#777] text-[15px] leading-[1.75]">
-            Over time, every contributing business benefits from the collective engagement of the entire ecosystem. Shared investment, distributed returns.
-          </p>
-          <div className="p-4 bg-[#fafaf9] border-l-[3px] border-[#f97316] rounded-r-xl">
-            <h4 className="text-[10px] font-extrabold text-[#1a1a1a] uppercase tracking-[0.12em]">Round-Robin Equity</h4>
-            <p className="text-[13px] text-[#888] mt-1 leading-relaxed">
-              Each partner receives a concentrated surge in qualified leads during their spotlight window, powered by the collective traffic of the entire network.
+
+          <div className="p-4 bg-[#fafaf9] border-l-2 border-[#f97316] rounded-r-lg">
+            <h4 className="text-[10px] font-extrabold text-[#1a1a1a] uppercase tracking-[0.15em]">Ecosystem Network Effect</h4>
+            <p className="text-[12px] text-[#888] mt-1.5 leading-relaxed">
+              When checkout flows are linked, members gain access to pre-qualified buyers that standard search ads fail to reach efficiently.
             </p>
           </div>
         </div>
 
-        {/* Spotlight simulation */}
+        {/* Live Spotlight Simulation Panel */}
         <div className="lg:col-span-7 w-full">
-          <div className="bg-[#fafaf9] p-6 lg:p-8 rounded-2xl border border-[#eee] shadow-sm space-y-5">
+          <div className="bg-[#fafaf9] p-6 lg:p-8 border border-[#eee] rounded-xl shadow-sm space-y-5">
             <div className="flex items-center justify-between border-b border-[#eee] pb-4">
-              <span className="text-[11px] font-bold tracking-[0.12em] text-[#888] uppercase">Spotlight Rotation</span>
-              <span className="px-2.5 py-1 rounded-md bg-[#f97316]/[0.08] border border-[#f97316]/[0.15] text-[9px] font-bold text-[#f97316] tracking-[0.12em] uppercase">Live Simulation</span>
+              <span className="text-[9px] font-bold tracking-[0.15em] text-[#888] uppercase">Active Partner Rotation</span>
+              <span className="px-2.5 py-1 rounded-sm bg-orange-100 border border-orange-200 text-[8px] font-black text-[#f97316] tracking-[0.15em] uppercase animate-pulse">Live Simulation</span>
             </div>
 
             <div className="space-y-3">
@@ -618,29 +728,30 @@ export default function LandingPage() {
                     key={index}
                     className={`p-4 rounded-xl border transition-all duration-500 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 ${
                       isActive
-                        ? 'border-[#f97316] bg-white shadow-md animate-spotlight'
-                        : 'border-[#eee] bg-transparent opacity-50'
+                        ? 'border-[#f97316] bg-white shadow-md'
+                        : 'border-[#eee] bg-white/40 opacity-40'
                     }`}
                   >
                     <div>
                       <div className="flex items-center gap-2">
-                        <span className={`w-2 h-2 rounded-full ${isActive ? 'bg-[#f97316] animate-pulse' : 'bg-[#ccc]'}`} />
-                        <h4 className="font-bold font-display text-sm text-[#1a1a1a]">{partner.name}</h4>
+                        <span className={`w-1.5 h-1.5 rounded-full ${isActive ? 'bg-[#f97316] animate-ping' : 'bg-[#ccc]'}`} />
+                        <h4 className="font-black font-display text-sm tracking-tight text-[#1a1a1a]">{partner.name}</h4>
                       </div>
-                      <p className="text-[11px] text-[#aaa] mt-0.5 ml-4">{partner.category}</p>
+                      <p className="text-[10px] text-[#aaa] mt-0.5">{partner.category}</p>
                     </div>
-                    <div className="flex items-center gap-6 text-xs ml-4 sm:ml-0">
+                    
+                    <div className="flex items-center gap-6 text-[11px] font-semibold text-[#1a1a1a]">
                       <div>
-                        <span className="text-[9px] text-[#aaa] font-semibold uppercase tracking-[0.1em] block">Leads</span>
-                        <span className={`font-bold ${isActive ? 'text-[#f97316]' : 'text-[#1a1a1a]'}`}>{partner.leads}</span>
+                        <span className="text-[8px] text-[#aaa] font-bold uppercase tracking-[0.1em] block">Leads</span>
+                        <span className={isActive ? 'text-[#f97316] font-black' : ''}>{partner.leads}</span>
                       </div>
                       <div>
-                        <span className="text-[9px] text-[#aaa] font-semibold uppercase tracking-[0.1em] block">Conversion</span>
-                        <span className="font-bold text-[#1a1a1a]">{partner.conversion}</span>
+                        <span className="text-[8px] text-[#aaa] font-bold uppercase tracking-[0.1em] block">Conversion</span>
+                        <span>{partner.conversion}</span>
                       </div>
                       <div>
-                        <span className="text-[9px] text-[#aaa] font-semibold uppercase tracking-[0.1em] block">Revenue</span>
-                        <span className="font-black text-[#1a1a1a]">{partner.revenue}</span>
+                        <span className="text-[8px] text-[#aaa] font-bold uppercase tracking-[0.1em] block">Revenue</span>
+                        <span className="font-extrabold">{partner.revenue}</span>
                       </div>
                     </div>
                   </div>
@@ -652,96 +763,99 @@ export default function LandingPage() {
       </section>
 
       {/* ═══════════════════════════════════════════════════
-          SECTION 6 — STOREFRONT EMBED
+          SECTION 6 — EMBED DEMO
       ═══════════════════════════════════════════════════ */}
       <section
         id="embed"
         ref={setSectionRef('embed')}
-        className={`py-28 px-6 lg:px-12 bg-[#fafaf9] border-y border-[#eee] ${sectionClass('embed')}`}
+        className={`py-28 px-6 lg:px-12 bg-[#fafaf9] border-y border-[#eee]/60 ${sectionClass('embed')}`}
       >
         <div className="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-12 gap-16 items-center">
           {/* Mockup */}
           <div className="lg:col-span-7 w-full order-2 lg:order-1">
             <div className="bg-white rounded-xl border border-[#eee] shadow-xl overflow-hidden relative">
-              {/* Browser bar */}
-              <div className="bg-[#fafaf9] border-b border-[#eee] px-4 py-3 flex items-center justify-between">
+              {/* Browser navigation bar */}
+              <div className="bg-[#fafaf9] border-b border-[#eee] px-4 py-3 flex items-center justify-between select-none">
                 <div className="flex items-center gap-1.5">
-                  <span className="w-2.5 h-2.5 rounded-full bg-[#ddd]" />
-                  <span className="w-2.5 h-2.5 rounded-full bg-[#ddd]" />
-                  <span className="w-2.5 h-2.5 rounded-full bg-[#ddd]" />
+                  <span className="w-2.5 h-2.5 rounded-full bg-[#eee]" />
+                  <span className="w-2.5 h-2.5 rounded-full bg-[#eee]" />
+                  <span className="w-2.5 h-2.5 rounded-full bg-[#eee]" />
                 </div>
-                <span className="text-[10px] text-[#aaa] font-mono tracking-wide">https://store.example.com/checkout</span>
+                <span className="text-[9px] text-[#aaa] font-mono tracking-wide">https://boutique.meridian.com/checkout</span>
                 <div className="w-4" />
               </div>
 
-              {/* Storefront mockup */}
-              <div className="p-8 space-y-5 relative min-h-[360px] bg-white flex flex-col justify-between">
+              {/* Checkout mockup */}
+              <div className="p-8 space-y-6 relative min-h-[350px] bg-white flex flex-col justify-between">
                 <div className="space-y-4">
-                  <div className="flex justify-between items-center border-b border-[#f0f0f0] pb-4">
-                    <span className="font-display font-black text-sm uppercase tracking-[0.06em] text-[#1a1a1a]">EXAMPLE STORE</span>
-                    <span className="text-[11px] text-[#999] font-semibold font-mono">CART / 2 ITEMS</span>
+                  <div className="flex justify-between items-center border-b border-[#eee] pb-4">
+                    <span className="font-display font-black text-sm uppercase tracking-[0.1em] text-[#1a1a1a]">Checkout Details</span>
+                    <span className="text-[10px] text-[#aaa] font-bold">2 items in cart</span>
                   </div>
 
                   <div className="space-y-2.5">
                     <div className="flex justify-between items-center text-xs">
-                      <span className="text-[#666]">Premium Cashmere Blazer</span>
-                      <span className="font-bold text-[#1a1a1a]">$340.00</span>
+                      <span className="text-[#666]">Premium Wool Coat</span>
+                      <span className="font-extrabold text-[#1a1a1a]">£290.00</span>
                     </div>
                     <div className="flex justify-between items-center text-xs">
-                      <span className="text-[#666]">Silk-Blend Waistcoat</span>
-                      <span className="font-bold text-[#1a1a1a]">$110.00</span>
+                      <span className="text-[#666]">Silk Necktie</span>
+                      <span className="font-extrabold text-[#1a1a1a]">£60.00</span>
                     </div>
-                    <div className="border-t border-[#f0f0f0] pt-3 flex justify-between items-center text-sm">
-                      <span className="font-bold text-[#1a1a1a]">ORDER TOTAL</span>
-                      <span className="font-black text-[#1a1a1a]">$450.00</span>
+                    <div className="border-t border-[#eee] pt-3 flex justify-between items-center text-sm">
+                      <span className="font-bold text-[#1a1a1a]">Order Total</span>
+                      <span className="font-black text-[#1a1a1a]">£350.00</span>
                     </div>
                   </div>
                 </div>
 
-                {/* MComSpin widget */}
-                <div className="w-full flex items-center justify-between p-4 rounded-xl border border-[#eee] bg-[#fafaf9] mt-6">
-                  <div>
-                    <h5 className="text-[11px] font-bold text-[#1a1a1a] uppercase tracking-[0.06em]">MComSpin Engagement Active</h5>
-                    <p className="text-[9px] text-[#aaa]">Complete your purchase to unlock partner rewards</p>
+                {/* Embedded Widget */}
+                <div className="w-full flex items-center justify-between p-4 rounded-xl border border-orange-200 bg-[#f97316]/[0.03] mt-4 shadow-sm select-none">
+                  <div className="space-y-0.5">
+                    <div className="flex items-center gap-1.5">
+                      <CheckCircle2 className="w-3.5 h-3.5 text-[#f97316]" />
+                      <h5 className="text-[10px] font-black text-[#1a1a1a] uppercase tracking-[0.08em]">MComSpin Partner Bonus Active</h5>
+                    </div>
+                    <p className="text-[9px] text-[#888] pl-5">Complete purchase to drop ball and claim a free partner gift</p>
                   </div>
-                  <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
                 </div>
 
-                <button className="w-full bg-[#1a1a1a] text-white py-3.5 rounded-lg text-xs font-bold uppercase tracking-[0.1em] mt-3">
-                  Proceed to Payment
+                <button className="w-full bg-[#1a1a1a] text-white py-3.5 rounded-lg text-xs font-bold uppercase tracking-[0.15em] mt-2 shadow-md hover:bg-[#f97316] transition-colors">
+                  Complete Payment
                 </button>
               </div>
 
-              {/* Floating widget callout */}
-              <div className="absolute top-1/3 right-4 bg-white border-l-[3px] border-l-[#f97316] border border-[#eee] shadow-2xl p-4 rounded-r-xl max-w-[180px] select-none text-left space-y-1.5 animate-luxury-float z-30">
+              {/* Float badge */}
+              <div className="absolute top-1/3 right-4 bg-white/95 border-l-2 border-l-[#f97316] border border-[#eee] shadow-xl p-4 rounded-r-lg max-w-[170px] select-none text-left space-y-1.5 animate-luxury-float z-30">
                 <div className="flex items-center gap-1.5">
-                  <span className="w-1.5 h-1.5 rounded-full bg-[#f97316] animate-pulse" />
-                  <span className="text-[8px] font-bold text-[#f97316] uppercase tracking-[0.1em]">Live Widget</span>
+                  <span className="w-1 h-1 rounded-full bg-[#f97316] animate-pulse" />
+                  <span className="text-[8px] font-extrabold text-[#f97316] uppercase tracking-[0.1em]">Embed Widget</span>
                 </div>
                 <p className="text-[9px] text-[#888] leading-relaxed">
-                  Embedded checkout integrations generate 4.8× higher immediate lead capture volume.
+                  Easily integrate the widget using a simple API script injection.
                 </p>
               </div>
             </div>
           </div>
 
-          {/* Copy */}
-          <div className="lg:col-span-5 space-y-7 order-1 lg:order-2">
-            <span className="text-[10px] font-bold tracking-[0.2em] text-[#f97316] uppercase">Storefront Integration</span>
-            <h2 className="text-3xl lg:text-[2.75rem] font-display font-black tracking-[-0.02em] text-[#1a1a1a] leading-tight">
-              Drop In. Light Up. Convert.
+          {/* Right copy */}
+          <div className="lg:col-span-5 space-y-6 order-1 lg:order-2">
+            <span className="text-[10px] font-bold tracking-[0.2em] text-[#f97316] uppercase">Storefront Embeds</span>
+            <h2 className="text-3xl lg:text-[2.75rem] font-display font-black tracking-[-0.03em] text-[#1a1a1a] leading-tight">
+              Single Script. Zero Friction.
             </h2>
-            <p className="text-[#777] text-[15px] leading-[1.75]">
-              MComSpin integrates directly into your existing checkout flow. A lightweight embed widget activates engagement at the point of purchase — no redesign required, no customer friction added.
+            <p className="text-[#666] text-sm lg:text-[15px] leading-[1.75]">
+              MComSpin does not require complex codebase refactoring. Drop the secure, lightweight widget directly into order completion templates, shopping carts, or sign-up portals. Custom brand stylesheets match your branding instantly.
             </p>
-            <p className="text-[#777] text-[15px] leading-[1.75]">
-              Customers receive instant value. You capture profile data, feed qualified leads back into the partner network, and increase storefront interaction on autopilot.
+            <p className="text-[#666] text-sm lg:text-[15px] leading-[1.75]">
+              Provide post-purchase rewards seamlessly, converting standard sales receipts into powerful leads for other members of your network.
             </p>
-            <ul className="space-y-2.5">
-              {['Single-line embed integration', 'Custom styling and brand theming', 'Physical POS terminal support'].map((item, idx) => (
-                <li key={idx} className="flex items-center gap-2.5 text-xs text-[#555] font-semibold uppercase tracking-[0.08em]">
+            <ul className="space-y-2 pt-2">
+              {['Asynchronous API loading', 'Fully isolated secure frame embeds', 'Modular styling configurations'].map((row, i) => (
+                <li key={i} className="flex items-center gap-2.5 text-[10px] font-bold text-[#555] uppercase tracking-[0.1em]">
                   <span className="w-1.5 h-1.5 bg-[#f97316] rounded-full" />
-                  {item}
+                  {row}
                 </li>
               ))}
             </ul>
@@ -758,32 +872,30 @@ export default function LandingPage() {
         className={`py-28 px-6 lg:px-12 max-w-7xl mx-auto space-y-16 ${sectionClass('analytics')}`}
       >
         <div className="max-w-2xl mx-auto text-center space-y-4">
-          <span className="text-[10px] font-bold tracking-[0.2em] text-[#f97316] uppercase">Performance Intelligence</span>
-          <h2 className="text-3xl lg:text-[2.75rem] font-display font-black tracking-[-0.02em] text-[#1a1a1a] leading-tight">
-            Every Metric. Real Time. One Dashboard.
+          <span className="text-[10px] font-bold tracking-[0.2em] text-[#f97316] uppercase">Network Metrics</span>
+          <h2 className="text-3xl lg:text-[2.75rem] font-display font-black tracking-[-0.03em] text-[#1a1a1a] leading-tight">
+            Ecosystem Analytics at a Glance
           </h2>
-          <p className="text-[#777] text-[15px] leading-[1.75]">
-            Track lead velocity, partner conversions, asset utilization, and ecosystem revenue — all from a single pane of glass built for operators who need clarity, not clutter.
+          <p className="text-[#777] text-sm lg:text-[15px] leading-[1.75]">
+            Track lead velocity metrics, partner conversions, asset utilization indices, and ecosystem net revenue pools using a clean, modern interface.
           </p>
         </div>
 
-        {/* KPI Cards */}
+        {/* Analytics Cards */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           {[
-            { label: 'Ecosystem Net Revenue', value: '$162,890', change: '+24.1% velocity growth', positive: true },
-            { label: 'Routed High-Intent Leads', value: '12,480', change: '94.8% routing accuracy', positive: false },
+            { label: 'Ecosystem Net Revenue', value: '£162,490', change: '+24.1% velocity growth', positive: true },
+            { label: 'Routed Consumer Profiles', value: '12,480', change: '94.8% routing accuracy', positive: true },
             { label: 'Inventory Clearance Rate', value: '86.2%', change: '4,920 assets liquidated', positive: true },
           ].map((kpi, idx) => (
-            <div key={idx} className="bg-white p-6 rounded-2xl border border-[#eee] shadow-sm hover:shadow-md transition-shadow flex flex-col justify-between min-h-[155px]">
+            <div key={idx} className="bg-white p-6 rounded-xl border border-[#eee] shadow-sm hover:shadow-md transition-shadow flex flex-col justify-between min-h-[145px]">
               <div className="flex items-center justify-between text-[#aaa]">
-                <span className="text-[10px] font-bold uppercase tracking-[0.12em]">{kpi.label}</span>
-                <svg className="w-4 h-4 text-[#f97316]" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M2.25 18L9 11.25l4.306 4.307a11.95 11.95 0 015.814-5.519l2.74-1.22m0 0l-5.94-2.28m5.94 2.28l-2.28 5.941" />
-                </svg>
+                <span className="text-[9px] font-bold uppercase tracking-[0.15em]">{kpi.label}</span>
+                <BarChart3 className="w-4 h-4 text-[#f97316]" />
               </div>
               <div className="mt-4">
                 <p className="text-3xl font-black font-display text-[#1a1a1a]">{kpi.value}</p>
-                <p className={`text-[10px] font-bold mt-1.5 uppercase tracking-[0.1em] ${kpi.positive ? 'text-emerald-500' : 'text-[#999]'}`}>
+                <p className="text-[9px] font-bold mt-1 text-emerald-500 uppercase tracking-[0.1em]">
                   {kpi.change}
                 </p>
               </div>
@@ -791,29 +903,29 @@ export default function LandingPage() {
           ))}
         </div>
 
-        {/* Chart */}
-        <div className="p-6 lg:p-8 border border-[#eee] rounded-2xl bg-white shadow-sm space-y-5">
+        {/* Custom Rendered SVG Chart */}
+        <div className="p-6 lg:p-8 border border-[#eee] rounded-xl bg-white shadow-sm space-y-6">
           <div className="flex items-center justify-between border-b border-[#f0f0f0] pb-4">
-            <span className="text-xs font-bold tracking-[0.1em] text-[#1a1a1a] uppercase">Lead Conversion Velocity</span>
-            <span className="text-[10px] text-[#aaa] uppercase font-semibold tracking-[0.08em]">Weeks 1–8</span>
+            <span className="text-[10px] font-bold tracking-[0.15em] text-[#1a1a1a] uppercase">Weekly Lead Velocity Index</span>
+            <span className="text-[9px] text-[#aaa] uppercase font-bold tracking-[0.1em]">Week 1 - Week 8</span>
           </div>
 
           <div className="h-[200px] w-full relative">
             <svg viewBox="0 0 800 200" className="w-full h-full" preserveAspectRatio="none">
               <defs>
-                <linearGradient id="cg" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="0%" stopColor="#f97316" stopOpacity="0.1" />
+                <linearGradient id="chartGlow" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="0%" stopColor="#f97316" stopOpacity="0.12" />
                   <stop offset="100%" stopColor="#f97316" stopOpacity="0" />
                 </linearGradient>
               </defs>
-              <line x1="0" y1="50" x2="800" y2="50" stroke="#eee" strokeWidth="0.5" />
-              <line x1="0" y1="100" x2="800" y2="100" stroke="#eee" strokeWidth="0.5" />
-              <line x1="0" y1="150" x2="800" y2="150" stroke="#eee" strokeWidth="0.5" />
-              <path d="M 0 170 Q 114 150 228 110 T 456 90 T 684 40 L 800 20 L 800 200 L 0 200 Z" fill="url(#cg)" />
-              <path d="M 0 170 Q 114 150 228 110 T 456 90 T 684 40 L 800 20" fill="none" stroke="#f97316" strokeWidth="2.5" />
-              <circle cx="228" cy="110" r="4" fill="#f97316" stroke="white" strokeWidth="1.5" />
-              <circle cx="456" cy="90" r="4" fill="#f97316" stroke="white" strokeWidth="1.5" />
-              <circle cx="684" cy="40" r="4" fill="#f97316" stroke="white" strokeWidth="1.5" />
+              <line x1="0" y1="50" x2="800" y2="50" stroke="#f6f6f3" strokeWidth="1" />
+              <line x1="0" y1="100" x2="800" y2="100" stroke="#f6f6f3" strokeWidth="1" />
+              <line x1="0" y1="150" x2="800" y2="150" stroke="#f6f6f3" strokeWidth="1" />
+              <path d="M 0 160 Q 120 140 240 100 T 480 80 T 700 35 L 800 20 L 800 200 L 0 200 Z" fill="url(#chartGlow)" />
+              <path d="M 0 160 Q 120 140 240 100 T 480 80 T 700 35 L 800 20" fill="none" stroke="#f97316" strokeWidth="2.5" />
+              <circle cx="240" cy="100" r="4" fill="#f97316" stroke="white" strokeWidth="1.5" />
+              <circle cx="480" cy="80" r="4" fill="#f97316" stroke="white" strokeWidth="1.5" />
+              <circle cx="700" cy="35" r="4" fill="#f97316" stroke="white" strokeWidth="1.5" />
               <circle cx="800" cy="20" r="4" fill="#f97316" stroke="white" strokeWidth="1.5" />
             </svg>
           </div>
@@ -826,25 +938,25 @@ export default function LandingPage() {
       <section
         id="cta"
         ref={setSectionRef('cta')}
-        className={`py-32 px-6 lg:px-12 text-center bg-white relative overflow-hidden border-t border-[#eee] ${sectionClass('cta')}`}
+        className={`py-32 px-6 lg:px-12 text-center bg-white relative overflow-hidden border-t border-[#eee]/60 ${sectionClass('cta')}`}
       >
-        <div className="absolute inset-0 bg-gradient-to-b from-transparent via-[#f97316]/[0.02] to-transparent pointer-events-none" />
+        <div className="absolute inset-0 bg-gradient-to-b from-transparent via-[#f97316]/[0.01] to-transparent pointer-events-none" />
 
         <div className="max-w-3xl mx-auto space-y-8 relative z-10">
           <span className="text-[10px] font-bold tracking-[0.2em] text-[#f97316] uppercase">Get Started</span>
-          <h2 className="text-4xl lg:text-[3.5rem] font-display font-black tracking-[-0.03em] leading-[1.08] luxury-text-gradient">
+          <h2 className="text-4xl lg:text-5xl font-display font-black tracking-[-0.03em] leading-[1.08] luxury-text-gradient">
             Build Your Engagement Ecosystem
           </h2>
-          <p className="text-[#777] text-[15px] leading-[1.75] max-w-lg mx-auto">
-            Join the next generation of collaborative commerce. Deploy controlled gamification infrastructure that automates lead capture, distributes rewards, and grows revenue across your entire partner network.
+          <p className="text-[#666] text-sm lg:text-[15px] leading-[1.75] max-w-lg mx-auto">
+            Ready to integrate controlled gamification? Pool idle merchant assets, secure profile conversions, and drive collaborative revenue across your network.
           </p>
 
           <div className="flex flex-col sm:flex-row gap-4 justify-center items-center pt-4">
-            <Link href="/play" className="w-full sm:w-auto text-[11px] font-bold tracking-[0.15em] bg-[#f97316] text-white py-4 px-10 rounded-full hover:bg-[#ea580c] hover:shadow-lg hover:shadow-[#f97316]/20 transition-all duration-300 uppercase">
-              See the Platform Live
+            <Link href="/play" className="w-full sm:w-auto text-[11px] font-bold tracking-[0.15em] bg-[#f97316] text-white py-4 px-10 rounded-xl hover:bg-[#ea580c] hover:shadow-lg hover:shadow-[#f97316]/20 transition-all duration-300 uppercase">
+              Launch Play Portal
             </Link>
-            <a href="mailto:hello@mcomspin.com?subject=Strategy%20Demo" className="w-full sm:w-auto text-[11px] font-bold tracking-[0.15em] border border-[#e0e0e0] bg-white text-[#1a1a1a] py-4 px-10 rounded-full hover:border-[#f97316]/30 hover:bg-[#fefcfa] transition-all duration-300 uppercase">
-              Book a Strategy Demo
+            <a href="mailto:hello@mcomspin.com?subject=Platform%20Demo" className="w-full sm:w-auto text-[11px] font-bold tracking-[0.15em] border border-[#e0e0e0] bg-white text-[#1a1a1a] py-4 px-10 rounded-xl hover:border-[#f97316]/30 hover:bg-[#fafaf9] transition-all duration-300 uppercase">
+              Book Strategy Call
             </a>
           </div>
         </div>
@@ -857,10 +969,10 @@ export default function LandingPage() {
         <div className="max-w-7xl mx-auto flex flex-col lg:flex-row items-center justify-between gap-6">
           <div className="flex items-center gap-3">
             <span className="w-2 h-2 bg-[#f97316] rounded-full" />
-            <span className="font-display font-bold text-sm text-[#1a1a1a]">MComSpin</span>
+            <span className="font-display font-black text-sm tracking-wide text-[#1a1a1a] uppercase">MComSpin</span>
           </div>
           <p className="text-[11px] text-[#aaa] font-medium text-center lg:text-right">
-            &copy; {new Date().getFullYear()} MComSpin. Business Engagement Infrastructure. All rights reserved.
+            &copy; {new Date().getFullYear()} MComSpin. All rights reserved.
           </p>
         </div>
       </footer>

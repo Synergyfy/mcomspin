@@ -1,291 +1,256 @@
 'use client';
 
-import { useState } from 'react';
-import { 
-  Users, 
-  Gift, 
-  Ticket, 
-  Search, 
-  Filter, 
-  MoreHorizontal, 
-  CheckCircle2, 
-  Clock, 
-  QrCode,
-  Download,
-  ChevronRight,
-  ArrowUpRight,
-  UserCircle2,
-  ExternalLink,
-  ShieldCheck,
-  History
-} from 'lucide-react';
+import React, { useState } from 'react';
 
-/* ─── Mock Data ─── */
-const rewardStats = [
-  { label: 'Pending Redemptions', value: '142', icon: Clock, color: 'text-amber-500', bg: 'bg-amber-50' },
-  { label: 'Total Redeemed', value: '3,842', icon: CheckCircle2, color: 'text-emerald-500', bg: 'bg-emerald-50' },
-  { label: 'Active Prize Winners', value: '28', icon: Users, color: 'text-blue-500', bg: 'bg-blue-50' },
-  { label: 'Avg. Redemption Time', value: '4.2h', icon: History, color: 'text-violet-500', bg: 'bg-violet-50' },
+interface Redemption {
+  id: string;
+  customerName: string;
+  rewardName: string;
+  code: string;
+  timestamp: string;
+  status: 'Pending' | 'Redeemed' | 'Expired' | 'Rejected';
+}
+
+const mockRedemptions: Redemption[] = [
+  { id: 'R1', customerName: 'Elena Rodriguez', rewardName: 'Free Latte', code: 'MC-8821', timestamp: '10 mins ago', status: 'Pending' },
+  { id: 'R2', customerName: 'James Wilson', rewardName: '20% Off Meal', code: 'MC-4490', timestamp: '1 hour ago', status: 'Redeemed' },
+  { id: 'R3', customerName: 'Sarah Chen', rewardName: 'Buy 1 Get 1 Burger', code: 'MC-1102', timestamp: '3 hours ago', status: 'Redeemed' },
+  { id: 'R4', customerName: 'David Smith', rewardName: 'Free Dessert', code: 'MC-9938', timestamp: 'Yesterday', status: 'Expired' },
+  { id: 'R5', customerName: 'Marcus Thorne', rewardName: '15% Discount', code: 'MC-7721', timestamp: '2 days ago', status: 'Rejected' },
 ];
 
-const liveRedemptions = [
-  { id: 'R-9042', customer: 'Sarah Jenkins', reward: '20% Off Color Service', time: '2 mins ago', status: 'Verifying', avatar: 'SJ' },
-  { id: 'R-9041', customer: 'Marcus Thorne', reward: 'Free Styling Product', time: '15 mins ago', status: 'Completed', avatar: 'MT' },
-  { id: 'R-9040', customer: 'Elena Rodriguez', reward: 'Weekend Pass (Event)', time: '45 mins ago', status: 'Completed', avatar: 'ER' },
-  { id: 'R-9039', customer: 'James Wilson', reward: 'Buy 1 Get 1 Free', time: '1 hour ago', status: 'Expired', avatar: 'JW' },
-];
+export default function RedemptionsPage() {
+  const [activeTab, setActiveTab] = useState<'Pending' | 'Redeemed' | 'Expired' | 'Rejected'>('Pending');
+  const [redeemCode, setRedeemCode] = useState('');
+  const [showScanner, setShowScanner] = useState(false);
 
-const rewardHistory = [
-  { 
-    id: 'TXN-8821', 
-    customer: 'Oliver Knight', 
-    reward: 'Free Beard Trim', 
-    date: 'May 27, 2026', 
-    method: 'QR Scan', 
-    points: '+50 XP',
-    status: 'Redeemed' 
-  },
-  { 
-    id: 'TXN-8820', 
-    customer: 'Amelia Chen', 
-    reward: 'VIP Lounge Access', 
-    date: 'May 27, 2026', 
-    method: 'Manual Entry', 
-    points: '+120 XP',
-    status: 'Redeemed' 
-  },
-  { 
-    id: 'TXN-8819', 
-    customer: 'Leo Brooks', 
-    reward: '15% Retail Discount', 
-    date: 'May 26, 2026', 
-    method: 'API Sync', 
-    points: '+25 XP',
-    status: 'Pending' 
-  },
-  { 
-    id: 'TXN-8818', 
-    customer: 'Sophia Varga', 
-    reward: 'Summer Festival Ticket', 
-    date: 'May 26, 2026', 
-    method: 'QR Scan', 
-    points: '+200 XP',
-    status: 'Redeemed' 
-  },
-  { 
-    id: 'TXN-8817', 
-    customer: 'Noah Smith', 
-    reward: 'Gift Card (£10)', 
-    date: 'May 25, 2026', 
-    method: 'QR Scan', 
-    points: '+10 XP',
-    status: 'Canceled' 
-  },
-];
+  const stats = {
+    Pending: mockRedemptions.filter(r => r.status === 'Pending').length,
+    Redeemed: mockRedemptions.filter(r => r.status === 'Redeemed').length,
+    Expired: mockRedemptions.filter(r => r.status === 'Expired').length,
+    Rejected: mockRedemptions.filter(r => r.status === 'Rejected').length,
+  };
 
-export default function CustomerRewardsPage() {
-  const [filter, setFilter] = useState('All');
+  const filteredRedemptions = mockRedemptions.filter(r => r.status === activeTab);
 
   return (
-    <div className="space-y-10 pb-20">
-      
-      {/* ── Page Header ── */}
-      <div className="flex flex-col md:flex-row md:items-end justify-between gap-6">
+    <div className="max-w-6xl mx-auto space-y-8 pb-20">
+      {/* Header */}
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
         <div>
-          <span className="text-[10px] font-bold tracking-[0.15em] text-[#f97316] uppercase">
-            Loyalty Management
-          </span>
-          <h1 className="text-3xl font-display font-bold text-[#1a1a1a] mt-1">
-            Customer Rewards
-          </h1>
-          <p className="text-[#888] text-[14px] mt-1 max-w-xl">
-            Monitor prize redemptions, verify customer wins, and manage the lifecycle of rewards issued through your gamified campaigns.
-          </p>
+          <h2 className="text-2xl font-bold text-[#1a1a1a]">Redemptions</h2>
+          <p className="text-[#888] mt-1">Validate rewards and manage redemption history.</p>
         </div>
-
+        
+        {/* Quick Redemption Action */}
         <div className="flex items-center gap-3">
-          <button className="flex items-center gap-2 px-6 py-4 bg-[#1a1a1a] text-white rounded-2xl font-bold text-[13px] hover:bg-[#333] transition-all shadow-lg shadow-black/10">
-            <QrCode className="w-4 h-4" />
-            Scan QR Code
+          <div className="relative flex-1 md:w-64">
+            <input
+              type="text"
+              placeholder="Enter Redemption Code..."
+              value={redeemCode}
+              onChange={(e) => setRedeemCode(e.target.value)}
+              className="w-full bg-white border border-[#eee] rounded-2xl px-4 py-3 text-[13px] font-medium text-[#1a1a1a] placeholder:text-[#bbb] outline-none focus:border-[#f97316] transition-all shadow-sm"
+            />
+          </div>
+          <button className="px-6 py-3 bg-[#f97316] text-white rounded-2xl text-[13px] font-bold hover:bg-[#ea580c] transition-all shadow-lg shadow-[#f97316]/20">
+            Redeem
           </button>
-          <button className="p-4 bg-white border border-[#eee] rounded-2xl text-[#888] hover:bg-gray-50 shadow-sm transition-all">
-            <Download className="w-5 h-5" />
+          <button 
+            onClick={() => setShowScanner(true)}
+            className="p-3 bg-[#1a1a1a] text-white rounded-2xl hover:bg-[#333] transition-all shadow-lg shadow-black/10"
+            title="Scan QR Code"
+          >
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M16 20h4M4 12h4m12 0h.01M5 8h2a1 1 0 001-1V5a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1zm12 0h2a1 1 0 001-1V5a1 1 0 00-1-1h-2a1 1 0 00-1 1v2a1 1 0 001 1zM5 20h2a1 1 0 001-1v-2a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1z" />
+            </svg>
           </button>
         </div>
       </div>
 
-      {/* ── Stats Overview ── */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        {rewardStats.map((stat, i) => (
-          <div key={i} className="bg-white rounded-[32px] border border-[#eee] p-8 shadow-sm">
-            <div className={`w-12 h-12 rounded-2xl ${stat.bg} ${stat.color} flex items-center justify-center mb-6`}>
-              <stat.icon className="w-6 h-6" />
+      {/* Tabs / Stats Grid */}
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+        {(['Pending', 'Redeemed', 'Expired', 'Rejected'] as const).map((tab) => (
+          <button
+            key={tab}
+            onClick={() => setActiveTab(tab)}
+            className={`p-4 rounded-3xl border transition-all text-left relative overflow-hidden group ${
+              activeTab === tab 
+                ? 'bg-white border-[#f97316] shadow-md' 
+                : 'bg-white border-[#eee] hover:border-[#ddd] shadow-sm'
+            }`}
+          >
+            <div className={`w-8 h-8 rounded-xl mb-3 flex items-center justify-center ${
+              activeTab === tab ? 'bg-[#f97316] text-white' : 'bg-[#f5f5f3] text-[#aaa]'
+            }`}>
+              {tab === 'Pending' && <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>}
+              {tab === 'Redeemed' && <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" /></svg>}
+              {tab === 'Expired' && <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>}
+              {tab === 'Rejected' && <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" /></svg>}
             </div>
-            <p className="text-[12px] font-bold text-[#aaa] uppercase tracking-wider">{stat.label}</p>
-            <h3 className="text-3xl font-display font-bold text-[#1a1a1a] mt-1">{stat.value}</h3>
-          </div>
+            <p className="text-[11px] font-bold text-[#aaa] uppercase tracking-wider">{tab}</p>
+            <p className="text-2xl font-black text-[#1a1a1a] mt-1">{stats[tab]}</p>
+            {activeTab === tab && (
+              <div className="absolute top-0 right-0 w-12 h-12 bg-[#f97316]/5 rounded-bl-full flex items-center justify-center">
+                <div className="w-1.5 h-1.5 bg-[#f97316] rounded-full" />
+              </div>
+            )}
+          </button>
         ))}
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+      {/* Main List */}
+      <div className="bg-white rounded-[32px] border border-[#eee] shadow-sm overflow-hidden">
+        <div className="px-8 py-6 border-b border-[#eee] flex items-center justify-between">
+          <h3 className="text-[15px] font-bold text-[#1a1a1a]">{activeTab} Log</h3>
+          <button className="text-[12px] font-bold text-[#f97316] hover:underline">Download CSV</button>
+        </div>
         
-        {/* ── Redemption History Table ── */}
-        <div className="lg:col-span-2 space-y-6">
-          <section className="bg-white rounded-[32px] border border-[#eee] overflow-hidden shadow-sm">
-            <div className="p-8 border-b border-[#f5f5f3] flex flex-col md:flex-row md:items-center justify-between gap-4">
-              <div>
-                <h2 className="text-[17px] font-display font-bold text-[#1a1a1a]">Recent Redemptions</h2>
-                <p className="text-[12px] text-[#888]">Comprehensive log of customer prize interactions.</p>
-              </div>
-              <div className="flex bg-[#fafaf9] rounded-xl p-1 border border-[#eee]">
-                {['All', 'Redeemed', 'Pending'].map((t) => (
-                  <button
-                    key={t}
-                    onClick={() => setFilter(t)}
-                    className={`px-4 py-1.5 rounded-lg text-[11px] font-bold transition-all ${
-                      filter === t ? 'bg-white shadow-sm text-[#1a1a1a]' : 'text-[#aaa] hover:text-[#888]'
-                    }`}
-                  >
-                    {t}
-                  </button>
-                ))}
-              </div>
-            </div>
-
-            <div className="overflow-x-auto">
-              <table className="w-full">
-                <thead>
-                  <tr className="bg-[#fafaf9]">
-                    <th className="px-8 py-4 text-left text-[11px] font-bold text-[#aaa] uppercase tracking-wider">Customer</th>
-                    <th className="px-8 py-4 text-left text-[11px] font-bold text-[#aaa] uppercase tracking-wider">Reward</th>
-                    <th className="px-8 py-4 text-left text-[11px] font-bold text-[#aaa] uppercase tracking-wider">Method</th>
-                    <th className="px-8 py-4 text-left text-[11px] font-bold text-[#aaa] uppercase tracking-wider">Status</th>
-                    <th className="px-8 py-4 text-right text-[11px] font-bold text-[#aaa] uppercase tracking-wider">Action</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-[#f5f5f3]">
-                  {rewardHistory.map((item) => (
-                    <tr key={item.id} className="hover:bg-[#fafaf9]/50 transition-colors group">
-                      <td className="px-8 py-5">
-                        <div className="flex items-center gap-3">
-                          <div className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center text-[10px] font-bold text-[#888]">
-                            {item.customer.split(' ').map(n => n[0]).join('')}
-                          </div>
-                          <div>
-                            <p className="text-[13px] font-bold text-[#1a1a1a]">{item.customer}</p>
-                            <p className="text-[10px] text-[#aaa]">{item.date}</p>
-                          </div>
-                        </div>
-                      </td>
-                      <td className="px-8 py-5">
-                        <div className="flex flex-col">
-                          <span className="text-[13px] font-medium text-[#1a1a1a]">{item.reward}</span>
-                          <span className="text-[10px] text-emerald-600 font-bold tracking-tight">{item.points}</span>
-                        </div>
-                      </td>
-                      <td className="px-8 py-5">
-                        <span className="text-[12px] text-[#888] flex items-center gap-1.5">
-                          {item.method === 'QR Scan' ? <QrCode className="w-3 h-3" /> : <ShieldCheck className="w-3 h-3" />}
-                          {item.method}
-                        </span>
-                      </td>
-                      <td className="px-8 py-5">
-                        <span className={`px-3 py-1 rounded-full text-[10px] font-bold ${
-                          item.status === 'Redeemed' ? 'bg-emerald-50 text-emerald-600' :
-                          item.status === 'Pending' ? 'bg-amber-50 text-amber-600' :
-                          'bg-red-50 text-red-600'
-                        }`}>
-                          {item.status}
-                        </span>
-                      </td>
-                      <td className="px-8 py-5 text-right">
-                        <button className="p-2 text-[#ccc] hover:text-[#f97316] transition-colors">
-                          <MoreHorizontal className="w-5 h-5" />
+        {/* Desktop Table View */}
+        <div className="hidden md:block overflow-x-auto">
+          <table className="w-full text-left border-collapse">
+            <thead>
+              <tr className="bg-[#fafaf9] border-b border-[#eee]">
+                <th className="px-8 py-4 text-[11px] font-bold text-[#aaa] uppercase tracking-wider">Reward / Customer</th>
+                <th className="px-8 py-4 text-[11px] font-bold text-[#aaa] uppercase tracking-wider">Code</th>
+                <th className="px-8 py-4 text-[11px] font-bold text-[#aaa] uppercase tracking-wider">Time</th>
+                {activeTab === 'Pending' && <th className="px-8 py-4 text-[11px] font-bold text-[#aaa] uppercase tracking-wider text-right">Actions</th>}
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-[#f5f5f3]">
+              {filteredRedemptions.length > 0 ? filteredRedemptions.map((r) => (
+                <tr key={r.id} className="group hover:bg-[#fafaf9] transition-colors">
+                  <td className="px-8 py-5">
+                    <div>
+                      <p className="text-[14px] font-bold text-[#1a1a1a]">{r.rewardName}</p>
+                      <p className="text-[12px] text-[#888]">{r.customerName}</p>
+                    </div>
+                  </td>
+                  <td className="px-8 py-5">
+                    <span className="font-mono text-[13px] bg-[#f5f5f3] px-2 py-1 rounded text-[#444] font-bold border border-[#eee]">
+                      {r.code}
+                    </span>
+                  </td>
+                  <td className="px-8 py-5 text-[13px] text-[#888]">
+                    {r.timestamp}
+                  </td>
+                  {activeTab === 'Pending' && (
+                    <td className="px-8 py-5 text-right">
+                      <div className="flex items-center justify-end gap-2">
+                        <button className="px-4 py-1.5 bg-green-500 text-white rounded-xl text-[12px] font-bold hover:bg-green-600 transition-colors shadow-sm">
+                          Redeem
                         </button>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-            
-            <div className="p-6 bg-[#fafaf9] border-t border-[#f5f5f3] flex justify-center">
-              <button className="text-[13px] font-bold text-[#888] hover:text-[#f97316] transition-all flex items-center gap-2">
-                View All Transaction History
-                <ChevronRight className="w-4 h-4" />
-              </button>
-            </div>
-          </section>
+                        <button className="px-4 py-1.5 bg-[#f5f5f3] text-[#666] rounded-xl text-[12px] font-bold hover:bg-red-50 hover:text-red-500 transition-colors">
+                          Reject
+                        </button>
+                      </div>
+                    </td>
+                  )}
+                </tr>
+              )) : (
+                <tr>
+                  <td colSpan={4} className="px-8 py-20 text-center">
+                    <div className="w-16 h-16 bg-[#f5f5f3] rounded-full flex items-center justify-center mx-auto mb-4">
+                      <svg className="w-8 h-8 text-[#ccc]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+                      </svg>
+                    </div>
+                    <p className="text-[15px] font-bold text-[#1a1a1a]">No {activeTab.toLowerCase()} redemptions</p>
+                    <p className="text-[13px] text-[#888] mt-1">There's nothing to see here yet.</p>
+                  </td>
+                </tr>
+              )}
+            </tbody>
+          </table>
         </div>
 
-        {/* ── Live Feed & Quick Actions ── */}
-        <div className="space-y-8">
-          
-          {/* Live Redemption Feed */}
-          <section className="bg-white rounded-[32px] border border-[#eee] p-8 shadow-sm">
-            <div className="flex items-center justify-between mb-8">
-              <div>
-                <h2 className="text-[17px] font-display font-bold text-[#1a1a1a]">Live Feed</h2>
-                <p className="text-[12px] text-[#888]">Real-time win notifications.</p>
-              </div>
-              <div className="flex items-center gap-1.5">
-                <div className="w-2 h-2 rounded-full bg-red-500 animate-pulse" />
-                <span className="text-[10px] font-bold text-[#888] uppercase tracking-wider">Live</span>
-              </div>
-            </div>
-
-            <div className="space-y-6">
-              {liveRedemptions.map((red, i) => (
-                <div key={i} className="flex items-start gap-4 p-4 rounded-2xl hover:bg-[#fafaf9] transition-all border border-transparent hover:border-[#eee]">
-                  <div className="w-10 h-10 rounded-xl bg-orange-100 text-[#f97316] flex items-center justify-center font-bold text-[12px] flex-shrink-0">
-                    {red.avatar}
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <div className="flex justify-between items-start mb-1">
-                      <p className="text-[13px] font-bold text-[#1a1a1a] truncate">{red.customer}</p>
-                      <span className="text-[10px] text-[#ccc] whitespace-nowrap ml-2">{red.time}</span>
-                    </div>
-                    <p className="text-[12px] text-[#666] leading-tight mb-2">{red.reward}</p>
-                    <div className="flex items-center gap-2">
-                      <span className={`text-[10px] font-bold px-2 py-0.5 rounded-md ${
-                        red.status === 'Verifying' ? 'bg-amber-100 text-amber-700' :
-                        red.status === 'Completed' ? 'bg-emerald-100 text-emerald-700' :
-                        'bg-gray-100 text-gray-500'
-                      }`}>
-                        {red.status}
-                      </span>
-                      {red.status === 'Verifying' && (
-                        <button className="text-[10px] font-bold text-[#f97316] hover:underline">Verify Now</button>
-                      )}
-                    </div>
-                  </div>
+        {/* Mobile Card View */}
+        <div className="md:hidden divide-y divide-[#f5f5f3]">
+          {filteredRedemptions.length > 0 ? filteredRedemptions.map((r) => (
+            <div key={r.id} className="p-5 flex flex-col gap-4 active:bg-[#fafaf9]">
+              <div className="flex justify-between items-start gap-3">
+                <div className="flex-1">
+                  <p className="text-[15px] font-bold text-[#1a1a1a] leading-tight">{r.rewardName}</p>
+                  <p className="text-[13px] text-[#888] mt-1">{r.customerName}</p>
                 </div>
-              ))}
+                <div className="text-right shrink-0">
+                  <p className="text-[11px] font-bold text-[#aaa] uppercase tracking-wider">Time</p>
+                  <p className="text-[13px] font-medium text-[#666] mt-0.5">{r.timestamp}</p>
+                </div>
+              </div>
+
+              <div className="flex items-center justify-between gap-4 p-3 bg-[#fafaf9] rounded-2xl border border-[#f0f0ee]">
+                <div>
+                  <p className="text-[10px] font-bold text-[#aaa] uppercase tracking-wider mb-1">Redemption Code</p>
+                  <span className="font-mono text-[14px] text-[#f97316] font-bold">{r.code}</span>
+                </div>
+                
+                {activeTab === 'Pending' && (
+                  <div className="flex gap-2">
+                    <button className="w-10 h-10 bg-green-500 text-white rounded-xl flex items-center justify-center shadow-lg shadow-green-500/20 active:scale-95 transition-all">
+                      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M5 13l4 4L19 7" /></svg>
+                    </button>
+                    <button className="w-10 h-10 bg-white text-red-500 border border-red-100 rounded-xl flex items-center justify-center shadow-sm active:scale-95 transition-all">
+                      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M6 18L18 6M6 6l12 12" /></svg>
+                    </button>
+                  </div>
+                )}
+              </div>
             </div>
-          </section>
-
-          {/* Quick Verification Card */}
-          <section className="bg-gradient-to-br from-[#1a1a1a] to-[#333] rounded-[32px] p-8 text-white shadow-xl">
-             <Ticket className="w-10 h-10 text-[#f97316] mb-6" />
-             <h3 className="text-xl font-display font-bold leading-tight">Manual Verification</h3>
-             <p className="text-white/60 text-[12px] mt-2 mb-8 leading-relaxed">
-               If a customer's QR code isn't scanning, enter their Transaction ID or Reward Code here to manually complete redemption.
-             </p>
-             <div className="space-y-3">
-               <input 
-                 type="text" 
-                 placeholder="Enter Reward Code..." 
-                 className="w-full bg-white/10 border border-white/20 rounded-xl px-4 py-3 text-[13px] focus:outline-none focus:border-[#f97316] placeholder:text-white/30"
-               />
-               <button className="w-full py-4 bg-[#f97316] text-white rounded-xl font-bold text-[13px] hover:bg-[#ea580c] transition-all">
-                 Validate Code
-               </button>
-             </div>
-          </section>
-
+          )) : (
+            <div className="p-12 text-center">
+              <div className="w-16 h-16 bg-[#f5f5f3] rounded-full flex items-center justify-center mx-auto mb-4">
+                <svg className="w-8 h-8 text-[#ccc]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+                </svg>
+              </div>
+              <p className="text-[15px] font-bold text-[#1a1a1a]">No {activeTab.toLowerCase()} redemptions</p>
+            </div>
+          )}
         </div>
-
       </div>
+
+      {/* Mobile Scanner Overlay (Mockup) */}
+      {showScanner && (
+        <div className="fixed inset-0 z-[100] bg-black flex flex-col">
+          <div className="p-6 flex items-center justify-between text-white">
+            <h3 className="text-lg font-bold">Scan QR Code</h3>
+            <button onClick={() => setShowScanner(false)} className="p-2 bg-white/10 rounded-full">
+              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
+          </div>
+          
+          <div className="flex-1 flex items-center justify-center p-12">
+            <div className="w-full aspect-square border-[4px] border-[#f97316] rounded-[40px] relative shadow-[0_0_100px_rgba(249,115,22,0.3)]">
+              <div className="absolute inset-0 border-[2px] border-white/20 rounded-[36px] overflow-hidden">
+                {/* Animated Scan Line */}
+                <div className="w-full h-1 bg-[#f97316] absolute top-0 left-0 shadow-[0_0_20px_rgba(249,115,22,1)] animate-scan" />
+              </div>
+            </div>
+          </div>
+          
+          <div className="p-12 text-center">
+            <p className="text-white/60 text-[13px] mb-8">Align the customer's QR code within the frame to automatically redeem their reward.</p>
+            <button className="w-full py-4 bg-white text-black text-[15px] font-bold rounded-[24px]">
+              Flash Off
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* Scanner Animation Styles */}
+      <style jsx global>{`
+        @keyframes scan {
+          0% { transform: translateY(0); }
+          50% { transform: translateY(300px); }
+          100% { transform: translateY(0); }
+        }
+        .animate-scan {
+          animation: scan 3s ease-in-out infinite;
+        }
+      `}</style>
     </div>
   );
 }

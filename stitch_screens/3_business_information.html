@@ -1,0 +1,256 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Business Onboarding - MCOMSpin</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "tertiary-fixed": "#cfe4ff",
+                        "outline": "#8e7164",
+                        "surface": "#fff8f6",
+                        "on-error-container": "#93000a",
+                        "on-tertiary": "#ffffff",
+                        "on-primary-container": "#541d00",
+                        "tertiary-container": "#009cf8",
+                        "surface-variant": "#f8ddd2",
+                        "on-background": "#261812",
+                        "secondary-fixed": "#ffdbcc",
+                        "on-tertiary-fixed-variant": "#004a79",
+                        "surface-container-low": "#fff1eb",
+                        "on-secondary-container": "#772f05",
+                        "on-primary": "#ffffff",
+                        "on-surface-variant": "#5a4136",
+                        "on-secondary-fixed-variant": "#793106",
+                        "secondary-container": "#ff9969",
+                        "on-surface": "#261812",
+                        "inverse-on-surface": "#ffede6",
+                        "error": "#ba1a1a",
+                        "surface-container": "#ffeae1",
+                        "on-primary-fixed-variant": "#7b2f00",
+                        "primary-fixed-dim": "#ffb695",
+                        "inverse-surface": "#3d2d26",
+                        "secondary": "#97471d",
+                        "primary": "#a23f00",
+                        "on-secondary-fixed": "#351000",
+                        "on-primary-fixed": "#351000",
+                        "surface-tint": "#a23f00",
+                        "surface-container-lowest": "#ffffff",
+                        "secondary-fixed-dim": "#ffb694",
+                        "on-tertiary-container": "#003152",
+                        "tertiary": "#00629f",
+                        "surface-container-highest": "#f8ddd2",
+                        "outline-variant": "#e2bfb1",
+                        "background": "#fff8f6",
+                        "surface-dim": "#efd5ca",
+                        "on-secondary": "#ffffff",
+                        "on-tertiary-fixed": "#001d34",
+                        "primary-container": "#fc6700",
+                        "surface-container-high": "#fee3d8",
+                        "surface-bright": "#fff8f6",
+                        "tertiary-fixed-dim": "#9acbff",
+                        "on-error": "#ffffff",
+                        "primary-fixed": "#ffdbcc",
+                        "inverse-primary": "#ffb695",
+                        "error-container": "#ffdad6"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                    "spacing": {
+                        "stack-sm": "8px",
+                        "gutter": "16px",
+                        "container-margin": "20px",
+                        "section-padding": "40px",
+                        "base": "8px",
+                        "stack-lg": "32px",
+                        "stack-md": "16px"
+                    },
+                    "fontFamily": {
+                        "label-sm": ["Inter"],
+                        "headline-lg": ["Inter"],
+                        "label-md": ["Inter"],
+                        "body-md": ["Inter"],
+                        "display-lg": ["Inter"],
+                        "body-lg": ["Inter"],
+                        "headline-lg-mobile": ["Inter"],
+                        "headline-md": ["Inter"]
+                    },
+                    "fontSize": {
+                        "label-sm": ["12px", {"lineHeight": "1.2", "fontWeight": "500"}],
+                        "headline-lg": ["32px", {"lineHeight": "1.2", "letterSpacing": "-0.02em", "fontWeight": "700"}],
+                        "label-md": ["14px", {"lineHeight": "1.2", "letterSpacing": "0.05em", "fontWeight": "600"}],
+                        "body-md": ["16px", {"lineHeight": "1.6", "fontWeight": "400"}],
+                        "display-lg": ["48px", {"lineHeight": "1.1", "letterSpacing": "-0.04em", "fontWeight": "800"}],
+                        "body-lg": ["18px", {"lineHeight": "1.6", "fontWeight": "400"}],
+                        "headline-lg-mobile": ["28px", {"lineHeight": "1.2", "fontWeight": "700"}],
+                        "headline-md": ["24px", {"lineHeight": "1.3", "fontWeight": "600"}]
+                    }
+                },
+            },
+        }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .kinetic-shadow {
+            box-shadow: 0 10px 20px -5px rgba(162, 63, 0, 0.15);
+        }
+        .input-focus-ring:focus {
+            outline: none;
+            border-color: #a23f00;
+            box-shadow: 0 0 0 2px rgba(162, 63, 0, 0.2);
+        }
+        .pegboard-bg {
+            background-image: radial-gradient(#8e7164 1px, transparent 1px);
+            background-size: 24px 24px;
+            opacity: 0.05;
+        }
+        .sticky-button-container {
+            backdrop-filter: blur(8px);
+            background: linear-gradient(to top, #fff8f6 70%, transparent);
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-surface text-on-surface min-h-screen font-body-md flex flex-col items-center">
+<!-- Progress Header -->
+<header class="w-full bg-surface-container-lowest sticky top-0 z-40 px-container-margin py-4 border-b border-outline-variant/30 flex flex-col items-center">
+<div class="max-w-xl w-full flex flex-col gap-2">
+<div class="flex justify-between items-center w-full">
+<span class="font-label-md text-label-md text-primary tracking-widest uppercase">Step 1 of 5</span>
+<span class="font-label-sm text-label-sm text-on-surface-variant">Setup Profile</span>
+</div>
+<div class="w-full bg-surface-container-high h-2 rounded-full overflow-hidden">
+<div class="bg-primary h-full w-1/5 rounded-full transition-all duration-500 ease-out"></div>
+</div>
+</div>
+</header>
+<!-- Main Content -->
+<main class="w-full max-w-xl px-container-margin py-stack-lg flex-grow relative">
+<!-- Subtle Kinetic Background -->
+<div class="fixed inset-0 pegboard-bg pointer-events-none"></div>
+<!-- Headline -->
+<div class="mb-stack-lg animate-in fade-in slide-in-from-bottom-4 duration-700">
+<h1 class="font-headline-lg-mobile text-headline-lg-mobile md:font-headline-lg md:text-headline-lg text-primary mb-2">Let's Get Your Business Ready</h1>
+<p class="font-body-md text-body-md text-on-surface-variant">We need a few details to customize your MCOMSpin experience and rewards engine.</p>
+</div>
+<!-- Onboarding Form -->
+<form class="space-y-stack-md pb-32">
+<!-- Business Identity Section -->
+<div class="space-y-stack-sm">
+<div class="flex flex-col gap-1">
+<label class="font-label-md text-label-md text-on-surface" for="biz_name">Business Name</label>
+<input class="w-full h-[56px] px-4 rounded-xl bg-surface-container-low border border-outline-variant text-on-surface input-focus-ring transition-all placeholder:text-on-surface-variant/50" id="biz_name" placeholder="Enter legal business name" type="text"/>
+</div>
+<div class="flex flex-col gap-1 pt-2">
+<label class="font-label-md text-label-md text-on-surface" for="biz_desc">Business Description</label>
+<textarea class="w-full p-4 rounded-xl bg-surface-container-low border border-outline-variant text-on-surface input-focus-ring transition-all placeholder:text-on-surface-variant/50 resize-none" id="biz_desc" placeholder="Tell us what you do..." rows="3"></textarea>
+</div>
+</div>
+<!-- Categorization Section -->
+<div class="grid grid-cols-1 md:grid-cols-2 gap-stack-md pt-2">
+<div class="flex flex-col gap-1">
+<label class="font-label-md text-label-md text-on-surface" for="industry">Industry</label>
+<div class="relative">
+<select class="w-full h-[56px] px-4 rounded-xl bg-surface-container-low border border-outline-variant text-on-surface input-focus-ring transition-all appearance-none" id="industry">
+<option disabled="" selected="" value="">Select an industry</option>
+<option value="retail">Retail &amp; E-commerce</option>
+<option value="saas">SaaS / Technology</option>
+<option value="finance">FinTech &amp; Services</option>
+<option value="hospitality">Hospitality &amp; Travel</option>
+<option value="other">Other</option>
+</select>
+<span class="material-symbols-outlined absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-outline">expand_more</span>
+</div>
+</div>
+<div class="flex flex-col gap-1">
+<label class="font-label-md text-label-md text-on-surface" for="website">Website URL</label>
+<input class="w-full h-[56px] px-4 rounded-xl bg-surface-container-low border border-outline-variant text-on-surface input-focus-ring transition-all placeholder:text-on-surface-variant/50" id="website" placeholder="https://example.com" type="url"/>
+</div>
+</div>
+<!-- Contact Section -->
+<div class="space-y-stack-sm pt-4">
+<div class="flex flex-col gap-1">
+<label class="font-label-md text-label-md text-on-surface" for="address">Business Address</label>
+<div class="relative">
+<span class="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-outline">location_on</span>
+<input class="w-full h-[56px] pl-12 pr-4 rounded-xl bg-surface-container-low border border-outline-variant text-on-surface input-focus-ring transition-all placeholder:text-on-surface-variant/50" id="address" placeholder="123 Business Way, Suite 100" type="text"/>
+</div>
+</div>
+<div class="flex flex-col gap-1 pt-2">
+<label class="font-label-md text-label-md text-on-surface" for="phone">Phone Number</label>
+<div class="relative">
+<span class="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-outline">call</span>
+<input class="w-full h-[56px] pl-12 pr-4 rounded-xl bg-surface-container-low border border-outline-variant text-on-surface input-focus-ring transition-all placeholder:text-on-surface-variant/50" id="phone" placeholder="+1 (555) 000-0000" type="tel"/>
+</div>
+</div>
+</div>
+<!-- Decorative Visual Element -->
+<div class="pt-8 flex justify-center">
+<div class="relative w-full h-32 rounded-2xl overflow-hidden kinetic-shadow">
+<img alt="Modern Office" class="w-full h-full object-cover" data-alt="A brightly lit, contemporary coworking office space with warm wooden accents and minimalist furniture. Large windows let in soft, natural daylight, reflecting the brand's premium and professional identity. The environment is clean and professional with subtle burnt sienna color accents in the decor, evoking a sense of trust and corporate reliability for a business onboarding experience." src="https://lh3.googleusercontent.com/aida-public/AB6AXuCilcwuOxUOYpdNqnHfsXeBUb7qWSlBTCGDOBAmVB-G7_3xbK_sOSQtKyjs0g6MPcYtmjpMIUZega_pZUJZfexFZ4cmrIklVxHc-xVINRn_8a8e9E_-_koRiOQarip3TMr5JvF9H0ZT60y-tOKO51BKO8Dr-iKNvZ5MUNGkGZuQ8hG1wrcELWcE0grhc4PuSOdetkBosV2HBa56TZI3toKuTBz_n2gqBjinXdOwMJFbsnAxMpmksQLHWg"/>
+<div class="absolute inset-0 bg-gradient-to-r from-primary/40 to-transparent flex items-center px-6">
+<p class="text-on-primary font-bold max-w-[200px]">Unlock arcade rewards for your team today.</p>
+</div>
+</div>
+</div>
+</form>
+</main>
+<!-- Sticky Footer Button -->
+<div class="fixed bottom-0 left-0 w-full sticky-button-container p-container-margin z-50 flex justify-center">
+<button class="max-w-xl w-full h-14 bg-primary text-on-primary rounded-full font-label-md text-label-md flex items-center justify-center gap-2 kinetic-shadow active:scale-[0.98] transition-transform shadow-[0_4px_0_0_#7b2f00] hover:bg-primary-container" type="submit">
+<span>Continue</span>
+<span class="material-symbols-outlined">arrow_forward</span>
+</button>
+</div>
+<!-- Micro-interactions Script -->
+<script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const inputs = document.querySelectorAll('input, select, textarea');
+            
+            inputs.forEach(input => {
+                input.addEventListener('focus', () => {
+                    const label = input.previousElementSibling;
+                    if (label) label.classList.add('text-primary');
+                });
+                
+                input.addEventListener('blur', () => {
+                    const label = input.previousElementSibling;
+                    if (label) label.classList.remove('text-primary');
+                });
+            });
+
+            // Handle the sticky button press effect
+            const btn = document.querySelector('button[type="submit"]');
+            btn.addEventListener('mousedown', () => {
+                btn.style.boxShadow = 'none';
+                btn.style.transform = 'translateY(2px) scale(0.98)';
+            });
+            btn.addEventListener('mouseup', () => {
+                btn.style.boxShadow = '0 4px 0 0 #7b2f00';
+                btn.style.transform = 'translateY(0) scale(1)';
+            });
+            btn.addEventListener('mouseleave', () => {
+                btn.style.boxShadow = '0 4px 0 0 #7b2f00';
+                btn.style.transform = 'translateY(0) scale(1)';
+            });
+        });
+    </script>
+</body></html>

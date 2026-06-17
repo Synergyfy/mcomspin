@@ -1,0 +1,245 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0, viewport-fit=cover" name="viewport"/>
+<title>MCOMSpin - Billing Frequency</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .step-gradient {
+            background: linear-gradient(90deg, #a23f00 50%, #e2bfb1 50%);
+        }
+        .kinetic-shadow {
+            box-shadow: 0 10px 20px rgba(151, 71, 29, 0.15);
+        }
+        .button-press:active {
+            transform: translateY(2px);
+            box-shadow: 0 0px 0px rgba(151, 71, 29, 0.15);
+        }
+        .toggle-transition {
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+    </style>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "tertiary-fixed": "#cfe4ff",
+                        "outline": "#8e7164",
+                        "surface": "#fff8f6",
+                        "on-error-container": "#93000a",
+                        "on-tertiary": "#ffffff",
+                        "on-primary-container": "#541d00",
+                        "tertiary-container": "#009cf8",
+                        "surface-variant": "#f8ddd2",
+                        "on-background": "#261812",
+                        "secondary-fixed": "#ffdbcc",
+                        "on-tertiary-fixed-variant": "#004a79",
+                        "surface-container-low": "#fff1eb",
+                        "on-secondary-container": "#772f05",
+                        "on-primary": "#ffffff",
+                        "on-surface-variant": "#5a4136",
+                        "on-secondary-fixed-variant": "#793106",
+                        "secondary-container": "#ff9969",
+                        "on-surface": "#261812",
+                        "inverse-on-surface": "#ffede6",
+                        "error": "#ba1a1a",
+                        "surface-container": "#ffeae1",
+                        "on-primary-fixed-variant": "#7b2f00",
+                        "primary-fixed-dim": "#ffb695",
+                        "inverse-surface": "#3d2d26",
+                        "secondary": "#97471d",
+                        "primary": "#a23f00",
+                        "on-secondary-fixed": "#351000",
+                        "on-primary-fixed": "#351000",
+                        "surface-tint": "#a23f00",
+                        "surface-container-lowest": "#ffffff",
+                        "secondary-fixed-dim": "#ffb694",
+                        "on-tertiary-container": "#003152",
+                        "tertiary": "#00629f",
+                        "surface-container-highest": "#f8ddd2",
+                        "outline-variant": "#e2bfb1",
+                        "background": "#fff8f6",
+                        "surface-dim": "#efd5ca",
+                        "on-secondary": "#ffffff",
+                        "on-tertiary-fixed": "#001d34",
+                        "primary-container": "#fc6700",
+                        "surface-container-high": "#fee3d8",
+                        "surface-bright": "#fff8f6",
+                        "tertiary-fixed-dim": "#9acbff",
+                        "on-error": "#ffffff",
+                        "primary-fixed": "#ffdbcc",
+                        "inverse-primary": "#ffb695",
+                        "error-container": "#ffdad6"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                    "spacing": {
+                        "stack-sm": "8px",
+                        "gutter": "16px",
+                        "container-margin": "20px",
+                        "section-padding": "40px",
+                        "base": "8px",
+                        "stack-lg": "32px",
+                        "stack-md": "16px"
+                    },
+                    "fontFamily": {
+                        "label-sm": ["Inter"],
+                        "headline-lg": ["Inter"],
+                        "label-md": ["Inter"],
+                        "body-md": ["Inter"],
+                        "display-lg": ["Inter"],
+                        "body-lg": ["Inter"],
+                        "headline-lg-mobile": ["Inter"],
+                        "headline-md": ["Inter"]
+                    },
+                    "fontSize": {
+                        "label-sm": ["12px", {"lineHeight": "1.2", "fontWeight": "500"}],
+                        "headline-lg": ["32px", {"lineHeight": "1.2", "letterSpacing": "-0.02em", "fontWeight": "700"}],
+                        "label-md": ["14px", {"lineHeight": "1.2", "letterSpacing": "0.05em", "fontWeight": "600"}],
+                        "body-md": ["16px", {"lineHeight": "1.6", "fontWeight": "400"}],
+                        "display-lg": ["48px", {"lineHeight": "1.1", "letterSpacing": "-0.04em", "fontWeight": "800"}],
+                        "body-lg": ["18px", {"lineHeight": "1.6", "fontWeight": "400"}],
+                        "headline-lg-mobile": ["28px", {"lineHeight": "1.2", "fontWeight": "700"}],
+                        "headline-md": ["24px", {"lineHeight": "1.3", "fontWeight": "600"}]
+                    }
+                },
+            },
+        }
+    </script>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-surface text-on-surface min-h-screen flex flex-col font-body-md">
+<!-- Top AppBar (Transactional - Navigation suppressed per rules) -->
+<header class="w-full top-0 sticky z-50 bg-surface shadow-sm flex justify-between items-center px-container-margin h-16 w-full max-w-screen-xl mx-auto">
+<button class="flex items-center justify-center h-10 w-10 text-on-surface-variant active:scale-95 transition-transform">
+<span class="material-symbols-outlined">arrow_back</span>
+</button>
+<h1 class="font-headline-lg-mobile text-headline-lg-mobile text-primary tracking-tighter">MCOMSpin</h1>
+<div class="w-10"></div> <!-- Spacer for symmetry -->
+</header>
+<main class="flex-grow px-container-margin pt-stack-md pb-stack-lg max-w-md mx-auto w-full">
+<!-- Progress Indicator -->
+<div class="mb-stack-lg">
+<div class="flex justify-between items-center mb-stack-sm">
+<span class="font-label-md text-label-md text-on-surface-variant">Step 2 of 4</span>
+<span class="font-label-md text-label-md text-primary">Billing</span>
+</div>
+<div class="w-full h-2 bg-surface-container rounded-full overflow-hidden">
+<div class="w-1/2 h-full bg-primary rounded-full"></div>
+</div>
+</div>
+<!-- Section Title -->
+<div class="mb-stack-lg">
+<h2 class="font-headline-md text-headline-md text-on-surface mb-stack-sm">Choose frequency</h2>
+<p class="font-body-md text-body-md text-on-surface-variant">Maximize your growth with flexible billing options tailored to your business scale.</p>
+</div>
+<!-- Plan Summary Card -->
+<div class="bg-surface-container-lowest rounded-xl p-stack-md kinetic-shadow border border-outline-variant mb-stack-lg">
+<div class="flex items-center gap-stack-md">
+<div class="h-12 w-12 rounded-lg bg-secondary-container flex items-center justify-center text-on-secondary-container">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">rocket_launch</span>
+</div>
+<div>
+<h3 class="font-label-md text-label-md text-on-surface">Selected Plan</h3>
+<p class="font-headline-md text-headline-md text-primary">Growth Plan</p>
+</div>
+</div>
+</div>
+<!-- Billing Toggle -->
+<div class="bg-surface-container-high rounded-full p-1 flex relative mb-stack-lg">
+<div class="absolute h-[calc(100%-8px)] w-[calc(50%-4px)] bg-primary-container rounded-full top-1 left-1 toggle-transition shadow-sm" id="toggle-highlight"></div>
+<button class="flex-1 py-3 px-2 z-10 font-label-md text-label-md text-center transition-colors duration-200" id="btn-monthly" onclick="updateBilling('monthly')">
+                Monthly
+            </button>
+<button class="flex-1 py-3 px-2 z-10 font-label-md text-label-md text-center transition-colors duration-200 relative" id="btn-yearly" onclick="updateBilling('yearly')">
+                Yearly
+                <span class="absolute -top-3 -right-2 bg-tertiary-container text-on-tertiary font-label-sm text-[10px] px-2 py-0.5 rounded-full shadow-sm animate-bounce">SAVE 20%</span>
+</button>
+</div>
+<!-- Price Display -->
+<div class="flex flex-col items-center justify-center py-stack-lg space-y-2">
+<div class="flex items-baseline gap-1">
+<span class="font-display-lg text-display-lg text-on-surface">$</span>
+<span class="font-display-lg text-display-lg text-on-surface" id="price-value">49</span>
+<span class="font-body-lg text-body-lg text-on-surface-variant" id="billing-period">/mo</span>
+</div>
+<p class="font-body-md text-body-md text-on-surface-variant opacity-0 transition-opacity duration-300" id="total-text">Billed as $470 per year</p>
+</div>
+<!-- Incentive Features -->
+<div class="space-y-stack-md mb-stack-lg">
+<div class="flex items-center gap-stack-md text-on-surface-variant">
+<span class="material-symbols-outlined text-primary" style="font-variation-settings: 'FILL' 1;">check_circle</span>
+<span class="font-body-md text-body-md">Unlimited kinetic drops</span>
+</div>
+<div class="flex items-center gap-stack-md text-on-surface-variant">
+<span class="material-symbols-outlined text-primary" style="font-variation-settings: 'FILL' 1;">check_circle</span>
+<span class="font-body-md text-body-md">Priority B2B support</span>
+</div>
+<div class="flex items-center gap-stack-md text-on-surface-variant">
+<span class="material-symbols-outlined text-primary" style="font-variation-settings: 'FILL' 1;">check_circle</span>
+<span class="font-body-md text-body-md">Custom reward configurations</span>
+</div>
+</div>
+</main>
+<!-- Fixed Bottom Action -->
+<div class="sticky bottom-0 w-full bg-surface-bright px-container-margin py-stack-md pb-10 border-t border-outline-variant/30">
+<button class="w-full bg-primary-container text-on-primary-container py-4 rounded-full font-headline-md text-headline-md shadow-lg border-b-4 border-primary active:border-b-0 active:translate-y-1 transition-all button-press">
+            Continue
+        </button>
+</div>
+<script>
+        const priceValue = document.getElementById('price-value');
+        const billingPeriod = document.getElementById('billing-period');
+        const totalText = document.getElementById('total-text');
+        const toggleHighlight = document.getElementById('toggle-highlight');
+        const btnMonthly = document.getElementById('btn-monthly');
+        const btnYearly = document.getElementById('btn-yearly');
+
+        function updateBilling(type) {
+            if (type === 'yearly') {
+                // Move highlight
+                toggleHighlight.style.transform = 'translateX(100%)';
+                btnYearly.classList.add('text-on-primary-container');
+                btnMonthly.classList.remove('text-on-primary-container');
+                btnMonthly.classList.add('text-on-surface-variant');
+                
+                // Update Price (Example logic: 49 -> 39 monthly equivalent when paid yearly)
+                priceValue.innerText = '39';
+                billingPeriod.innerText = '/mo';
+                totalText.innerText = 'Billed as $468 per year';
+                totalText.classList.remove('opacity-0');
+            } else {
+                // Move highlight back
+                toggleHighlight.style.transform = 'translateX(0%)';
+                btnMonthly.classList.add('text-on-primary-container');
+                btnYearly.classList.remove('text-on-primary-container');
+                btnYearly.classList.add('text-on-surface-variant');
+                
+                // Update Price
+                priceValue.innerText = '49';
+                billingPeriod.innerText = '/mo';
+                totalText.classList.add('opacity-0');
+            }
+        }
+
+        // Initialize
+        updateBilling('monthly');
+    </script>
+</body></html>

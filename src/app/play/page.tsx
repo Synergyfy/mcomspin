@@ -2,588 +2,560 @@
 
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
+import { useCustomerStore } from '@/store/customer-store';
+import { motion, AnimatePresence } from 'framer-motion';
 
-interface LeadData {
-  name: string;
-  email: string;
-  phone: string;
-}
-
-interface Prize {
-  id: string;
-  title: string;
-  provider: string;
-  type: 'discount' | 'appointment' | 'voucher' | 'product';
-  value: string;
-  details: string;
-  color: string;
-  labelTop: string;
-  labelBottom: string;
-}
-
-const getPrizeIcon = (type: 'discount' | 'appointment' | 'voucher' | 'product') => {
-  switch (type) {
-    case 'voucher':
-      return (
-        <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" d="M16.5 6v.75m0 3v.75m0 3v.75m0 3V18m-9-12h12c1.38 0 2.5 1.12 2.5 2.5v7c0 1.38-1.12 2.5-2.5 2.5h-12A2.5 2.5 0 013 15.5v-7A2.5 2.5 0 015.5 6z" />
+// Mock Campaign Data
+const campaignData = {
+  businessName: 'MCOM Mall',
+  businessLogo: 'M',
+  storeImage: 'https://images.unsplash.com/photo-1567401893414-76b7b1e5a7a5?auto=format&fit=crop&w=1200&q=80',
+  title: 'Summer Rewards Festival',
+  description: 'Play our exclusive Plucko game and win amazing rewards from your favorite MCOM stores!',
+  rewards: [
+    { 
+      name: 'Free Haircut', 
+      provider: 'Style & Co', 
+      icon: (
+        <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" d="M15.362 5.214A8.252 8.252 0 0 1 12 21 8.25 8.25 0 0 1 6.038 7.048 8.287 8.287 0 0 0 9 9.601a8.983 8.283 0 0 1 3.361-6.865 8.213 8.213 0 0 0 3 2.478Z" />
         </svg>
-      );
-    case 'appointment':
-      return (
-        <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z" />
+      ), 
+      color: 'bg-blue-500' 
+    },
+    { 
+      name: '£5 Voucher', 
+      provider: 'MCOM Mall', 
+      icon: (
+        <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" d="M16.5 6v.75m0 3v.75m0 3v.75m0 3V18m-9-12h12c1.38 0 2.5 1.12 2.5 2.5v7c0 1.38-1.12 2.5-2.5 2.5h-12A2.5 2.5 0 0 1 3 15.5v-7A2.5 2.5 0 0 1 5.5 6z" />
         </svg>
-      );
-    case 'product':
-      return (
-        <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
+      ), 
+      color: 'bg-orange-500' 
+    },
+    { 
+      name: '20% Discount', 
+      provider: 'Fashion Hub', 
+      icon: (
+        <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" d="M9.568 3H5.25A2.25 2.25 0 0 0 3 5.25v4.318c0 .597.237 1.17.659 1.591l9.581 9.581a2.25 2.25 0 0 0 3.182 0l4.318-4.318a2.25 2.25 0 0 0 0-3.182L11.159 3.659A2.25 2.25 0 0 0 9.568 3Z" />
+          <path strokeLinecap="round" strokeLinejoin="round" d="M6 6h.008v.008H6V6Z" />
         </svg>
-      );
-    case 'discount':
-      return (
-        <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" d="M9 14.25l6-6m4.5-3.75a3 3 0 11-6 0 3 3 0 016 0zm-12 12a3 3 0 11-6 0 3 3 0 016 0z" />
+      ), 
+      color: 'bg-purple-500' 
+    },
+    { 
+      name: 'Free Drink', 
+      provider: 'Cafe Nero', 
+      icon: (
+        <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" d="M15.362 5.214A8.252 8.252 0 0 1 12 21 8.25 8.25 0 0 1 6.038 7.048 8.287 8.287 0 0 0 9 9.601a8.983 8.283 0 0 1 3.361-6.865 8.213 8.213 0 0 0 3 2.478Z" />
         </svg>
-      );
-    default:
-      return null;
-  }
+      ), 
+      color: 'bg-green-500' 
+    },
+    { 
+      name: 'Cashback', 
+      provider: 'MCOM Pay', 
+      icon: (
+        <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" d="M2.25 18.75a60.07 60.07 0 0 1 15.797 2.101c.727.198 1.453-.342 1.453-1.096V18.75M3.75 4.5v.75m0 3v.75m0 3v.75m0 3V15m15 0h.008v.008H18.75V15Zm0-2.25h.008v.008H18.75V12.75Zm0-2.25h.008v.008H18.75V10.5Zm0-2.25h.008v.008H18.75V8.25Zm0-2.25h.008v.008H18.75V6Zm-9 13.5V4.5a2.25 2.25 0 0 1 2.25-2.25h1.348c.548 0 1.088.112 1.59.332 1.014.442 1.531 1.503 1.3 2.584l-.538 2.512a2.25 2.25 0 0 0-.07.548V13.5" />
+        </svg>
+      ), 
+      color: 'bg-emerald-500' 
+    },
+    { 
+      name: 'Loyalty Points', 
+      provider: 'MCOM Rewards', 
+      icon: (
+        <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" d="M11.48 3.499a.562.562 0 0 1 1.04 0l2.125 5.111a.563.563 0 0 0 .475.345l5.518.442c.499.04.701.663.321.988l-4.204 3.602a.563.563 0 0 0-.182.557l1.285 5.385a.562.562 0 0 1-.84.61l-4.725-2.885a.563.563 0 0 0-.586 0L6.982 20.54a.562.562 0 0 1-.84-.61l1.285-5.386a.562.562 0 0 0-.182-.557l-4.204-3.602a.563.563 0 0 1 .321-.988l5.518-.442a.563.563 0 0 0 .475-.345L11.48 3.5Z" />
+        </svg>
+      ), 
+      color: 'bg-amber-500' 
+    },
+  ]
 };
 
-export default function PlayPortal() {
-  const [step, setStep] = useState<'gate' | 'play' | 'reveal' | 'claim'>('gate');
-  const [lead, setLead] = useState<LeadData>({ name: '', email: '', phone: '' });
-  const [isSpinning, setIsSpinning] = useState(false);
-  const [rotation, setRotation] = useState(0);
-  const [selectedPrize, setSelectedPrize] = useState<Prize | null>(null);
-  const [developerLogs, setDeveloperLogs] = useState<string[]>([]);
-  const [activePartnerIndex, setActivePartnerIndex] = useState(0);
+const GiftBox = ({ reward, isRevealed, label, color }: { reward?: any, isRevealed?: boolean, label?: string, color?: string }) => {
+  return (
+    <div className="relative group perspective-1000 w-full h-full">
+      {/* 3D Box Container */}
+      <div className="relative w-full h-full transition-transform duration-500 preserve-3d">
+        {/* Box Shadow */}
+        <div className="absolute -bottom-2 left-1/2 -translate-x-1/2 w-[80%] h-4 bg-black/40 blur-md rounded-full" />
+        
+        {/* Box Body */}
+        <div className={`absolute inset-0 rounded-xl bg-gradient-to-b ${color || 'from-orange-500 to-orange-700'} border-t border-white/20 shadow-xl flex items-center justify-center overflow-hidden`}>
+          {/* Ribbons */}
+          <div className="absolute inset-0 flex items-center justify-center">
+            <div className="w-4 h-full bg-yellow-400/80 shadow-inner" />
+            <div className="w-full h-4 bg-yellow-400/80 shadow-inner" />
+          </div>
+          
+          {/* Label or Reward Content */}
+          <div className="relative z-10 flex flex-col items-center justify-center text-center p-2">
+            {isRevealed && reward ? (
+              <motion.div 
+                initial={{ scale: 0, opacity: 0 }}
+                animate={{ scale: 1, opacity: 1 }}
+                className="flex flex-col items-center"
+              >
+                <div className="text-white drop-shadow-md mb-1">
+                  {reward.icon}
+                </div>
+                <span className="text-[10px] font-black text-white leading-tight uppercase drop-shadow-sm">
+                  {reward.name}
+                </span>
+              </motion.div>
+            ) : (
+              <span className="text-white/90 font-black text-xl drop-shadow-lg">
+                {label || '?'}
+              </span>
+            )}
+          </div>
 
-  const partners = [
-    { name: 'Sartorial Goods Co.', active: true },
-    { name: 'Orchard & Co. Spas', active: false },
-    { name: 'Apex Tech Vouchers', active: false },
-    { name: 'Vanguard Fine Dining', active: false }
-  ];
+          {/* Glossy Overlay */}
+          <div className="absolute inset-0 bg-gradient-to-tr from-white/10 to-transparent pointer-events-none" />
+        </div>
 
-  const addLog = (msg: string) => {
-    setDeveloperLogs((prev) => [`[${new Date().toLocaleTimeString()}] ${msg}`, ...prev].slice(0, 8));
+        {/* Box Lid (slightly larger) */}
+        <div className={`absolute -top-1 -left-1 -right-1 h-6 rounded-t-xl rounded-b-md bg-gradient-to-b ${color || 'from-orange-400 to-orange-600'} border-t border-white/30 shadow-lg z-20`}>
+          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-4 h-4 bg-yellow-400 rounded-sm shadow-sm" />
+        </div>
+      </div>
+    </div>
+  );
+};
+
+export default function PlayPage() {
+  const { profile, completeOnboarding } = useCustomerStore();
+  const [step, setStep] = useState<'landing' | 'eligibility' | 'checking' | 'confirmed' | 'token_check' | 'game_prep' | 'reward_reveal' | 'box_shuffle' | 'ready'>('landing');
+  const [formData, setFormData] = useState({ name: '', email: '' });
+  const [prepStatus, setPrepStatus] = useState('Initializing board...');
+  const [boxes, setBoxes] = useState([0, 1, 2, 3, 4, 5]);
+
+  const isRegistered = profile.onboardingCompleted;
+
+  const handleStartPlaying = () => {
+    if (isRegistered) {
+      setStep('token_check');
+    } else {
+      setStep('eligibility');
+    }
+  };
+
+  const handleRegister = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!formData.name || !formData.email) return;
+    completeOnboarding(formData.name, formData.email, [], []);
+    setStep('checking');
   };
 
   useEffect(() => {
-    addLog('System Initialized: Loading Week 1 configuration...');
-    addLog('Active round-robin recipient: Sartorial Goods Co.');
-  }, []);
-
-  const prizes: Prize[] = [
-    { id: '1', title: '$100 Tailoring Voucher', provider: 'Sartorial Goods Co.', type: 'voucher', value: '$100', details: 'Valid on custom collections. Min spend $300.', color: '#f97316', labelTop: '$100', labelBottom: 'VOUCHER' },
-    { id: '2', title: 'Luxury Hydrotherapy Session', provider: 'Orchard & Co. Spas', type: 'appointment', value: 'Complimentary', details: 'Full-service spa booking. Instant reservation token generated.', color: '#252525', labelTop: 'SPA', labelBottom: 'SESSION' },
-    { id: '3', title: 'Premium Wireless Charger', provider: 'Apex Tech Vouchers', type: 'product', value: 'Free Item', details: 'Redeemable at tech terminal, excess stock inventory #AP-903.', color: '#f97316', labelTop: 'TECH', labelBottom: 'ITEM' },
-    { id: '4', title: '50% Chef Tasting Table', provider: 'Vanguard Fine Dining', type: 'discount', value: '50% Off', details: 'Exquisite 6-course menu reservation for two guests.', color: '#252525', labelTop: '50% OFF', labelBottom: 'DINING' },
-    { id: '5', title: '$50 Retail Gift Card', provider: 'Sartorial Goods Co.', type: 'voucher', value: '$50', details: 'Storewide shopping credit. Valid immediately.', color: '#f97316', labelTop: '$50', labelBottom: 'CREDIT' },
-    { id: '6', title: 'Priority Consultation Slot', provider: 'Orchard & Co. Spas', type: 'appointment', value: 'VIP Booking', details: 'Direct matching with a senior physical therapist.', color: '#252525', labelTop: 'VIP', labelBottom: 'BOOKING' }
-  ];
-
-  const handleGateSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!lead.name || !lead.email) {
-      alert('Please fill out the required information to enter the prize portal.');
-      return;
+    if (step === 'checking') {
+      const timer = setTimeout(() => {
+        setStep('token_check');
+      }, 2000);
+      return () => clearTimeout(timer);
     }
-    addLog(`Instant Gratification triggered. Lead Captured: ${lead.name} (${lead.email})`);
-    addLog(`Data routing control established. Assigning session telemetry...`);
-    setStep('play');
-  };
-
-  const triggerMainSpin = () => {
-    if (isSpinning) return;
-    setIsSpinning(true);
-    addLog('Engagement request submitted to Backend Probability Engine...');
-
-    const randomPercent = Math.random() * 100;
-    let targetIndex = 0;
-
-    if (randomPercent < 60) {
-      targetIndex = Math.random() > 0.5 ? 0 : 4;
-      addLog(`Probability override active: Spotlighting Featured Partner (60% weight matched)`);
-    } else {
-      const otherIndices = [1, 2, 3, 5];
-      targetIndex = otherIndices[Math.floor(Math.random() * otherIndices.length)];
-      addLog(`Standard probability distribution matched.`);
-    }
-
-    const extraSpins = 6 + Math.floor(Math.random() * 4); // 6 to 9 spins
-    const sectorAngle = 60;
     
-    // We want the wheel to spin clockwise and stop exactly at the pointer (at 0 degrees / top center)
-    // The target slice needs to be at the top. Since slice indices go clockwise,
-    // to align targetIndex at the top center, we must rotate the wheel by:
-    // 360 - (targetIndex * 60)
-    const targetAngle = extraSpins * 360 + (360 - (targetIndex * sectorAngle));
+    if (step === 'game_prep') {
+      const statuses = [
+        'Loading physics engine...',
+        'Secretly assigning rewards...',
+        'Syncing campaign rules...',
+        'Ready to play!'
+      ];
+      let i = 0;
+      const interval = setInterval(() => {
+        if (i < statuses.length - 1) {
+          setPrepStatus(statuses[++i]);
+        } else {
+          clearInterval(interval);
+          setTimeout(() => setStep('reward_reveal'), 800);
+        }
+      }, 1000);
+      return () => clearInterval(interval);
+    }
 
-    setRotation(targetAngle);
+    if (step === 'reward_reveal') {
+      const timer = setTimeout(() => {
+        setStep('box_shuffle');
+      }, 3000);
+      return () => clearTimeout(timer);
+    }
 
-    setTimeout(() => {
-      setIsSpinning(false);
-      const prize = prizes[targetIndex];
-      setSelectedPrize(prize);
-      addLog(`Game outcome resolved: Selected [${prize.title}]`);
-      addLog(`Lead automatically routed to: ${prize.provider}`);
-      addLog(`Disbursing asset logic triggered. Excess Inventory log: ID-${Math.floor(1000 + Math.random() * 9000)}`);
-      setStep('reveal');
-    }, 4500);
-  };
+    if (step === 'box_shuffle') {
+      const shuffleInterval = setInterval(() => {
+        setBoxes(prev => {
+          const next = [...prev];
+          const i = Math.floor(Math.random() * next.length);
+          const j = Math.floor(Math.random() * next.length);
+          [next[i], next[j]] = [next[j], next[i]];
+          return next;
+        });
+      }, 400);
 
-  const handleRedeem = () => {
-    addLog(`Routing conversion event telemetry to dashboard trackers...`);
-    addLog(`Lead status updated: "Highly Motivated - Asset Distributed"`);
-    setStep('claim');
-  };
+      const endShuffle = setTimeout(() => {
+        clearInterval(shuffleInterval);
+        setStep('ready'); // Transition to Step 7 (Moving Ball)
+      }, 4000);
+
+      return () => { clearInterval(shuffleInterval); clearTimeout(endShuffle); };
+    }
+  }, [step]);
 
   return (
-    <div className="min-h-screen bg-white text-[#252525] relative overflow-hidden luxury-gradient font-body">
-      {/* Decorative ambient background glows */}
-      <div className="absolute top-0 left-0 w-[500px] h-[500px] bg-[#f97316]/5 rounded-full blur-[120px] pointer-events-none" />
-      <div className="absolute -bottom-40 -right-40 w-[600px] h-[600px] bg-[#f97316]/5 rounded-full blur-[140px] pointer-events-none" />
-
-      {/* Header */}
-      <header className="sticky top-0 z-50 w-full border-b border-[#e8e8e5] bg-white/85 backdrop-blur-md px-6 lg:px-16 py-4 flex items-center justify-between">
-        <div className="flex items-center gap-3">
-          <Link href="/" className="w-4 h-4 bg-[#f97316] rounded-full animate-pulse block" />
-          <Link href="/" className="font-display font-semibold text-lg tracking-tight text-[#252525]">mcomspin</Link>
-        </div>
-        <div className="flex items-center gap-4">
-          <Link href="/" className="text-xs font-bold tracking-widest text-[#727272] hover:text-[#252525] transition-colors">
-            &larr; BACK TO SYSTEM CORE
-          </Link>
-        </div>
-      </header>
-
-      {/* Main Container */}
-      <main className="max-w-6xl mx-auto px-6 py-12 grid grid-cols-1 lg:grid-cols-12 gap-12 items-start relative z-10">
+    <div className="min-h-screen bg-stone-50 text-stone-900 font-sans selection:bg-orange-200">
+      <AnimatePresence mode="wait">
         
-        {/* Left Column: Interactive Screen */}
-        <div className="lg:col-span-8 bg-white/95 border border-[#e8e8e5] rounded-2xl p-6 lg:p-8 shadow-xl min-h-[560px] flex flex-col justify-between relative">
-          
-          {/* Step 1: Gate */}
-          {step === 'gate' && (
-            <div className="space-y-6 max-w-lg mx-auto py-8">
-              <div className="text-center space-y-2">
-                <span className="text-[10px] font-bold tracking-widest text-[#f97316] uppercase">Step 01 / Instant Gratification Gate</span>
-                <h2 className="text-2xl lg:text-3xl font-display font-bold text-[#252525]">Verification & Data Capture</h2>
-                <p className="text-[#727272] text-sm font-light">
-                  To participate in the partner rewards ecosystem and spin for luxury business assets, verify your invitation.
-                </p>
+        {/* Step 2: Landing Screen */}
+        {step === 'landing' && (
+          <motion.div 
+            key="landing"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="flex flex-col min-h-screen"
+          >
+            {/* Hero Section */}
+            <div className="relative h-[40vh] overflow-hidden">
+              <img 
+                src={campaignData.storeImage} 
+                alt={campaignData.businessName}
+                className="w-full h-full object-cover"
+              />
+              <div className="absolute inset-0 bg-black/40 flex flex-col items-center justify-center p-6 text-center">
+                <div className="w-16 h-16 bg-white rounded-2xl flex items-center justify-center text-orange-500 font-bold text-2xl shadow-xl mb-4">
+                  {campaignData.businessLogo}
+                </div>
+                <h1 className="text-white text-3xl font-extrabold tracking-tight drop-shadow-md">
+                  {campaignData.businessName}
+                </h1>
+              </div>
+            </div>
+
+            {/* Content */}
+            <div className="flex-1 max-w-3xl mx-auto w-full px-6 -mt-10 relative z-10">
+              <div className="bg-white rounded-3xl p-8 shadow-2xl border border-stone-200/50">
+                <div className="text-center mb-8">
+                  <span className="text-[10px] font-bold tracking-[0.2em] text-orange-500 uppercase block mb-2">Exclusive Campaign</span>
+                  <h2 className="text-2xl font-black text-stone-900 mb-3">{campaignData.title}</h2>
+                  <p className="text-stone-500 text-sm leading-relaxed">
+                    {campaignData.description}
+                  </p>
+                </div>
+
+                <div className="space-y-4 mb-8">
+                  <h3 className="text-xs font-bold uppercase tracking-wider text-stone-400 text-center">Win Amazing Rewards</h3>
+                  <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                    {campaignData.rewards.map((reward, i) => (
+                      <div key={i} className="flex flex-col items-center p-4 rounded-2xl bg-stone-50 border border-stone-100 transition-transform hover:scale-[1.02]">
+                        <span className={`w-10 h-10 rounded-xl ${reward.color} flex items-center justify-center text-white mb-2 shadow-sm`}>
+                          {reward.icon}
+                        </span>
+                        <span className="text-[11px] font-bold text-stone-800 text-center">{reward.name}</span>
+                        <span className="text-[9px] text-stone-400 text-center">{reward.provider}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                <button 
+                  onClick={handleStartPlaying}
+                  className="w-full bg-orange-500 hover:bg-orange-600 text-white py-5 rounded-2xl font-black tracking-widest text-sm uppercase transition-all shadow-lg shadow-orange-500/25 active:scale-[0.98]"
+                >
+                  Start Playing & Win
+                </button>
+              </div>
+            </div>
+
+            <footer className="py-8 text-center text-[10px] font-bold text-stone-400 uppercase tracking-widest">
+              Powered by MCOM Mall Ecosystem
+            </footer>
+          </motion.div>
+        )}
+
+        {/* Step 3: Eligibility Check (Registration) */}
+        {step === 'eligibility' && (
+          <motion.div 
+            key="eligibility"
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -20 }}
+            className="min-h-screen flex items-center justify-center p-6 bg-stone-50"
+          >
+            <div className="bg-white rounded-3xl p-8 shadow-2xl border border-stone-200 max-w-md w-full">
+              <div className="text-center mb-8">
+                <div className="w-12 h-12 bg-orange-100 text-orange-500 rounded-full flex items-center justify-center mx-auto mb-4">
+                  <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                  </svg>
+                </div>
+                <h2 className="text-2xl font-black text-stone-900 mb-2">Claim Your Entry</h2>
+                <p className="text-stone-500 text-sm">Register quickly to unlock your daily game tokens and save your winnings.</p>
               </div>
 
-              <form onSubmit={handleGateSubmit} className="space-y-4">
+              <form onSubmit={handleRegister} className="space-y-4">
                 <div className="space-y-1.5">
-                  <label className="text-xs font-bold uppercase tracking-wider text-[#727272]">Full Name</label>
+                  <label className="text-[10px] font-black uppercase tracking-widest text-stone-400 ml-1">Full Name</label>
                   <input 
                     type="text" 
                     required
                     placeholder="Enter your name" 
-                    value={lead.name}
-                    onChange={(e) => setLead({ ...lead, name: e.target.value })}
-                    className="w-full px-4 py-3 rounded-xl border border-[#e8e8e5] bg-white text-sm focus:outline-none focus:border-[#f97316] transition-colors text-[#252525]"
+                    value={formData.name}
+                    onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                    className="w-full px-5 py-4 rounded-2xl bg-stone-50 border border-stone-100 text-stone-900 text-sm focus:outline-none focus:ring-2 focus:ring-orange-500/20 focus:border-orange-500 transition-all"
                   />
                 </div>
 
                 <div className="space-y-1.5">
-                  <label className="text-xs font-bold uppercase tracking-wider text-[#727272]">Corporate Email</label>
+                  <label className="text-[10px] font-black uppercase tracking-widest text-stone-400 ml-1">Email Address</label>
                   <input 
                     type="email" 
                     required
-                    placeholder="name@company.com" 
-                    value={lead.email}
-                    onChange={(e) => setLead({ ...lead, email: e.target.value })}
-                    className="w-full px-4 py-3 rounded-xl border border-[#e8e8e5] bg-white text-sm focus:outline-none focus:border-[#f97316] transition-colors text-[#252525]"
-                  />
-                </div>
-
-                <div className="space-y-1.5">
-                  <label className="text-xs font-bold uppercase tracking-wider text-[#727272]">Mobile Number (Optional)</label>
-                  <input 
-                    type="tel" 
-                    placeholder="+1 (555) 000-0000" 
-                    value={lead.phone}
-                    onChange={(e) => setLead({ ...lead, phone: e.target.value })}
-                    className="w-full px-4 py-3 rounded-xl border border-[#e8e8e5] bg-white text-sm focus:outline-none focus:border-[#f97316] transition-colors text-[#252525]"
+                    placeholder="name@example.com" 
+                    value={formData.email}
+                    onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                    className="w-full px-5 py-4 rounded-2xl bg-stone-50 border border-stone-100 text-stone-900 text-sm focus:outline-none focus:ring-2 focus:ring-orange-500/20 focus:border-orange-500 transition-all"
                   />
                 </div>
 
                 <button 
                   type="submit"
-                  className="w-full bg-[#252525] text-white py-4 rounded-xl font-bold tracking-wide hover:bg-[#f97316] transition-all duration-300 shadow-lg shadow-black/10"
+                  className="w-full bg-stone-900 hover:bg-stone-800 text-white py-5 rounded-2xl font-black tracking-widest text-sm uppercase transition-all shadow-xl active:scale-[0.98]"
                 >
-                  ENTER PRIZE PORTAL
+                  Verify & Play
                 </button>
               </form>
 
-              <div className="pt-4 border-t border-[#e8e8e5] text-center">
-                <p className="text-[10px] text-[#727272] leading-relaxed font-bold">
-                  *By submitting, you agree to lead-routing assignment across participating round-robin partners.
-                </p>
-              </div>
-            </div>
-          )}
-
-          {/* Step 2: The Main Play Spin Board */}
-          {step === 'play' && (
-            <div className="flex flex-col items-center justify-center space-y-8 py-6">
-              <div className="text-center space-y-1.5 max-w-md">
-                <span className="text-[10px] font-bold tracking-widest text-[#f97316] uppercase bg-[#f97316]/10 px-2.5 py-0.5 rounded-full">Step 02 / Controlled Engagement Layer</span>
-                <h2 className="text-xl lg:text-2xl font-display font-extrabold tracking-tight text-[#252525]">Spin the Live Reward Wheel</h2>
-                <p className="text-[#727272] text-xs font-light">
-                  Spotlight partner active: <span className="font-semibold text-[#252525]">Sartorial Goods Co. (60% Weighted Probability)</span>
-                </p>
-              </div>
-
-              {/* Luxury Chronometer Outer Wrapper */}
-              <div className="relative w-[348px] h-[348px] rounded-full bg-gradient-to-b from-stone-50 via-white to-stone-100 p-2.5 flex items-center justify-center border border-stone-200/90 shadow-[0_25px_60px_rgba(0,0,0,0.08),inset_0_2px_4px_white,0_0_0_1px_rgba(0,0,0,0.02)] select-none transition-all duration-500 hover:shadow-[0_30px_70px_rgba(249,115,22,0.08),inset_0_2px_4px_white] hover:scale-[1.01] active:scale-[0.99]">
-                
-                {/* Concentric scale ring */}
-                <div className="absolute inset-0 bg-[#fafaf7] rounded-full m-1 border border-stone-200/60 shadow-[inset_0_1px_3px_rgba(0,0,0,0.02)]" />
-                
-                {/* Chronograph Watch Face Ticks */}
-                <svg className="absolute inset-0 w-full h-full pointer-events-none select-none z-0 animate-[spin_120s_linear_infinite]" viewBox="0 0 100 100">
-                  {/* Outer micro-tracks */}
-                  <circle cx="50" cy="50" r="48.5" fill="none" stroke="#e8e8e5" strokeWidth="0.15" />
-                  <circle cx="50" cy="50" r="45.5" fill="none" stroke="#e8e8e5" strokeWidth="0.15" />
-                  
-                  {/* 60 Chronograph ticks */}
-                  {Array.from({ length: 60 }).map((_, idx) => {
-                    const angle = idx * 6; // 360 / 60 = 6 deg
-                    const isMajor = idx % 5 === 0;
-                    const isSectorBoundary = idx % 10 === 0;
-                    const r1 = isMajor ? (isSectorBoundary ? 44.5 : 45.2) : 45.8;
-                    const r2 = 48.0;
-                    
-                    const rad = (angle * Math.PI) / 180;
-                    const x1 = 50 + r1 * Math.cos(rad);
-                    const y1 = 50 + r1 * Math.sin(rad);
-                    const x2 = 50 + r2 * Math.cos(rad);
-                    const y2 = 50 + r2 * Math.sin(rad);
-                    
-                    return (
-                      <line
-                        key={idx}
-                        x1={x1}
-                        y1={y1}
-                        x2={x2}
-                        y2={y2}
-                        stroke={isSectorBoundary ? '#f97316' : (isMajor ? '#252525' : '#e8e8e5')}
-                        strokeWidth={isSectorBoundary ? '0.45' : (isMajor ? '0.3' : '0.2')}
-                      />
-                    );
-                  })}
-                </svg>
-
-                {/* Elegant Bezel-Mounted Chrono-Pointer */}
-                <div className="absolute -top-[16px] z-30 flex flex-col items-center select-none pointer-events-none filter drop-shadow-[0_5px_8px_rgba(0,0,0,0.18)]">
-                  {/* Miniature mount bracket */}
-                  <div className="w-5 h-2 bg-[#252525] rounded-t-sm border-b border-white/10" />
-                  {/* Tapered chronometer hand */}
-                  <svg width="18" height="30" viewBox="0 0 18 30" fill="none" className="transition-transform duration-300 hover:translate-y-0.5">
-                    <path d="M9 28L1 1L17 1L9 28Z" fill="#252525" />
-                    <path d="M9 23L3 3L15 3L9 23Z" fill="#f97316" />
-                    <circle cx="9" cy="3" r="1.2" fill="white" />
-                  </svg>
-                </div>
-
-                {/* Inner Bezel (Sleek Metallic Gunmetal Ring) */}
-                <div className="relative w-[288px] h-[288px] rounded-full bg-white border-[4px] border-[#252525] shadow-[0_10px_30px_rgba(0,0,0,0.06),inset_0_4px_12px_rgba(0,0,0,0.15)] flex items-center justify-center z-10 overflow-hidden">
-                  
-                  {/* Rotating Dial Container */}
-                  <div 
-                    className="w-full h-full rounded-full overflow-hidden transition-transform ease-out relative"
-                    style={{ 
-                      transform: `rotate(${rotation}deg)`,
-                      transitionDuration: isSpinning ? '4.5s' : '0s'
-                    }}
-                  >
-                    {/* SVG wedge layout with concentric watch sub-tracks */}
-                    <svg viewBox="0 0 100 100" className="w-full h-full transform -rotate-90">
-                      <defs>
-                        {/* Light luxury sector radial gradient */}
-                        <radialGradient id="lightWedge" cx="50%" cy="50%" r="50%" fx="50%" fy="10%">
-                          <stop offset="0%" stopColor="#ffffff" />
-                          <stop offset="60%" stopColor="#fafaf7" />
-                          <stop offset="100%" stopColor="#f3f3eb" />
-                        </radialGradient>
-                        
-                        {/* Dark luxury sector radial gradient */}
-                        <radialGradient id="darkWedge" cx="50%" cy="50%" r="50%" fx="50%" fy="10%">
-                          <stop offset="0%" stopColor="#2c2c2b" />
-                          <stop offset="60%" stopColor="#1e1e1d" />
-                          <stop offset="100%" stopColor="#111110" />
-                        </radialGradient>
-                      </defs>
-
-                      {/* Wedges */}
-                      <path d="M50,50 L50,0 A50,50 0 0,1 93.3,25 Z" fill="url(#lightWedge)" stroke="#e8e8e5" strokeWidth="0.3" />
-                      <path d="M50,50 L93.3,25 A50,50 0 0,1 93.3,75 Z" fill="url(#darkWedge)" stroke="rgba(255,255,255,0.04)" strokeWidth="0.3" />
-                      <path d="M50,50 L93.3,75 A50,50 0 0,1 50,100 Z" fill="url(#lightWedge)" stroke="#e8e8e5" strokeWidth="0.3" />
-                      <path d="M50,50 L50,100 A50,50 0 0,1 6.7,75 Z" fill="url(#darkWedge)" stroke="rgba(255,255,255,0.04)" strokeWidth="0.3" />
-                      <path d="M50,50 L6.7,75 A50,50 0 0,1 6.7,25 Z" fill="url(#lightWedge)" stroke="#e8e8e5" strokeWidth="0.3" />
-                      <path d="M50,50 L6.7,25 A50,50 0 0,1 50,0 Z" fill="url(#darkWedge)" stroke="rgba(255,255,255,0.04)" strokeWidth="0.3" />
-
-                      {/* Outer rim gold highlight inside the sectors */}
-                      <circle cx="50" cy="50" r="49" fill="none" stroke="rgba(249,115,22,0.08)" strokeWidth="0.5" />
-                      
-                      {/* Luxury watchface design accents inside the sectors */}
-                      <circle cx="50" cy="50" r="41" fill="none" stroke="#e8e8e5" strokeOpacity="0.25" strokeWidth="0.2" strokeDasharray="0.8, 1.5" />
-                      <circle cx="50" cy="50" r="32" fill="none" stroke="#e8e8e5" strokeOpacity="0.15" strokeWidth="0.2" />
-                      <circle cx="50" cy="50" r="23" fill="none" stroke="#e8e8e5" strokeOpacity="0.25" strokeWidth="0.15" strokeDasharray="0.5, 1" />
+              <div className="mt-8 pt-6 border-t border-stone-100">
+                <p className="text-[10px] font-bold text-stone-400 uppercase tracking-widest text-center mb-4">Or sign up with</p>
+                <div className="grid grid-cols-2 gap-4">
+                  <button className="flex items-center justify-center gap-2 py-3 rounded-xl border border-stone-200 text-xs font-bold text-stone-600 hover:bg-stone-50 transition-colors">
+                    <svg className="w-4 h-4" viewBox="0 0 24 24">
+                      <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" />
+                      <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-1 .67-2.28 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" />
+                      <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.16H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.84l3.66-2.75z" />
+                      <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.16l3.66 2.75c.87-2.6 3.3-4.53 6.16-4.53z" />
                     </svg>
-
-                    {/* Absolute Positioned Precise Labels */}
-                    {prizes.map((prize, idx) => {
-                      const sectorAngle = 60;
-                      const labelAngle = idx * sectorAngle + (sectorAngle / 2);
-                      const isDark = idx % 2 === 1;
-                      return (
-                        <div
-                          key={idx}
-                          className="absolute top-0 left-1/2 h-1/2 origin-bottom -translate-x-1/2 flex flex-col items-center justify-start pt-8 select-none"
-                          style={{
-                            transform: `rotate(${labelAngle}deg)`,
-                            width: '90px',
-                          }}
-                        >
-                          {/* Micro Icon Container with glowing ring */}
-                          <div className={`p-2 rounded-full border shadow-md mb-2 flex items-center justify-center transition-all duration-300 ${
-                            isDark 
-                              ? 'bg-[#252525] border-white/10 text-[#ffa15f] shadow-black/30' 
-                              : 'bg-[#fafaf7] border-[#e8e8e5] text-[#f97316] shadow-stone-200'
-                          }`}>
-                            {getPrizeIcon(prize.type)}
-                          </div>
-                          
-                          {/* Top Value Label (e.g. $100, SPA, 50% OFF) */}
-                          <span className={`text-[11px] font-black tracking-[0.1em] text-center uppercase leading-tight font-display ${
-                            isDark ? 'text-white drop-shadow-[0_2px_4px_rgba(0,0,0,0.4)]' : 'text-[#252525]'
-                          }`}>
-                            {prize.labelTop}
-                          </span>
-                          
-                          {/* Muted line separator */}
-                          <span className={`w-5 h-[1.5px] my-1.5 rounded-full ${
-                            isDark ? 'bg-white/10' : 'bg-[#e8e8e5]'
-                          }`} />
-                          
-                          {/* Bottom Category Label (e.g. VOUCHER, SESSION) */}
-                          <span className={`text-[7.5px] font-black tracking-[0.2em] text-center uppercase ${
-                            isDark ? 'text-[#ffa15f]' : 'text-[#f97316]'
-                          }`}>
-                            {prize.labelBottom}
-                          </span>
-                        </div>
-                      );
-                    })}
-                  </div>
-
-                  {/* Sapphire Glass Crystal Reflection Cover (Stationary / High-end watch finish) */}
-                  <div className="absolute inset-0 rounded-full pointer-events-none z-15 bg-gradient-to-tr from-white/0 via-white/8 to-white/18 opacity-90 shadow-[inset_0_4px_12px_rgba(255,255,255,0.15),inset_0_-4px_12px_rgba(0,0,0,0.1)]" />
-                  <div className="absolute inset-0 rounded-full pointer-events-none z-15 bg-[radial-gradient(circle_at_30%_30%,rgba(255,255,255,0.15)_0%,rgba(255,255,255,0)_65%)]" />
-
-                  {/* High-End Concentric Tourbillon Mechanical Central Hub */}
-                  <div className="absolute w-[60px] h-[60px] rounded-full bg-white shadow-[0_10px_25px_rgba(0,0,0,0.18),inset_0_2px_4px_rgba(255,255,255,0.8),inset_0_-2px_4px_rgba(0,0,0,0.1)] flex items-center justify-center border-[4px] border-[#252525] z-20">
-                    <div className="w-[38px] h-[38px] rounded-full bg-gradient-to-br from-stone-50 to-stone-200 border border-stone-300 flex items-center justify-center shadow-[inset_0_2px_5px_rgba(0,0,0,0.1)]">
-                      <div className="w-[24px] h-[24px] rounded-full bg-white border-[3px] border-[#252525] flex items-center justify-center relative shadow-sm">
-                        {/* Core pin */}
-                        <span className="w-[10px] h-[10px] bg-[#f97316] rounded-full shadow-[0_0_10px_#f97316] animate-pulse" />
-                        {/* Rotating radial mechanical tourbillon detail */}
-                        <span className="absolute inset-0.5 rounded-full border border-dashed border-[#e8e8e5] animate-[spin_20s_linear_infinite]" />
-                      </div>
-                    </div>
-                  </div>
-
-                </div>
-              </div>
-
-
-              {/* Ultra-Premium Action Button */}
-              <button 
-                onClick={triggerMainSpin}
-                disabled={isSpinning}
-                className="w-full max-w-xs bg-[#252525] hover:bg-[#1e1e1d] text-white py-4 rounded-xl font-bold tracking-widest text-xs uppercase transition-all duration-300 disabled:bg-[#727272] disabled:cursor-not-allowed shadow-[0_10px_30px_rgba(0,0,0,0.15)] hover:shadow-[0_15px_35px_rgba(249,115,22,0.15)] border border-[#e8e8e5]/10 active:scale-[0.98] group flex items-center justify-center gap-2"
-              >
-                <span>{isSpinning ? 'Executing Engine Calculations...' : 'TRIGGER ENGAGEMENT SPIN'}</span>
-                {!isSpinning && (
-                  <svg className="w-4 h-4 text-[#f97316] group-hover:translate-x-0.5 transition-transform" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M13 5l7 7-7 7M5 5l7 7-7 7" />
-                  </svg>
-                )}
-              </button>
-            </div>
-          )}
-
-          {/* Step 3: Reveal Reward */}
-          {step === 'reveal' && selectedPrize && (
-            <div className="space-y-8 max-w-xl mx-auto py-8 text-center">
-              <div className="space-y-1">
-                <span className="text-[10px] font-bold tracking-widest text-[#f97316] uppercase">Instant Gratification Resolved</span>
-                <h2 className="text-2xl lg:text-4xl font-display font-extrabold tracking-tight text-[#252525]">Reward Box Unlocked!</h2>
-              </div>
-
-              {/* Animated glassmorphic card reveal */}
-              <div className="p-8 rounded-2xl border border-[#f97316] bg-[#fafaf7] relative overflow-hidden space-y-6">
-                <div className="absolute top-0 right-0 w-24 h-24 bg-[#f97316]/10 rounded-full blur-xl pointer-events-none" />
-                
-                <span className="px-3 py-1 rounded-full text-xs font-bold bg-[#f97316] text-white uppercase tracking-wider">
-                  {selectedPrize.value}
-                </span>
-
-                <div className="space-y-2">
-                  <h3 className="text-xl lg:text-2xl font-bold font-display text-[#252525]">{selectedPrize.title}</h3>
-                  <p className="text-xs text-[#727272] tracking-wide uppercase">Contributed by: <span className="text-[#252525] font-semibold">{selectedPrize.provider}</span></p>
-                </div>
-
-                <p className="text-sm text-[#727272] font-light leading-relaxed">
-                  {selectedPrize.details}
-                </p>
-
-                <div className="pt-4 border-t border-[#e8e8e5] flex flex-col sm:flex-row gap-4">
-                  <button 
-                    onClick={handleRedeem}
-                    className="flex-1 bg-[#f97316] text-white py-3.5 rounded-xl font-bold hover:bg-[#ea580c] transition-colors shadow-md"
-                  >
-                    REDEEM REWARD NOW
+                    Google
                   </button>
-                  <Link 
-                    href="/dashboard"
-                    className="flex-1 border border-[#e8e8e5] bg-white text-[#252525] py-3.5 rounded-xl font-bold hover:bg-[#fafaf7] transition-colors flex items-center justify-center text-sm"
-                  >
-                    View Partner Dashboard
-                  </Link>
+                  <button className="flex items-center justify-center gap-2 py-3 rounded-xl border border-stone-200 text-xs font-bold text-stone-600 hover:bg-stone-50 transition-colors">
+                    <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
+                      <path d="M12.152 6.896c-.948 0-2.415-1.078-3.96-1.04-2.04.027-3.91 1.183-4.961 3.014-2.117 3.675-.546 9.103 1.519 12.09 1.013 1.454 2.208 3.09 3.792 3.039 1.52-.065 2.09-.987 3.935-.987 1.831 0 2.35.987 3.96.948 1.637-.026 2.676-1.48 3.676-2.948 1.156-1.688 1.636-3.325 1.662-3.415-.039-.013-3.182-1.221-3.22-4.857-.026-3.04 2.48-4.494 2.597-4.559-1.429-2.09-3.623-2.324-4.39-2.376-2-.156-3.675 1.09-4.61 1.09zM15.53 3.83c.844-1.026 1.417-2.467 1.274-3.83-1.235.052-2.73.818-3.614 1.856-.793.91-1.482 2.363-1.299 3.7.13.013.26.013.39.013 1.183 0 2.416-.714 3.25-1.74z" />
+                    </svg>
+                    Apple
+                  </button>
                 </div>
               </div>
             </div>
-          )}
+          </motion.div>
+        )}
 
-          {/* Step 4: Claim / Monetization validation */}
-          {step === 'claim' && selectedPrize && (
-            <div className="space-y-8 max-w-md mx-auto py-8 text-center">
-              <div className="w-16 h-16 bg-[#f97316]/10 border border-[#f97316]/20 rounded-full flex items-center justify-center mx-auto text-[#f97316]">
-                <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-                  <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" />
-                  <polyline points="22 4 12 14.01 9 11.01" />
+        {/* Loading / Checking Step */}
+        {step === 'checking' && (
+          <motion.div 
+            key="checking"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="min-h-screen flex flex-col items-center justify-center p-6 bg-stone-50"
+          >
+            <div className="relative w-20 h-20 mb-8">
+              <div className="absolute inset-0 border-4 border-stone-200 rounded-full" />
+              <motion.div 
+                animate={{ rotate: 360 }}
+                transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
+                className="absolute inset-0 border-4 border-orange-500 border-t-transparent rounded-full"
+              />
+            </div>
+            <h2 className="text-xl font-black text-stone-900 uppercase tracking-widest">Checking Eligibility</h2>
+            <p className="text-stone-400 text-xs font-bold mt-2">Connecting to MCOM Reward Engine...</p>
+          </motion.div>
+        )}
+
+        {/* Step 4: Confirmed / Token Check */}
+        {(step === 'confirmed' || step === 'token_check') && (
+          <motion.div 
+            key="confirmed"
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            exit={{ opacity: 0 }}
+            className="min-h-screen flex items-center justify-center p-6 bg-stone-50"
+          >
+            <div className="bg-white rounded-3xl p-8 shadow-2xl border border-stone-200 max-w-md w-full text-center">
+              <div className="w-16 h-16 bg-emerald-500 text-white rounded-full flex items-center justify-center mx-auto mb-6 shadow-lg shadow-emerald-500/20">
+                <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M5 13l4 4L19 7" />
                 </svg>
               </div>
-
-              <div className="space-y-2">
-                <h3 className="text-2xl font-display font-extrabold tracking-tight text-[#252525]">Reward Secured Successfully</h3>
-                <p className="text-[#727272] text-sm font-light">
-                  A high-intent conversion token has been disbursed to <span className="font-semibold text-[#252525]">{lead.email}</span>.
-                </p>
-              </div>
-
-              <div className="p-4 rounded-xl border border-[#e8e8e5] bg-[#fafaf7] space-y-3 text-left text-xs">
-                <p className="font-bold uppercase tracking-wider text-[9px] text-[#727272]">Automated Systems Telemetry</p>
-                <div className="grid grid-cols-2 gap-2">
-                  <div>
-                    <span className="text-[#727272] block">Lead Status:</span>
-                    <span className="font-semibold text-[#252525]">Active & Routed</span>
+              <h2 className="text-2xl font-black text-stone-900 mb-2">Access Granted</h2>
+              <p className="text-stone-500 text-sm mb-8">Your account is verified. Let's check your available tokens.</p>
+              
+              <div className="bg-stone-50 border border-stone-100 rounded-2xl p-6 mb-8 flex items-center justify-between">
+                <div className="text-left">
+                  <span className="text-[10px] font-black uppercase tracking-[0.2em] text-stone-400 block mb-1">Play Balance</span>
+                  <div className="flex items-baseline gap-1">
+                    <span className="text-3xl font-black text-orange-500">{profile.availableSpins}</span>
+                    <span className="text-xs font-bold text-stone-400">Tokens</span>
                   </div>
-                  <div>
-                    <span className="text-[#727272] block">Recipient Partner:</span>
-                    <span className="font-semibold text-[#252525]">{selectedPrize.provider}</span>
-                  </div>
-                  <div>
-                    <span className="text-[#727272] block">Stock Code:</span>
-                    <span className="font-mono text-[#f97316] font-bold">MS-EXP-928</span>
-                  </div>
-                  <div>
-                    <span className="text-[#727272] block">Week Rotation Index:</span>
-                    <span className="font-semibold text-[#252525]">Spotlight Round 01</span>
-                  </div>
+                </div>
+                <div className="flex flex-col gap-1 text-right">
+                  <span className="text-[10px] font-bold text-stone-600 bg-orange-100 px-2 py-0.5 rounded-full">1 Daily Ready</span>
+                  <span className="text-[10px] font-bold text-stone-400">{profile.availableSpins > 1 ? `+${profile.availableSpins - 1} Bonus` : 'No Bonus'}</span>
                 </div>
               </div>
 
-              <div className="space-y-3 pt-4">
+              {profile.availableSpins > 0 ? (
                 <button 
-                  onClick={() => {
-                    setStep('play');
-                    setSelectedPrize(null);
-                  }}
-                  className="w-full bg-[#252525] text-white py-3.5 rounded-xl font-bold hover:bg-[#f97316] transition-colors"
+                  onClick={() => setStep('game_prep')}
+                  className="w-full bg-orange-500 hover:bg-orange-600 text-white py-5 rounded-2xl font-black tracking-widest text-sm uppercase transition-all shadow-lg shadow-orange-500/25 active:scale-[0.98]"
                 >
-                  SPIN AGAIN FOR PARTNERS
+                  Prepare Game Board
                 </button>
-                <Link 
-                  href="/dashboard"
-                  className="block text-xs font-bold text-[#f97316] hover:underline"
-                >
-                  ENTER THE REAL BUSINESS DASHBOARD &rarr;
-                </Link>
+              ) : (
+                <div className="space-y-4">
+                  <p className="text-xs font-bold text-red-500 bg-red-50 py-3 rounded-xl">No tokens remaining for today.</p>
+                  <p className="text-stone-400 text-[10px] uppercase font-bold tracking-widest leading-relaxed">
+                    Check back tomorrow for your daily token or make a purchase at any MCOM store to unlock more!
+                  </p>
+                </div>
+              )}
+            </div>
+          </motion.div>
+        )}
+
+        {/* Step 5: Game Prep */}
+        {step === 'game_prep' && (
+          <motion.div 
+            key="game_prep"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="min-h-screen bg-stone-900 flex flex-col items-center justify-center p-6"
+          >
+            {/* Visual Board Mockup */}
+            <div className="relative w-full max-w-sm aspect-[3/4] mb-12 flex flex-col justify-between">
+              {/* Pegs structure visualization */}
+              <div className="flex-1 grid grid-cols-7 gap-4 p-8">
+                {Array.from({ length: 35 }).map((_, i) => (
+                  <motion.div 
+                    key={i}
+                    initial={{ scale: 0, opacity: 0 }}
+                    animate={{ scale: 1, opacity: 0.3 }}
+                    transition={{ delay: i * 0.02 }}
+                    className="w-2 h-2 bg-white rounded-full mx-auto"
+                  />
+                ))}
+              </div>
+
+              {/* Reward Boxes visualization */}
+              <div className="grid grid-cols-6 gap-2 px-4 h-20">
+                {['A', 'B', 'C', 'D', 'E', 'F'].map((box, i) => (
+                  <motion.div 
+                    key={i}
+                    initial={{ y: 50, opacity: 0 }}
+                    animate={{ y: 0, opacity: 1 }}
+                    transition={{ delay: 0.5 + (i * 0.1) }}
+                    className="relative"
+                  >
+                    <GiftBox label={box} />
+                  </motion.div>
+                ))}
               </div>
             </div>
-          )}
 
-        </div>
-
-        {/* Right Column: Real-Time Business telemetry logger */}
-        <div className="lg:col-span-4 space-y-6">
-          
-          {/* Active Partner spotlight panel */}
-          <div className="bg-[#fafaf7] rounded-2xl border border-[#e8e8e5] p-6 shadow-sm">
-            <h4 className="text-xs font-bold tracking-widest text-[#727272] uppercase mb-4">ACTIVE ROTATION FOCUS</h4>
-            <div className="space-y-3">
-              {partners.map((p, idx) => (
-                <div 
-                  key={idx}
-                  className={`p-3 rounded-lg border text-xs flex items-center justify-between transition-all duration-300 ${
-                    idx === activePartnerIndex 
-                      ? 'border-[#f97316] bg-white font-bold text-[#252525]' 
-                      : 'border-[#e8e8e5]/60 bg-transparent opacity-60 text-[#727272]'
-                  }`}
-                >
-                  <span className="flex items-center gap-1.5">
-                    <span className={`w-1.5 h-1.5 rounded-full ${idx === activePartnerIndex ? 'bg-[#f97316] animate-ping' : 'bg-[#727272]'}`} />
-                    {p.name}
-                  </span>
-                  <span className="text-[10px] text-[#727272] uppercase">
-                    {idx === activePartnerIndex ? ' spotlit recipient' : 'queued'}
-                  </span>
-                </div>
-              ))}
+            <div className="text-center space-y-4">
+              <div className="flex items-center justify-center gap-3">
+                <div className="w-2 h-2 bg-orange-500 rounded-full animate-ping" />
+                <h2 className="text-white text-xl font-black uppercase tracking-[0.2em]">{prepStatus}</h2>
+              </div>
+              <p className="text-stone-500 text-xs font-bold uppercase tracking-widest">Please stay on this page</p>
             </div>
-            <div className="mt-4 pt-3 border-t border-[#e8e8e5] text-center">
-              <span className="text-[10px] text-[#727272] italic">Ecosystem rotations are handled on automated backend crons weekly.</span>
-            </div>
-          </div>
+          </motion.div>
+        )}
 
-          {/* Dev logs console widget */}
-          <div className="bg-[#252525] text-white rounded-2xl p-6 shadow-lg relative overflow-hidden">
-            {/* Glossy top detail */}
-            <div className="absolute top-0 inset-x-0 h-1 bg-gradient-to-r from-[#f97316] to-transparent" />
+        {/* Step 5: Reward Reveal */}
+        {step === 'reward_reveal' && (
+          <motion.div 
+            key="reward_reveal"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="min-h-screen bg-stone-900 flex flex-col items-center justify-center p-6"
+          >
+            <h2 className="text-white text-2xl font-black uppercase tracking-[0.2em] mb-4">The Rewards...</h2>
+            <p className="text-stone-400 text-xs font-bold uppercase tracking-widest mb-12">Take a look before we hide them!</p>
             
-            <div className="flex items-center justify-between mb-4">
-              <h4 className="text-xs font-bold tracking-widest text-[#f97316] uppercase">Live Systems Engine Telemetry</h4>
-              <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse" />
-            </div>
-
-            <div className="font-mono text-[10px] space-y-2.5 max-h-[220px] overflow-y-auto leading-relaxed">
-              {developerLogs.map((log, idx) => (
-                <div key={idx} className="border-b border-white/5 pb-1 last:border-0">
-                  <span className="text-[#f97316] font-semibold">{log.slice(0, 10)}</span>
-                  <span className="text-zinc-300">{log.slice(10)}</span>
+            <div className="grid grid-cols-2 sm:grid-cols-3 gap-6 w-full max-w-xl">
+              {campaignData.rewards.map((reward, i) => (
+                <div key={i} className="h-32">
+                  <GiftBox reward={reward} isRevealed={true} />
                 </div>
               ))}
             </div>
-          </div>
+          </motion.div>
+        )}
 
-        </div>
+        {/* Step 6: Box Shuffle */}
+        {step === 'box_shuffle' && (
+          <motion.div 
+            key="box_shuffle"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="min-h-screen bg-stone-900 flex flex-col items-center justify-center p-6"
+          >
+            <h2 className="text-white text-2xl font-black uppercase tracking-[0.2em] mb-12">Watch Closely...</h2>
+            
+            <div className="grid grid-cols-2 sm:grid-cols-3 gap-6 w-full max-w-xl">
+              {boxes.map((boxIndex, i) => (
+                <motion.div
+                  key={boxIndex}
+                  layoutId={`box-${boxIndex}`}
+                  className="h-32"
+                  transition={{ type: "spring", stiffness: 300, damping: 25 }}
+                >
+                  <GiftBox label={String.fromCharCode(65 + boxIndex)} />
+                </motion.div>
+              ))}
+            </div>
+          </motion.div>
+        )}
 
-      </main>
+        {/* Transition to Ready (Step 7 Start) */}
+        {step === 'ready' && (
+          <motion.div 
+            key="ready"
+            initial={{ opacity: 0, scale: 1.1 }}
+            animate={{ opacity: 1, scale: 1 }}
+            className="min-h-screen bg-stone-900 flex flex-col items-center justify-center p-6 text-center"
+          >
+             <motion.div 
+              initial={{ rotate: -10 }}
+              animate={{ rotate: 10 }}
+              transition={{ repeat: Infinity, repeatType: "mirror", duration: 0.5 }}
+              className="w-24 h-24 bg-orange-500 rounded-3xl flex items-center justify-center text-white shadow-2xl mb-8"
+            >
+              <svg className="w-12 h-12" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M13 10V3L4 14h7v7l9-11h-7z" />
+              </svg>
+            </motion.div>
+            <h2 className="text-white text-4xl font-black mb-4 uppercase italic tracking-tighter">Get Ready!</h2>
+            <p className="text-stone-400 text-sm font-bold uppercase tracking-widest mb-12">Shuffling reward boxes...</p>
+            
+            <Link 
+              href="/customer/active-games?campaignId=toby-barbers" 
+              className="bg-white text-stone-900 px-12 py-5 rounded-2xl font-black uppercase tracking-widest text-sm shadow-2xl transition-transform hover:scale-105 active:scale-95"
+            >
+              Start Gameplay
+            </Link>
+          </motion.div>
+        )}
 
-      {/* Small footer */}
-      <footer className="py-8 text-center text-xs text-[#727272] border-t border-[#e8e8e5] mt-12 bg-[#fafaf7]">
-        <p>&copy; {new Date().getFullYear()} mcomspin Play System. Secured Partner Collaboration.</p>
-      </footer>
+      </AnimatePresence>
     </div>
   );
 }
