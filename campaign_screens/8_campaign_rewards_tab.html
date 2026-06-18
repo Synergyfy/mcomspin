@@ -1,0 +1,314 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" name="viewport"/>
+<title>Campaign Rewards - MCOMSpin</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<style>
+        body { font-family: 'Inter', sans-serif; -webkit-tap-highlight-color: transparent; }
+        .material-symbols-outlined { font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24; }
+        .glass-card { background: rgba(255, 255, 255, 0.8); backdrop-filter: blur(12px); border: 1px solid rgba(226, 191, 177, 0.3); }
+        .reward-card-shadow { box-shadow: 0 10px 20px -10px rgba(53, 16, 0, 0.15); }
+        .premium-button-inset { box-shadow: inset 0 -2px 0 rgba(0,0,0,0.1); }
+        .ball-counter-glass { background: rgba(252, 103, 0, 0.1); border: 1px solid rgba(252, 103, 0, 0.2); backdrop-filter: blur(8px); }
+    </style>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "surface-container-highest": "#f8ddd2",
+                        "on-surface-variant": "#5a4136",
+                        "on-error": "#ffffff",
+                        "on-surface": "#261812",
+                        "on-secondary-fixed": "#351000",
+                        "surface-container-lowest": "#ffffff",
+                        "surface-container": "#ffeae1",
+                        "outline-variant": "#e2bfb1",
+                        "error-container": "#ffdad6",
+                        "tertiary": "#00629f",
+                        "surface-bright": "#fff8f6",
+                        "secondary-container": "#ff9969",
+                        "inverse-surface": "#3d2d26",
+                        "tertiary-container": "#009cf8",
+                        "on-background": "#261812",
+                        "surface-container-low": "#fff1eb",
+                        "on-primary-fixed": "#351000",
+                        "inverse-primary": "#ffb695",
+                        "tertiary-fixed": "#cfe4ff",
+                        "on-primary-container": "#541d00",
+                        "on-tertiary-container": "#003152",
+                        "primary-fixed-dim": "#ffb695",
+                        "on-secondary-fixed-variant": "#793106",
+                        "inverse-on-surface": "#ffede6",
+                        "error": "#ba1a1a",
+                        "background": "#fff8f6",
+                        "surface-container-high": "#fee3d8",
+                        "on-primary-fixed-variant": "#7b2f00",
+                        "primary-container": "#fc6700",
+                        "outline": "#8e7164",
+                        "secondary-fixed": "#ffdbcc",
+                        "on-tertiary-fixed-variant": "#004a79",
+                        "surface": "#fff8f6",
+                        "primary-fixed": "#ffdbcc",
+                        "on-primary": "#ffffff",
+                        "secondary": "#97471d",
+                        "on-tertiary": "#ffffff",
+                        "primary": "#a23f00",
+                        "on-tertiary-fixed": "#001d34",
+                        "surface-tint": "#a23f00",
+                        "surface-dim": "#efd5ca",
+                        "tertiary-fixed-dim": "#9acbff",
+                        "on-secondary": "#ffffff",
+                        "on-error-container": "#93000a",
+                        "secondary-fixed-dim": "#ffb694",
+                        "on-secondary-container": "#772f05",
+                        "surface-variant": "#f8ddd2"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                    "spacing": {
+                        "stack-lg": "32px",
+                        "gutter": "16px",
+                        "section-padding": "40px",
+                        "stack-md": "16px",
+                        "base": "8px",
+                        "stack-sm": "8px",
+                        "container-margin": "20px"
+                    },
+                    "fontFamily": {
+                        "body-lg": ["Inter"],
+                        "headline-lg": ["Inter"],
+                        "label-md": ["Inter"],
+                        "headline-md": ["Inter"],
+                        "display-lg": ["Inter"],
+                        "label-sm": ["Inter"],
+                        "headline-lg-mobile": ["Inter"],
+                        "body-md": ["Inter"]
+                    },
+                    "fontSize": {
+                        "body-lg": ["18px", {"lineHeight": "1.6", "fontWeight": "400"}],
+                        "headline-lg": ["32px", {"lineHeight": "1.2", "letterSpacing": "-0.02em", "fontWeight": "700"}],
+                        "label-md": ["14px", {"lineHeight": "1.2", "letterSpacing": "0.05em", "fontWeight": "600"}],
+                        "headline-md": ["24px", {"lineHeight": "1.3", "fontWeight": "600"}],
+                        "display-lg": ["48px", {"lineHeight": "1.1", "letterSpacing": "-0.04em", "fontWeight": "800"}],
+                        "label-sm": ["12px", {"lineHeight": "1.2", "fontWeight": "500"}],
+                        "headline-lg-mobile": ["28px", {"lineHeight": "1.2", "fontWeight": "700"}],
+                        "body-md": ["16px", {"lineHeight": "1.6", "fontWeight": "400"}]
+                    }
+                },
+            },
+        }
+    </script>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-background text-on-background min-h-screen pb-32">
+<!-- TopAppBar -->
+<header class="bg-surface dark:bg-surface shadow-[0_10px_20px_-10px_rgba(53,16,0,0.15)] w-full top-0 sticky flex justify-between items-center px-container-margin py-base z-50">
+<div class="flex items-center gap-3">
+<div class="w-10 h-10 rounded-lg bg-primary flex items-center justify-center text-on-primary">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">business_center</span>
+</div>
+<h1 class="font-headline-md text-headline-md font-bold text-primary dark:text-primary-fixed-dim">MCOMSpin</h1>
+</div>
+<div class="flex items-center gap-2">
+<button class="p-2 rounded-full hover:bg-surface-container-low transition-colors active:scale-95 duration-100">
+<span class="material-symbols-outlined text-on-surface-variant">notifications</span>
+</button>
+<div class="w-8 h-8 rounded-full bg-secondary-container flex items-center justify-center">
+<span class="material-symbols-outlined text-on-secondary-container text-[20px]">account_circle</span>
+</div>
+</div>
+</header>
+<main class="px-container-margin py-stack-md">
+<!-- Campaign Header Context -->
+<section class="mb-stack-lg">
+<div class="flex items-center gap-2 text-on-surface-variant mb-1">
+<span class="material-symbols-outlined text-[18px]">arrow_back</span>
+<span class="font-label-sm text-label-sm">Summer Launch 2024</span>
+</div>
+<div class="flex justify-between items-end">
+<div>
+<h2 class="font-headline-lg-mobile text-headline-lg-mobile text-on-surface">Campaign Rewards</h2>
+<p class="font-body-md text-body-md text-on-surface-variant">Manage prize distribution and inventory for this drop.</p>
+</div>
+<div class="ball-counter-glass px-3 py-1.5 rounded-full flex items-center gap-2">
+<span class="w-2.5 h-2.5 rounded-full bg-primary animate-pulse"></span>
+<span class="font-label-md text-label-md text-primary">Active</span>
+</div>
+</div>
+</section>
+<!-- Search and Filter Actions -->
+<div class="flex gap-2 mb-stack-md">
+<div class="relative flex-grow">
+<span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-on-surface-variant text-[20px]">search</span>
+<input class="w-full pl-10 pr-4 py-3 bg-white border-outline-variant rounded-xl focus:ring-primary focus:border-primary text-body-md shadow-sm" placeholder="Search rewards..." type="text"/>
+</div>
+<button class="bg-primary text-on-primary px-4 py-3 rounded-xl font-label-md text-label-md flex items-center gap-2 premium-button-inset active:scale-95 transition-transform">
+<span class="material-symbols-outlined text-[20px]">add</span>
+<span class="hidden sm:inline">Add New</span>
+</button>
+</div>
+<!-- Rewards List -->
+<div class="space-y-stack-md">
+<!-- Reward Item 1 -->
+<div class="glass-card rounded-2xl p-4 flex gap-4 reward-card-shadow">
+<div class="w-20 h-20 flex-shrink-0 rounded-xl overflow-hidden bg-surface-container-high border-2 border-primary/10">
+<img alt="Premium Coffee Kit" class="w-full h-full object-cover" data-alt="A premium luxury coffee brewing gift set featuring a matte black pour-over kettle, a sleek manual grinder, and organic coffee beans in a minimalist copper-foiled bag. The scene is shot in high-end product photography style with warm, soft-key lighting that emphasizes textures and metallic finishes. The background is a clean, bright studio surface with soft shadows, reflecting a professional SaaS corporate aesthetic with warm burnt sienna accents." src="https://lh3.googleusercontent.com/aida-public/AB6AXuCzP2n3pt-xa4Mcub9C1GQwlJLxHwdgNrjbvhBzws9RKqVmtPD-wjwDyIP_wJYbKrfLjlxs5NG1lc-m-QK_xazib7UyqI1DneBtBkFgL0JnpbmwDgccXuQmPxrWOK6zM4ZccSwcdAv2FioFZLBEalMQdK2Qk7ccKqghzIffpc6whGOEsOBeL4so4WWH6zZUw2qAG4RrlCQT9ydVkmKExGNS2A6_iE5mtV7VFC6LL4-IRN9alNDgT8V3Ow"/>
+</div>
+<div class="flex-grow flex flex-col justify-between">
+<div>
+<div class="flex justify-between items-start">
+<h3 class="font-headline-md text-body-lg font-bold text-on-surface">Artisan Coffee Kit</h3>
+<button class="text-on-surface-variant hover:text-primary transition-colors">
+<span class="material-symbols-outlined text-[20px]">more_vert</span>
+</button>
+</div>
+<p class="font-label-sm text-label-sm text-on-surface-variant">Tier: Gold | Probability: 2%</p>
+</div>
+<div class="flex justify-between items-center mt-2">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-[16px] text-primary">inventory_2</span>
+<span class="font-label-md text-label-md font-semibold text-secondary">12 remaining</span>
+</div>
+<span class="px-2 py-0.5 bg-tertiary-container/10 text-tertiary text-[10px] font-bold uppercase tracking-wider rounded-md">High Demand</span>
+</div>
+</div>
+</div>
+<!-- Reward Item 2 -->
+<div class="glass-card rounded-2xl p-4 flex gap-4 reward-card-shadow border-l-4 border-l-primary">
+<div class="w-20 h-20 flex-shrink-0 rounded-xl overflow-hidden bg-surface-container-high border-2 border-primary/10">
+<img alt="Digital Gift Card" class="w-full h-full object-cover" data-alt="A sophisticated digital credit card visualization with glowing orange and blue neon accents, floating in a minimalist three-dimensional space. The card surface features intricate circuit-like patterns and frosted glass textures. Soft volumetric lighting illuminates the scene, creating a sense of digital wealth and modern gamification. The color palette is dominated by amber orange and deep navy, fitting a premium corporate arcade brand." src="https://lh3.googleusercontent.com/aida-public/AB6AXuCGthsyFbNk4Nn0HRd7oEaMMz9YiT4ZPAk8O2PZDoYXlE17SZ2qdALNjmVIaTfZnetH3OvhWZQQOZ0xBspIFjW0KM3FsViwoPbFgrSqoP59ny3iCt_w17NmoeRAJiKyN_JXpfGut0xt4El1jgKpxyvnEIYVAPfeWhON6mX1FHG2GDaCzHTuiFPUZnwa_LGic2wHC1G0Ntzj0PypQiVl-2zEo60ojV4ZViRzjJNt_4teWeQhI0Pinfkszg"/>
+</div>
+<div class="flex-grow flex flex-col justify-between">
+<div>
+<div class="flex justify-between items-start">
+<h3 class="font-headline-md text-body-lg font-bold text-on-surface">$50 Amazon Credit</h3>
+<button class="text-on-surface-variant hover:text-primary transition-colors">
+<span class="material-symbols-outlined text-[20px]">more_vert</span>
+</button>
+</div>
+<p class="font-label-sm text-label-sm text-on-surface-variant">Tier: Silver | Probability: 15%</p>
+</div>
+<div class="flex justify-between items-center mt-2">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-[16px] text-primary">inventory_2</span>
+<span class="font-label-md text-label-md font-semibold text-secondary">245 remaining</span>
+</div>
+<span class="px-2 py-0.5 bg-green-100 text-green-700 text-[10px] font-bold uppercase tracking-wider rounded-md">Healthy</span>
+</div>
+</div>
+</div>
+<!-- Reward Item 3 -->
+<div class="glass-card rounded-2xl p-4 flex gap-4 reward-card-shadow opacity-75 grayscale-[0.5]">
+<div class="w-20 h-20 flex-shrink-0 rounded-xl overflow-hidden bg-surface-container-high border-2 border-outline-variant">
+<img alt="Smart Watch" class="w-full h-full object-cover" data-alt="A sleek, modern smartwatch with a minimalist design, displayed on a plush velvet circular stand. The watch features a bright, high-resolution interface showing data visualizations. The lighting is dramatic and moody, with focused spotlights creating sharp contrasts and elegant reflections on the glass screen. The overall aesthetic is high-tech luxury, using professional tones of charcoal and bronze with a slight warm glow." src="https://lh3.googleusercontent.com/aida-public/AB6AXuCaqvP_yEU0RAGs_rGu5CZfGIrlf6RpoUDDiBTqdcC3X-lcFSntulNmzXsfFk40EtrZajXrDJu2ENU8eOPR1SATVUXvthnejF5IIpggjHjIkd_rLgDBVNDoXExKVV7wqZbouEsXDIZNcy5fJjhBCtj4rBLR1lwz8HRrZnQLl38ir2jr3zvpVAx7JbWkIsF8vNpNPy8yJ7fHWotHTBFSKCwwPWEpNsbompXBtU350hcStYA1RVUFMC_vAg"/>
+</div>
+<div class="flex-grow flex flex-col justify-between">
+<div>
+<div class="flex justify-between items-start">
+<h3 class="font-headline-md text-body-lg font-bold text-on-surface">MCOM Pro Watch</h3>
+<button class="text-on-surface-variant hover:text-primary transition-colors">
+<span class="material-symbols-outlined text-[20px]">more_vert</span>
+</button>
+</div>
+<p class="font-label-sm text-label-sm text-on-surface-variant">Tier: Platinum | Probability: 0.5%</p>
+</div>
+<div class="flex justify-between items-center mt-2">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-[16px] text-error">error</span>
+<span class="font-label-md text-label-md font-semibold text-error">Out of Stock</span>
+</div>
+<button class="px-2 py-1 bg-surface-container-high text-on-surface-variant text-[10px] font-bold uppercase tracking-wider rounded-md border border-outline-variant">Restock</button>
+</div>
+</div>
+</div>
+<!-- Reward Item 4 -->
+<div class="glass-card rounded-2xl p-4 flex gap-4 reward-card-shadow">
+<div class="w-20 h-20 flex-shrink-0 rounded-xl overflow-hidden bg-surface-container-high border-2 border-primary/10">
+<img alt="Branded Hoodie" class="w-full h-full object-cover" data-alt="A high-quality, heavyweight cotton hoodie in a deep charcoal gray color, featuring a subtle embossed corporate logo on the chest. The hoodie is artfully folded on a textured wooden surface, illuminated by natural side lighting that reveals the premium fabric weave. The scene has a cozy yet professional atmosphere, maintaining a sophisticated B2B lifestyle aesthetic with a palette of neutrals and warm wood tones." src="https://lh3.googleusercontent.com/aida-public/AB6AXuAq4HH2NwDKG7AXf8G8mEsUmlxeS-GAPE2Vf6rhYU4-uSG_uxnENTgqwkRucVl6DPI6T_cIFZocq8_nQdgdGtMU06dYbmBDbv3qVLRfMM-ofK72hE9znGaPQlqiu7vbXN4Ftil91k6gzUYEMD3_m3QUDyBzhNW7JL2w3_NSXMSmiRTnphgT5sTi9htpOLqwPPL8Hwqp-4scsq2MzE-UjSVarNQs16Foj8B2NRPEockU4gMSrMGAnEiIrA"/>
+</div>
+<div class="flex-grow flex flex-col justify-between">
+<div>
+<div class="flex justify-between items-start">
+<h3 class="font-headline-md text-body-lg font-bold text-on-surface">Limited Edition Hoodie</h3>
+<button class="text-on-surface-variant hover:text-primary transition-colors">
+<span class="material-symbols-outlined text-[20px]">more_vert</span>
+</button>
+</div>
+<p class="font-label-sm text-label-sm text-on-surface-variant">Tier: Bronze | Probability: 40%</p>
+</div>
+<div class="flex justify-between items-center mt-2">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-[16px] text-primary">inventory_2</span>
+<span class="font-label-md text-label-md font-semibold text-secondary">52 remaining</span>
+</div>
+<span class="px-2 py-0.5 bg-tertiary-container/10 text-tertiary text-[10px] font-bold uppercase tracking-wider rounded-md">Active</span>
+</div>
+</div>
+</div>
+</div>
+<!-- Inventory Summary Stats -->
+<section class="mt-stack-lg p-6 bg-surface-container rounded-[2rem] border-2 border-dashed border-outline-variant/50">
+<h4 class="font-label-md text-label-md text-secondary font-bold mb-4 uppercase tracking-widest text-center">Reward Pool Performance</h4>
+<div class="grid grid-cols-2 gap-4">
+<div class="bg-white p-4 rounded-2xl shadow-sm border border-outline-variant/20 text-center">
+<span class="block font-display-lg text-[24px] text-primary">82%</span>
+<span class="font-label-sm text-label-sm text-on-surface-variant">Claims Rate</span>
+</div>
+<div class="bg-white p-4 rounded-2xl shadow-sm border border-outline-variant/20 text-center">
+<span class="block font-display-lg text-[24px] text-primary">4.2k</span>
+<span class="font-label-sm text-label-sm text-on-surface-variant">Total Value</span>
+</div>
+</div>
+</section>
+</main>
+<!-- BottomNavBar -->
+<nav class="fixed bottom-0 left-0 w-full flex justify-around items-center px-base py-stack-sm pb-safe bg-surface dark:bg-surface-container-low shadow-[0_-10px_20px_-10px_rgba(53,16,0,0.15)] z-50 rounded-t-xl">
+<a class="flex flex-col items-center justify-center text-on-surface-variant dark:text-outline-variant px-4 py-1 hover:bg-surface-container-high dark:hover:bg-surface-container-highest transition-all active:scale-90 duration-200" href="#">
+<span class="material-symbols-outlined" data-icon="dashboard">dashboard</span>
+<span class="font-label-sm text-label-sm">Dashboard</span>
+</a>
+<a class="flex flex-col items-center justify-center text-on-surface-variant dark:text-outline-variant px-4 py-1 hover:bg-surface-container-high dark:hover:bg-surface-container-highest transition-all active:scale-90 duration-200" href="#">
+<span class="material-symbols-outlined" data-icon="campaign">campaign</span>
+<span class="font-label-sm text-label-sm">Campaigns</span>
+</a>
+<a class="flex flex-col items-center justify-center bg-secondary-container dark:bg-primary-container text-on-secondary-container dark:text-on-primary-container rounded-full px-4 py-1 active:scale-90 transition-transform duration-200" href="#">
+<span class="material-symbols-outlined" data-icon="military_tech" style="font-variation-settings: 'FILL' 1;">military_tech</span>
+<span class="font-label-sm text-label-sm">Rewards</span>
+</a>
+<a class="flex flex-col items-center justify-center text-on-surface-variant dark:text-outline-variant px-4 py-1 hover:bg-surface-container-high dark:hover:bg-surface-container-highest transition-all active:scale-90 duration-200" href="#">
+<span class="material-symbols-outlined" data-icon="group">group</span>
+<span class="font-label-sm text-label-sm">Customers</span>
+</a>
+<a class="flex flex-col items-center justify-center text-on-surface-variant dark:text-outline-variant px-4 py-1 hover:bg-surface-container-high dark:hover:bg-surface-container-highest transition-all active:scale-90 duration-200" href="#">
+<span class="material-symbols-outlined" data-icon="more_horiz">more_horiz</span>
+<span class="font-label-sm text-label-sm">More</span>
+</a>
+</nav>
+<script>
+        // Simple micro-interaction for list items
+        document.querySelectorAll('.glass-card').forEach(card => {
+            card.addEventListener('touchstart', () => {
+                card.style.transform = 'scale(0.98)';
+                card.style.transition = 'transform 0.1s ease';
+            });
+            card.addEventListener('touchend', () => {
+                card.style.transform = 'scale(1)';
+            });
+        });
+    </script>
+</body></html>

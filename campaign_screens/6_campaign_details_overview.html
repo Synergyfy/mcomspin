@@ -1,0 +1,338 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0, viewport-fit=cover" name="viewport"/>
+<title>Campaign Details - Winter Spin 2024</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            "colors": {
+                    "surface-container-highest": "#f8ddd2",
+                    "on-surface-variant": "#5a4136",
+                    "on-error": "#ffffff",
+                    "on-surface": "#261812",
+                    "on-secondary-fixed": "#351000",
+                    "surface-container-lowest": "#ffffff",
+                    "surface-container": "#ffeae1",
+                    "outline-variant": "#e2bfb1",
+                    "error-container": "#ffdad6",
+                    "tertiary": "#00629f",
+                    "surface-bright": "#fff8f6",
+                    "secondary-container": "#ff9969",
+                    "inverse-surface": "#3d2d26",
+                    "tertiary-container": "#009cf8",
+                    "on-background": "#261812",
+                    "surface-container-low": "#fff1eb",
+                    "on-primary-fixed": "#351000",
+                    "inverse-primary": "#ffb695",
+                    "tertiary-fixed": "#cfe4ff",
+                    "on-primary-container": "#541d00",
+                    "on-tertiary-container": "#003152",
+                    "primary-fixed-dim": "#ffb695",
+                    "on-secondary-fixed-variant": "#793106",
+                    "inverse-on-surface": "#ffede6",
+                    "error": "#ba1a1a",
+                    "background": "#fff8f6",
+                    "surface-container-high": "#fee3d8",
+                    "on-primary-fixed-variant": "#7b2f00",
+                    "primary-container": "#fc6700",
+                    "outline": "#8e7164",
+                    "secondary-fixed": "#ffdbcc",
+                    "on-tertiary-fixed-variant": "#004a79",
+                    "surface": "#fff8f6",
+                    "primary-fixed": "#ffdbcc",
+                    "on-primary": "#ffffff",
+                    "secondary": "#97471d",
+                    "on-tertiary": "#ffffff",
+                    "primary": "#a23f00",
+                    "on-tertiary-fixed": "#001d34",
+                    "surface-tint": "#a23f00",
+                    "surface-dim": "#efd5ca",
+                    "tertiary-fixed-dim": "#9acbff",
+                    "on-secondary": "#ffffff",
+                    "on-error-container": "#93000a",
+                    "secondary-fixed-dim": "#ffb694",
+                    "on-secondary-container": "#772f05",
+                    "surface-variant": "#f8ddd2"
+            },
+            "borderRadius": {
+                    "DEFAULT": "0.25rem",
+                    "lg": "0.5rem",
+                    "xl": "0.75rem",
+                    "full": "9999px"
+            },
+            "spacing": {
+                    "stack-lg": "32px",
+                    "gutter": "16px",
+                    "section-padding": "40px",
+                    "stack-md": "16px",
+                    "base": "8px",
+                    "stack-sm": "8px",
+                    "container-margin": "20px"
+            },
+            "fontFamily": {
+                    "body-lg": ["Inter"],
+                    "headline-lg": ["Inter"],
+                    "label-md": ["Inter"],
+                    "headline-md": ["Inter"],
+                    "display-lg": ["Inter"],
+                    "label-sm": ["Inter"],
+                    "headline-lg-mobile": ["Inter"],
+                    "body-md": ["Inter"]
+            },
+            "fontSize": {
+                    "body-lg": ["18px", {"lineHeight": "1.6", "fontWeight": "400"}],
+                    "headline-lg": ["32px", {"lineHeight": "1.2", "letterSpacing": "-0.02em", "fontWeight": "700"}],
+                    "label-md": ["14px", {"lineHeight": "1.2", "letterSpacing": "0.05em", "fontWeight": "600"}],
+                    "headline-md": ["24px", {"lineHeight": "1.3", "fontWeight": "600"}],
+                    "display-lg": ["48px", {"lineHeight": "1.1", "letterSpacing": "-0.04em", "fontWeight": "800"}],
+                    "label-sm": ["12px", {"lineHeight": "1.2", "fontWeight": "500"}],
+                    "headline-lg-mobile": ["28px", {"lineHeight": "1.2", "fontWeight": "700"}],
+                    "body-md": ["16px", {"lineHeight": "1.6", "fontWeight": "400"}]
+            }
+          },
+        },
+      }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+            display: inline-block;
+            line-height: 1;
+        }
+        .active-tab-indicator {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            height: 3px;
+            width: 100%;
+            background-color: #a23f00;
+            border-radius: 3px 3px 0 0;
+        }
+        .kinetic-card {
+            transition: transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+        .kinetic-card:active {
+            transform: scale(0.98);
+        }
+        .shadow-premium {
+            box-shadow: 0 10px 20px -10px rgba(53, 16, 0, 0.15);
+        }
+        .glass-badge {
+            background: rgba(255, 255, 255, 0.85);
+            backdrop-filter: blur(8px);
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-background text-on-background font-body-md antialiased min-h-screen pb-24">
+<!-- Header Navigation -->
+<header class="bg-surface sticky top-0 w-full z-50 flex justify-between items-center px-container-margin py-base shadow-premium">
+<div class="flex items-center gap-3">
+<button class="w-10 h-10 flex items-center justify-center rounded-full hover:bg-surface-container-low active:scale-95 transition-all">
+<span class="material-symbols-outlined text-primary">arrow_back</span>
+</button>
+<span class="font-headline-md text-headline-md font-bold text-primary">MCOMSpin</span>
+</div>
+<div class="flex items-center gap-2">
+<button class="w-10 h-10 flex items-center justify-center rounded-full hover:bg-surface-container-low active:scale-95 transition-all">
+<span class="material-symbols-outlined text-primary">notifications</span>
+</button>
+<div class="w-10 h-10 rounded-full bg-secondary-fixed flex items-center justify-center text-on-secondary-fixed font-bold border-2 border-primary-container">
+                JD
+            </div>
+</div>
+</header>
+<main class="max-w-md mx-auto">
+<!-- Hero Banner Section -->
+<section class="relative w-full h-56 overflow-hidden">
+<div class="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent z-10"></div>
+<img alt="Winter Campaign Banner" class="w-full h-full object-cover" data-alt="A cinematic, high-end winter-themed digital art piece showing golden geometric snowflakes and abstract glowing embers against a dark, warm mahogany background. The lighting is dramatic and luxurious, mimicking a high-stakes arcade environment with vibrant orange accents and soft bokeh effects. Professional B2B SaaS aesthetic with a kinetic, playful edge." src="https://lh3.googleusercontent.com/aida-public/AB6AXuDuOcj4TNCAGH2VX48Rd-NgN2oaaRc3rSAnZfWGOHvxVqOMqrnWycTYZN6YPEdNcQbterzDKlSScZuuiZAj1ezUQPFBoAWI9oio4o72YOnAE-qWEe2RqzVkKzIBbo_WshTw75BxqMMv1IBDWFE4VgCWK4MRiOILVMiLUsrlM3EwZR3f1Nw735WyCuGowTiIuOXjwYqVrbO5Dq6z1fh0l-ml2KbP68YADuss0auKRvArWpRfXW3vfyoOhQ"/>
+<div class="absolute bottom-gutter left-container-margin z-20 flex flex-col gap-2">
+<div class="flex items-center gap-2">
+<span class="bg-primary-container text-on-primary-container px-3 py-1 rounded-full font-label-sm text-label-sm uppercase tracking-wider flex items-center gap-1 shadow-sm">
+<span class="w-2 h-2 rounded-full bg-white animate-pulse"></span>
+                        Active
+                    </span>
+</div>
+<h1 class="font-headline-lg-mobile text-headline-lg-mobile text-white drop-shadow-md">Winter Spin 2024</h1>
+</div>
+</section>
+<!-- Tabs Navigation -->
+<nav class="sticky top-[60px] bg-surface z-40 border-b border-outline-variant shadow-sm">
+<div class="flex overflow-x-auto no-scrollbar px-container-margin">
+<button class="relative px-4 py-4 font-label-md text-label-md text-primary whitespace-nowrap">
+                    Overview
+                    <span class="active-tab-indicator"></span>
+</button>
+<button class="px-4 py-4 font-label-md text-label-md text-on-surface-variant whitespace-nowrap hover:text-primary transition-colors">
+                    Rules
+                </button>
+<button class="px-4 py-4 font-label-md text-label-md text-on-surface-variant whitespace-nowrap hover:text-primary transition-colors">
+                    Rewards
+                </button>
+<button class="px-4 py-4 font-label-md text-label-md text-on-surface-variant whitespace-nowrap hover:text-primary transition-colors">
+                    Performance
+                </button>
+</div>
+</nav>
+<!-- Content Area -->
+<div class="p-container-margin space-y-stack-lg">
+<!-- Summary Card -->
+<div class="bg-surface-container-lowest p-gutter rounded-xl shadow-premium border border-surface-container-highest kinetic-card">
+<div class="flex justify-between items-start mb-stack-md">
+<h2 class="font-headline-md text-headline-md text-on-surface">Campaign Summary</h2>
+<span class="material-symbols-outlined text-secondary" style="font-variation-settings: 'FILL' 1;">info</span>
+</div>
+<p class="font-body-md text-body-md text-on-surface-variant leading-relaxed">
+                    Boost Q4 engagement with our exclusive ball-drop experience. Customers earn spins for every $50 spent, unlocking premium holiday rewards and exclusive partner discounts.
+                </p>
+<div class="mt-stack-lg grid grid-cols-2 gap-gutter">
+<div class="p-base bg-surface-container rounded-lg">
+<span class="font-label-sm text-label-sm text-on-surface-variant uppercase tracking-tighter">Start Date</span>
+<div class="flex items-center gap-2 mt-1">
+<span class="material-symbols-outlined text-primary text-[20px]">calendar_today</span>
+<span class="font-label-md text-label-md text-on-surface">Nov 15, 2023</span>
+</div>
+</div>
+<div class="p-base bg-surface-container rounded-lg">
+<span class="font-label-sm text-label-sm text-on-surface-variant uppercase tracking-tighter">End Date</span>
+<div class="flex items-center gap-2 mt-1">
+<span class="material-symbols-outlined text-primary text-[20px]">event</span>
+<span class="font-label-md text-label-md text-on-surface">Jan 15, 2024</span>
+</div>
+</div>
+</div>
+</div>
+<!-- Game Type Section -->
+<div class="bg-surface-container-lowest p-gutter rounded-xl shadow-premium border border-surface-container-highest kinetic-card flex items-center gap-gutter">
+<div class="w-14 h-14 rounded-full bg-primary-container flex items-center justify-center text-on-primary-container shadow-inner">
+<span class="material-symbols-outlined text-3xl" style="font-variation-settings: 'FILL' 1;">sports_kabaddi</span>
+</div>
+<div class="flex-1">
+<h3 class="font-headline-md text-[18px] text-on-surface">Game Type: Ball Drop</h3>
+<p class="font-label-md text-label-md text-on-surface-variant">Kinetic arcade physics-based reward system</p>
+</div>
+<span class="material-symbols-outlined text-outline">chevron_right</span>
+</div>
+<!-- Performance Stats Grid -->
+<div class="space-y-stack-md">
+<h2 class="font-headline-md text-[20px] text-on-surface px-1">Current Status</h2>
+<div class="grid grid-cols-2 gap-gutter">
+<!-- Stat 1 -->
+<div class="bg-surface-container-low p-gutter rounded-xl shadow-sm border border-surface-container border-b-4 border-b-primary-container">
+<span class="material-symbols-outlined text-primary mb-2">ads_click</span>
+<div class="font-display-lg text-[24px] text-on-surface mb-1">12,482</div>
+<div class="font-label-sm text-label-sm text-on-surface-variant uppercase">Total Spins</div>
+</div>
+<!-- Stat 2 -->
+<div class="bg-surface-container-low p-gutter rounded-xl shadow-sm border border-surface-container border-b-4 border-b-secondary-container">
+<span class="material-symbols-outlined text-secondary mb-2">military_tech</span>
+<div class="font-display-lg text-[24px] text-on-surface mb-1">$4,250</div>
+<div class="font-label-sm text-label-sm text-on-surface-variant uppercase">Claimed Rewards</div>
+</div>
+<!-- Stat 3 -->
+<div class="bg-surface-container-low p-gutter rounded-xl shadow-sm border border-surface-container border-b-4 border-b-tertiary-container">
+<span class="material-symbols-outlined text-tertiary mb-2">group</span>
+<div class="font-display-lg text-[24px] text-on-surface mb-1">3,120</div>
+<div class="font-label-sm text-label-sm text-on-surface-variant uppercase">Active Users</div>
+</div>
+<!-- Stat 4 -->
+<div class="bg-surface-container-low p-gutter rounded-xl shadow-sm border border-surface-container border-b-4 border-b-outline">
+<span class="material-symbols-outlined text-on-surface-variant mb-2">trending_up</span>
+<div class="font-display-lg text-[24px] text-on-surface mb-1">82%</div>
+<div class="font-label-sm text-label-sm text-on-surface-variant uppercase">Conv. Rate</div>
+</div>
+</div>
+</div>
+<!-- Recent Activity Micro-list -->
+<div class="bg-surface-container-lowest rounded-xl shadow-premium overflow-hidden">
+<div class="p-gutter border-b border-surface-container flex justify-between items-center">
+<h3 class="font-headline-md text-[18px] text-on-surface">Recent Wins</h3>
+<button class="text-primary font-label-md text-label-md">View All</button>
+</div>
+<div class="divide-y divide-surface-container">
+<div class="p-gutter flex items-center gap-stack-md">
+<div class="w-10 h-10 rounded-full bg-secondary-fixed flex items-center justify-center text-on-secondary-fixed font-bold text-xs">SM</div>
+<div class="flex-1">
+<div class="font-label-md text-label-md text-on-surface">Sarah Miller won $25 Gift Card</div>
+<div class="font-label-sm text-label-sm text-on-surface-variant">2 minutes ago</div>
+</div>
+<span class="material-symbols-outlined text-tertiary">celebration</span>
+</div>
+<div class="p-gutter flex items-center gap-stack-md">
+<div class="w-10 h-10 rounded-full bg-primary-fixed flex items-center justify-center text-on-primary-fixed font-bold text-xs">RK</div>
+<div class="flex-1">
+<div class="font-label-md text-label-md text-on-surface">Robert King won 10% Discount</div>
+<div class="font-label-sm text-label-sm text-on-surface-variant">15 minutes ago</div>
+</div>
+<span class="material-symbols-outlined text-primary">local_activity</span>
+</div>
+</div>
+</div>
+</div>
+</main>
+<!-- Bottom Navigation Bar (Contextual mapping to Campaigns tab) -->
+<nav class="fixed bottom-0 left-0 w-full flex justify-around items-center px-base py-stack-sm pb-safe bg-surface shadow-[0_-10px_20px_-10px_rgba(53,16,0,0.15)] z-50 rounded-t-xl">
+<a class="flex flex-col items-center justify-center text-on-surface-variant px-4 py-1 hover:bg-surface-container-high transition-all active:scale-90 duration-200" href="#">
+<span class="material-symbols-outlined">dashboard</span>
+<span class="font-label-sm text-label-sm">Dashboard</span>
+</a>
+<a class="flex flex-col items-center justify-center bg-secondary-container text-on-secondary-container rounded-full px-4 py-1 active:scale-90 transition-transform duration-200" href="#">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">campaign</span>
+<span class="font-label-sm text-label-sm">Campaigns</span>
+</a>
+<a class="flex flex-col items-center justify-center text-on-surface-variant px-4 py-1 hover:bg-surface-container-high transition-all active:scale-90 duration-200" href="#">
+<span class="material-symbols-outlined">military_tech</span>
+<span class="font-label-sm text-label-sm">Rewards</span>
+</a>
+<a class="flex flex-col items-center justify-center text-on-surface-variant px-4 py-1 hover:bg-surface-container-high transition-all active:scale-90 duration-200" href="#">
+<span class="material-symbols-outlined">group</span>
+<span class="font-label-sm text-label-sm">Customers</span>
+</a>
+<a class="flex flex-col items-center justify-center text-on-surface-variant px-4 py-1 hover:bg-surface-container-high transition-all active:scale-90 duration-200" href="#">
+<span class="material-symbols-outlined">more_horiz</span>
+<span class="font-label-sm text-label-sm">More</span>
+</a>
+</nav>
+<!-- Interaction Script -->
+<script>
+        document.querySelectorAll('.kinetic-card').forEach(card => {
+            card.addEventListener('touchstart', () => {
+                card.style.transform = 'scale(0.97)';
+            });
+            card.addEventListener('touchend', () => {
+                card.style.transform = 'scale(1)';
+            });
+        });
+
+        // Tab selection logic
+        const tabs = document.querySelectorAll('nav button');
+        tabs.forEach(tab => {
+            tab.addEventListener('click', () => {
+                tabs.forEach(t => {
+                    t.classList.remove('text-primary');
+                    t.classList.add('text-on-surface-variant');
+                    const indicator = t.querySelector('.active-tab-indicator');
+                    if(indicator) indicator.remove();
+                });
+                tab.classList.add('text-primary');
+                tab.classList.remove('text-on-surface-variant');
+                const indicator = document.createElement('span');
+                indicator.className = 'active-tab-indicator';
+                tab.appendChild(indicator);
+            });
+        });
+    </script>
+</body></html>

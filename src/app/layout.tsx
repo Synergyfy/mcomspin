@@ -1,5 +1,8 @@
 import type { Metadata } from "next";
 import "./globals.css";
+import { Inter } from 'next/font/google';
+
+const inter = Inter({ subsets: ['latin'], variable: '--font-inter' });
 
 export const metadata: Metadata = {
   title: "MComSpin — Business Engagement & Monetization Infrastructure",
@@ -15,9 +18,9 @@ export default function RootLayout({
   return (
     <html
       lang="en"
-      className="h-full antialiased scroll-smooth"
+      className={`h-full antialiased scroll-smooth ${inter.variable}`}
     >
-      <body className="min-h-full flex flex-col bg-white text-[#1a1a1a]">{children}</body>
+      <body className="min-h-full flex flex-col bg-surface text-on-surface font-body">{children}</body>
     </html>
   );
 }

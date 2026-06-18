@@ -1,17 +1,5 @@
 @import "tailwindcss";
-
-@theme {
-  --color-brand-bg: #ffffff;
-  --color-brand-surface: #fafaf9;
-  --color-brand-fg: #1a1a1a;
-  --color-brand-muted: #888888;
-  --color-brand-border: #eeeeee;
-  --color-brand-accent: #f97316;
-  --color-brand-accent-hover: #ea580c;
-
-  --font-display: 'SF Pro Display', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-  --font-body: 'SF Pro Text', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-}
+@config "../../tailwind.config.ts";
 
 /* ─── Base ─── */
 * {
@@ -33,9 +21,15 @@ body {
 
 /* ─── Premium glass / gradient utilities ─── */
 .luxury-glass {
-  background: rgba(255, 255, 255, 0.8) !important;
+  background: rgba(255, 255, 255, 0.75) !important;
+  backdrop-filter: blur(20px);
+  border: 1px solid rgba(238, 238, 238, 0.6) !important;
+}
+
+.luxury-glass-dark {
+  background: rgba(26, 26, 26, 0.85) !important;
   backdrop-filter: blur(24px);
-  border: 1px solid rgba(238, 238, 238, 0.7) !important;
+  border: 1px solid rgba(255, 255, 255, 0.08) !important;
 }
 
 .luxury-gradient {
@@ -44,7 +38,7 @@ body {
 }
 
 .luxury-text-gradient {
-  background: linear-gradient(135deg, #1a1a1a 25%, #555 55%, #f97316 100%) !important;
+  background: linear-gradient(135deg, #1a1a1a 20%, #444 50%, #f97316 100%) !important;
   -webkit-background-clip: text !important;
   -webkit-text-fill-color: transparent !important;
   background-clip: text !important;
@@ -53,13 +47,18 @@ body {
 /* ─── Animations ─── */
 @keyframes float {
   0%, 100% { transform: translateY(0px); }
-  50% { transform: translateY(-8px); }
+  50% { transform: translateY(-6px); }
+}
+
+@keyframes float-delayed {
+  0%, 100% { transform: translateY(0px); }
+  50% { transform: translateY(6px); }
 }
 
 @keyframes pulse-ring {
-  0% { transform: scale(0.95); opacity: 0.5; }
-  50% { transform: scale(1.05); opacity: 0.8; }
-  100% { transform: scale(0.95); opacity: 0.5; }
+  0% { transform: scale(0.95); opacity: 0.4; }
+  50% { transform: scale(1.05); opacity: 0.7; }
+  100% { transform: scale(0.95); opacity: 0.4; }
 }
 
 @keyframes dash {
@@ -71,7 +70,7 @@ body {
 @keyframes fade-in-up {
   from {
     opacity: 0;
-    transform: translateY(16px);
+    transform: translateY(12px);
   }
   to {
     opacity: 1;
@@ -80,12 +79,16 @@ body {
 }
 
 @keyframes spotlight-glow {
-  0%, 100% { box-shadow: 0 0 12px rgba(249, 115, 22, 0.08); }
-  50% { box-shadow: 0 0 28px rgba(249, 115, 22, 0.2); }
+  0%, 100% { box-shadow: 0 0 12px rgba(249, 115, 22, 0.05); border-color: rgba(238, 238, 238, 0.8); }
+  50% { box-shadow: 0 0 24px rgba(249, 115, 22, 0.15); border-color: rgba(249, 115, 22, 0.3); }
 }
 
 .animate-luxury-float {
-  animation: float 6s ease-in-out infinite;
+  animation: float 5s ease-in-out infinite;
+}
+
+.animate-luxury-float-delayed {
+  animation: float-delayed 6s ease-in-out infinite;
 }
 
 .animate-pulse-ring {
@@ -98,7 +101,7 @@ body {
 }
 
 .animate-fade-in-up {
-  animation: fade-in-up 0.7s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  animation: fade-in-up 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }
 
 .animate-spotlight {
@@ -108,21 +111,30 @@ body {
 /* ─── Range slider styling ─── */
 input[type="range"]::-webkit-slider-thumb {
   -webkit-appearance: none;
-  width: 18px;
-  height: 18px;
+  width: 16px;
+  height: 16px;
   border-radius: 50%;
   background: #f97316;
   cursor: pointer;
-  border: 3px solid white;
-  box-shadow: 0 2px 6px rgba(249, 115, 22, 0.3);
+  border: 2px solid white;
+  box-shadow: 0 2px 4px rgba(249, 115, 22, 0.3);
+  transition: transform 0.1s ease;
+}
+input[type="range"]::-webkit-slider-thumb:hover {
+  transform: scale(1.15);
 }
 
 input[type="range"]::-moz-range-thumb {
-  width: 18px;
-  height: 18px;
+  width: 16px;
+  height: 16px;
   border-radius: 50%;
   background: #f97316;
   cursor: pointer;
-  border: 3px solid white;
-  box-shadow: 0 2px 6px rgba(249, 115, 22, 0.3);
+  border: 2px solid white;
+  box-shadow: 0 2px 4px rgba(249, 115, 22, 0.3);
+  transition: transform 0.1s ease;
 }
+input[type="range"]::-moz-range-thumb:hover {
+  transform: scale(1.15);
+}
+

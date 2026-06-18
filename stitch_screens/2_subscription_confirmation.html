@@ -1,0 +1,273 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "tertiary-fixed": "#cfe4ff",
+                        "outline": "#8e7164",
+                        "surface": "#fff8f6",
+                        "on-error-container": "#93000a",
+                        "on-tertiary": "#ffffff",
+                        "on-primary-container": "#541d00",
+                        "tertiary-container": "#009cf8",
+                        "surface-variant": "#f8ddd2",
+                        "on-background": "#261812",
+                        "secondary-fixed": "#ffdbcc",
+                        "on-tertiary-fixed-variant": "#004a79",
+                        "surface-container-low": "#fff1eb",
+                        "on-secondary-container": "#772f05",
+                        "on-primary": "#ffffff",
+                        "on-surface-variant": "#5a4136",
+                        "on-secondary-fixed-variant": "#793106",
+                        "secondary-container": "#ff9969",
+                        "on-surface": "#261812",
+                        "inverse-on-surface": "#ffede6",
+                        "error": "#ba1a1a",
+                        "surface-container": "#ffeae1",
+                        "on-primary-fixed-variant": "#7b2f00",
+                        "primary-fixed-dim": "#ffb695",
+                        "inverse-surface": "#3d2d26",
+                        "secondary": "#97471d",
+                        "primary": "#a23f00",
+                        "on-secondary-fixed": "#351000",
+                        "on-primary-fixed": "#351000",
+                        "surface-tint": "#a23f00",
+                        "surface-container-lowest": "#ffffff",
+                        "secondary-fixed-dim": "#ffb694",
+                        "on-tertiary-container": "#003152",
+                        "tertiary": "#00629f",
+                        "surface-container-highest": "#f8ddd2",
+                        "outline-variant": "#e2bfb1",
+                        "background": "#fff8f6",
+                        "surface-dim": "#efd5ca",
+                        "on-secondary": "#ffffff",
+                        "on-tertiary-fixed": "#001d34",
+                        "primary-container": "#fc6700",
+                        "surface-container-high": "#fee3d8",
+                        "surface-bright": "#fff8f6",
+                        "tertiary-fixed-dim": "#9acbff",
+                        "on-error": "#ffffff",
+                        "primary-fixed": "#ffdbcc",
+                        "inverse-primary": "#ffb695",
+                        "error-container": "#ffdad6"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                    "spacing": {
+                        "stack-sm": "8px",
+                        "gutter": "16px",
+                        "container-margin": "20px",
+                        "section-padding": "40px",
+                        "base": "8px",
+                        "stack-lg": "32px",
+                        "stack-md": "16px"
+                    },
+                    "fontFamily": {
+                        "label-sm": ["Inter"],
+                        "headline-lg": ["Inter"],
+                        "label-md": ["Inter"],
+                        "body-md": ["Inter"],
+                        "display-lg": ["Inter"],
+                        "body-lg": ["Inter"],
+                        "headline-lg-mobile": ["Inter"],
+                        "headline-md": ["Inter"]
+                    },
+                    "fontSize": {
+                        "label-sm": ["12px", {"lineHeight": "1.2", "fontWeight": "500"}],
+                        "headline-lg": ["32px", {"lineHeight": "1.2", "letterSpacing": "-0.02em", "fontWeight": "700"}],
+                        "label-md": ["14px", {"lineHeight": "1.2", "letterSpacing": "0.05em", "fontWeight": "600"}],
+                        "body-md": ["16px", {"lineHeight": "1.6", "fontWeight": "400"}],
+                        "display-lg": ["48px", {"lineHeight": "1.1", "letterSpacing": "-0.04em", "fontWeight": "800"}],
+                        "body-lg": ["18px", {"lineHeight": "1.6", "fontWeight": "400"}],
+                        "headline-lg-mobile": ["28px", {"lineHeight": "1.2", "fontWeight": "700"}],
+                        "headline-md": ["24px", {"lineHeight": "1.3", "fontWeight": "600"}]
+                    }
+                },
+            },
+        }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .kinetic-bg {
+            background-image: radial-gradient(circle at 2px 2px, rgba(142, 113, 100, 0.05) 1px, transparent 0);
+            background-size: 24px 24px;
+        }
+        .ball-glow {
+            filter: drop-shadow(0 0 8px rgba(252, 103, 0, 0.4));
+        }
+        .card-shadow {
+            box-shadow: 0 10px 20px rgba(151, 71, 29, 0.15);
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-background text-on-background font-body-md min-h-screen kinetic-bg">
+<!-- Top AppBar - Following JSON Structure -->
+<header class="w-full top-0 sticky z-50 bg-surface shadow-sm h-16 flex justify-between items-center px-container-margin max-w-screen-xl mx-auto">
+<div class="flex items-center gap-4">
+<button class="material-symbols-outlined text-primary hover:bg-surface-container-high transition-colors p-2 rounded-full active:scale-95 transition-transform" data-icon="menu">menu</button>
+<span class="font-display-lg text-headline-lg-mobile text-primary tracking-tighter">MCOMSpin</span>
+</div>
+<div class="w-10 h-10 rounded-full bg-surface-container-highest overflow-hidden border-2 border-primary-container">
+<img alt="User Profile" class="w-full h-full object-cover" data-alt="A professional headshot of a business executive in a high-end corporate office setting. The lighting is soft and bright, emphasizing a premium light-mode aesthetic with warm skin tones and a blurred background of a modern glass skyscraper. The overall mood is confident and sophisticated, using a palette of soft tans and crisp whites." src="https://lh3.googleusercontent.com/aida-public/AB6AXuCqIfs_rMrPhuU1H-ledsi6dHOBpJcrUvuFhtgm3COhoPzJznb-XIkyG54nHYjTl0vCb64X80VzjMbGoVyohTD4r6fPPJZZrRrfjrMfyCHfMfAbY6mvSNXom--rglZP-q-X8KLDFp6HaEiEjctg4MgWKOwoyprhI9HW9-MBl_kJcL49UA1L-0lajfyhdPtfZ5bZy6e7h98YE_80ytnpBPNtnDA3BvqGJor4W5Dg7hCANn3xNErxCv6x1A"/>
+</div>
+</header>
+<main class="max-w-md mx-auto px-container-margin py-stack-lg pb-32">
+<!-- Step Indicator -->
+<div class="flex items-center justify-between mb-stack-lg">
+<div class="flex flex-col">
+<span class="font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider">Step 4 of 4</span>
+<h1 class="font-headline-lg-mobile text-headline-lg-mobile text-on-surface">Confirmation</h1>
+</div>
+<div class="relative w-12 h-12 flex items-center justify-center">
+<svg class="w-full h-full transform -rotate-90">
+<circle class="text-surface-container-highest" cx="24" cy="24" fill="transparent" r="20" stroke="currentColor" stroke-width="4"></circle>
+<circle class="text-primary" cx="24" cy="24" fill="transparent" r="20" stroke="currentColor" stroke-dasharray="125.6" stroke-dashoffset="0" stroke-width="4"></circle>
+</svg>
+<span class="absolute font-label-md text-label-md text-primary">100%</span>
+</div>
+</div>
+<!-- Summary Card -->
+<div class="bg-surface-container-lowest rounded-xl p-stack-md card-shadow border border-outline-variant/30 mb-stack-lg overflow-hidden relative">
+<div class="absolute top-0 left-0 w-2 h-full bg-primary"></div>
+<div class="flex justify-between items-start mb-6 pl-2">
+<div>
+<h2 class="font-headline-md text-headline-md text-on-surface">Growth Plan</h2>
+<p class="font-body-md text-body-md text-on-surface-variant">Yearly billing cycle</p>
+</div>
+<div class="bg-tertiary-container/10 px-3 py-1 rounded-full border border-tertiary-container/30">
+<span class="font-label-sm text-label-sm text-tertiary">Best Value</span>
+</div>
+</div>
+<div class="space-y-4 pl-2">
+<div class="flex items-center gap-3">
+<div class="w-10 h-10 rounded-lg bg-primary-container/10 flex items-center justify-center">
+<span class="material-symbols-outlined text-primary" data-icon="payments">payments</span>
+</div>
+<div class="flex flex-col">
+<span class="font-label-sm text-label-sm text-on-surface-variant">Total Price</span>
+<span class="font-headline-md text-headline-md text-on-surface">$758<span class="text-body-md font-normal text-on-surface-variant">/year</span></span>
+</div>
+</div>
+<div class="flex items-center gap-3">
+<div class="w-10 h-10 rounded-lg bg-secondary-container/10 flex items-center justify-center">
+<span class="material-symbols-outlined text-secondary" data-icon="credit_card">credit_card</span>
+</div>
+<div class="flex flex-col">
+<span class="font-label-sm text-label-sm text-on-surface-variant">Payment Method</span>
+<div class="flex items-center gap-2">
+<span class="font-label-md text-label-md text-on-surface">Card ending in 4242</span>
+<img alt="Visa" class="h-4" data-alt="A professional minimalist illustration of a premium credit card logo. The style is clean and flat, using professional branding colors. The lighting is even and high-key, fitting into a modern financial dashboard interface. The background is a crisp neutral white to emphasize clarity and trust." src="https://lh3.googleusercontent.com/aida-public/AB6AXuBM8U1CIsN9B9B9s55iNn-gYMWchigskpNrmj3-Qk4kQctn26YPm4d6pOvzzluC97QH7G721e12d7D97lYmkzgigyjWKDVgXTGvCrLTvMnQBJYFWQNF-ErIRu1Lf-CJ8harqK_ACfCdHxpVh_XRWqTWP7sE1DYaudTn7ZPDkTA3k56tUQPWpGdTGP9cx2lIIVzE8-vrRMkm4mB-8n-BkIqSEAC5c0O1-UvjmbKiUG5po02_V4DU30fuWQ"/>
+</div>
+</div>
+</div>
+</div>
+<!-- Kinetic Decoration -->
+<div class="mt-8 pt-6 border-t border-outline-variant/30 relative">
+<div class="flex items-center justify-between">
+<span class="font-body-md text-body-md text-on-surface">Plan Status</span>
+<span class="flex items-center gap-1.5 text-primary">
+<span class="w-2 h-2 rounded-full bg-primary animate-pulse"></span>
+<span class="font-label-md text-label-md">Ready to Activate</span>
+</span>
+</div>
+</div>
+</div>
+<!-- Details Section -->
+<div class="space-y-stack-sm mb-stack-lg">
+<h3 class="font-label-md text-label-md text-on-surface-variant px-1">INCLUDED FEATURES</h3>
+<div class="bg-surface-container-low rounded-xl p-4 border border-outline-variant/20">
+<ul class="space-y-3">
+<li class="flex items-center gap-3">
+<span class="material-symbols-outlined text-primary text-sm" data-icon="check_circle">check_circle</span>
+<span class="font-body-md text-body-md">Unlimited Daily Drops</span>
+</li>
+<li class="flex items-center gap-3">
+<span class="material-symbols-outlined text-primary text-sm" data-icon="check_circle">check_circle</span>
+<span class="font-body-md text-body-md">Premium Analytics Suite</span>
+</li>
+<li class="flex items-center gap-3">
+<span class="material-symbols-outlined text-primary text-sm" data-icon="check_circle">check_circle</span>
+<span class="font-body-md text-body-md">24/7 Priority Support</span>
+</li>
+</ul>
+</div>
+</div>
+<!-- Actions -->
+<div class="flex flex-col gap-4">
+<button class="w-full h-[56px] bg-primary text-on-primary font-label-md text-label-md rounded-xl shadow-lg border-b-4 border-primary-fixed-dim active:border-b-0 active:translate-y-1 transition-all flex items-center justify-center gap-2 group" onclick="handleConfirm()">
+                Confirm Subscription
+                <span class="material-symbols-outlined transition-transform group-hover:translate-x-1" data-icon="arrow_forward">arrow_forward</span>
+</button>
+<button class="w-full h-[56px] bg-surface-container-high text-on-surface-variant font-label-md text-label-md rounded-xl hover:bg-surface-variant transition-colors active:scale-95">
+                Back
+            </button>
+</div>
+<p class="mt-6 text-center font-label-sm text-label-sm text-on-surface-variant px-4">
+            By confirming, you agree to our <a class="text-primary underline" href="#">Terms of Service</a> and <a class="text-primary underline" href="#">Privacy Policy</a>.
+        </p>
+</main>
+<!-- Bottom Navigation - Following JSON Structure -->
+<nav class="fixed bottom-0 left-0 w-full z-50 flex justify-around items-center px-4 py-2 pb-safe bg-surface-container rounded-t-xl shadow-[0_-4px_10px_rgba(151,71,29,0.1)] border-t border-outline-variant md:hidden">
+<a class="flex flex-col items-center justify-center text-on-surface-variant hover:text-primary active:scale-90 duration-200" href="#">
+<span class="material-symbols-outlined" data-icon="casino">casino</span>
+<span class="font-label-md text-label-md">Spin</span>
+</a>
+<a class="flex flex-col items-center justify-center text-on-surface-variant hover:text-primary active:scale-90 duration-200" href="#">
+<span class="material-symbols-outlined" data-icon="query_stats">query_stats</span>
+<span class="font-label-md text-label-md">Stats</span>
+</a>
+<a class="flex flex-col items-center justify-center bg-primary-container text-on-primary-container rounded-full px-4 py-1 active:scale-90 duration-200" href="#">
+<span class="material-symbols-outlined" data-icon="account_circle">account_circle</span>
+<span class="font-label-md text-label-md">Account</span>
+</a>
+<a class="flex flex-col items-center justify-center text-on-surface-variant hover:text-primary active:scale-90 duration-200" href="#">
+<span class="material-symbols-outlined" data-icon="help_outline">help_outline</span>
+<span class="font-label-md text-label-md">Help</span>
+</a>
+</nav>
+<!-- Micro-interaction script -->
+<script>
+        function handleConfirm() {
+            const btn = event.currentTarget;
+            btn.innerHTML = `
+                <svg class="animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                  <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                  <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                </svg>
+                Processing...
+            `;
+            btn.disabled = true;
+            btn.classList.add('opacity-80');
+            
+            setTimeout(() => {
+                btn.innerHTML = `
+                    <span class="material-symbols-outlined" data-icon="check_circle">check_circle</span>
+                    Success!
+                `;
+                btn.classList.replace('bg-primary', 'bg-tertiary-container');
+                btn.classList.add('animate-bounce');
+            }, 2000);
+        }
+    </script>
+</body></html>
