@@ -23,7 +23,16 @@ export default function AuthPage() {
     loginMutation.mutate(
       { email: loginEmail, password: loginPassword },
       {
-        onSuccess: () => router.push('/dashboard'),
+        onSuccess: (data) => {
+          const role = data.user?.role || (data.user as any)?.roles?.[0];
+          if (role === 'SuperAdmin' || role === 'BoroughAdmin') {
+            router.push('/admin');
+          } else if (role === 'Customer') {
+            router.push('/customer');
+          } else {
+            router.push('/dashboard');
+          }
+        },
         onError: (err: any) => {
           setError(err?.response?.data?.error?.message || err?.message || 'Login failed');
         },
@@ -46,7 +55,16 @@ export default function AuthPage() {
         lastName: '',
       },
       {
-        onSuccess: () => router.push('/dashboard'),
+        onSuccess: (data) => {
+          const role = data.user?.role || (data.user as any)?.roles?.[0];
+          if (role === 'SuperAdmin' || role === 'BoroughAdmin') {
+            router.push('/admin');
+          } else if (role === 'Customer') {
+            router.push('/customer');
+          } else {
+            router.push('/dashboard');
+          }
+        },
         onError: (err: any) => {
           setError(err?.response?.data?.error?.message || err?.message || 'Registration failed');
         },

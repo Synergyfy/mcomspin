@@ -56,24 +56,9 @@ export default function DashboardOverview() {
   const summaryData = rawSummary as any;
   const liveData = rawLive as any;
 
-  const engagementData = React.useMemo(() => {
-    if (summaryData?.chartData) return summaryData.chartData;
-    const mockTrends = [];
-    const totalPlays = summaryData?.totalPlays ?? 0;
-    const rewardsRedeemed = summaryData?.rewardsRedeemed ?? 0;
-    const engagement = summaryData?.customersEngaged ?? 0;
-    for (let i = 30; i >= 0; i--) {
-      const date = new Date();
-      date.setDate(date.getDate() - i);
-      const factor = 1 - (i / 40) + Math.random() * 0.15;
-      mockTrends.push({
-        day: date.toLocaleDateString([], { month: 'short', day: 'numeric' }),
-        engagement: Math.max(0, Math.floor(engagement * factor)),
-        leads: Math.max(0, Math.floor(totalPlays * factor)),
-        rewards: Math.max(0, Math.floor(rewardsRedeemed * factor)),
-      });
-    }
-    return mockTrends;
+  const engagementData: any[] = React.useMemo(() => {
+    if (summaryData?.chartData?.length) return summaryData.chartData;
+    return [];
   }, [summaryData]);
 
   const activityFeed = React.useMemo(() => {

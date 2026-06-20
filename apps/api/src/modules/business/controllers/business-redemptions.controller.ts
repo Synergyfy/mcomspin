@@ -29,4 +29,10 @@ export class BusinessRedemptionsController {
   approve(@Req() req: any, @Param('id') id: string) {
     return this.businessRedemptionsService.approve(req.businessId, id);
   }
+
+  @Put(':id/reject')
+  @ApiOperation({ summary: 'Reject a pending redemption' })
+  reject(@Req() req: any, @Param('id') id: string) {
+    return this.businessRedemptionsService.reject(req.businessId, id);
+  }
 }

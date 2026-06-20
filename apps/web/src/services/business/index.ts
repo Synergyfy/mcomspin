@@ -25,6 +25,7 @@ export {
   useDeleteBusinessReward,
   useBusinessRedemptions,
   useApproveRedemption,
+  useRejectRedemption,
   useBusinessGame,
   useUpdateBusinessGame,
   useBusinessAnalytics,

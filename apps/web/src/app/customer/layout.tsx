@@ -17,6 +17,7 @@ import {
   PanelLeftClose,
   PanelLeftOpen
 } from 'lucide-react';
+import { AuthProxy } from '../proxy';
 
 const navItems = [
   { name: 'Overview', href: '/customer', icon: LayoutDashboard },
@@ -46,7 +47,8 @@ export default function CustomerLayout({
   }, [pathname]);
 
   return (
-    <div className="min-h-screen bg-[#fafaf9] flex flex-col md:flex-row relative pb-20 md:pb-0">
+    <AuthProxy allowedRoles={['Customer']}>
+      <div className="min-h-screen bg-[#fafaf9] flex flex-col md:flex-row relative pb-20 md:pb-0">
       
       {/* Mobile Top Bar */}
       <div className="md:hidden sticky top-0 z-50 flex items-center justify-between px-6 py-4 bg-white border-b border-[#eee] shadow-sm">
@@ -220,5 +222,6 @@ export default function CustomerLayout({
         </div>
       </main>
     </div>
+    </AuthProxy>
   );
 }

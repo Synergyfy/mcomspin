@@ -1,20 +1,24 @@
 'use client';
 
 import React from 'react';
-import { useDashboardSummary } from '@/services/dashboard';
+
+/* ─── Static product content — not database-driven ─── */
+const HELP_CATEGORIES = [
+  { title: 'Getting Started', count: 12, icon: '🚀' },
+  { title: 'Campaign Rules', count: 8, icon: '⚙️' },
+  { title: 'Reward Types', count: 5, icon: '🎁' },
+  { title: 'Staff Training', count: 4, icon: '👥' },
+  { title: 'Analytics Help', count: 6, icon: '📊' },
+  { title: 'Billing Info', count: 3, icon: '💳' },
+];
+
+const TUTORIALS = [
+  { title: 'Setting up your first campaign', time: '5 mins', type: 'Video' },
+  { title: 'How to manage staff roles', time: '3 mins', type: 'Guide' },
+  { title: 'Understanding your analytics', time: '7 mins', type: 'Video' },
+];
 
 export default function SupportPage() {
-  const { data: supportData } = useDashboardSummary();
-  const rawHelpCategories = (supportData as any)?.helpCategories;
-  const helpCategories: any[] = rawHelpCategories?.length ? rawHelpCategories : [
-    { title: 'Getting Started', count: 12, icon: '🚀' },
-    { title: 'Campaign Rules', count: 8, icon: '⚙️' },
-    { title: 'Reward Types', count: 5, icon: '🎁' },
-    { title: 'Staff Training', count: 4, icon: '👥' },
-    { title: 'Analytics Help', count: 6, icon: '📊' },
-    { title: 'Billing Info', count: 3, icon: '💳' },
-  ];
-
   return (
     <div className="max-w-6xl mx-auto space-y-12 pb-20">
       {/* Header */}
@@ -39,7 +43,7 @@ export default function SupportPage() {
 
       {/* Help Resources */}
       <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
-        {helpCategories.map((cat: any, i: any) => (
+        {HELP_CATEGORIES.map((cat, i) => (
           <button key={i} className="bg-white border border-[#eee] p-6 rounded-[32px] hover:border-[#f97316]/30 hover:shadow-md transition-all text-center group">
             <div className="text-3xl mb-4 group-hover:scale-110 transition-transform">{cat.icon}</div>
             <p className="text-[13px] font-bold text-[#1a1a1a]">{cat.title}</p>
@@ -57,7 +61,6 @@ export default function SupportPage() {
               Our support team is available Monday to Friday, 9am - 6pm. We typically respond within 2 hours.
             </p>
           </div>
-          
           <div className="mt-10 space-y-3">
             <button className="w-full py-4 bg-[#f97316] text-white rounded-2xl font-bold text-[14px] hover:bg-[#ea580c] transition-all flex items-center justify-center gap-2">
               <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.094 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" /></svg>
@@ -79,21 +82,17 @@ export default function SupportPage() {
         <section className="bg-white rounded-[40px] border border-[#eee] p-10 shadow-sm">
           <h3 className="text-2xl font-bold text-[#1a1a1a] mb-6">Recent Tutorials</h3>
           <div className="space-y-6">
-            {(((supportData as any)?.tutorials as any[])?.length ? (supportData as any)?.tutorials : [
-              { title: 'Setting up your first campaign', time: '5 mins', type: 'Video' },
-              { title: 'How to manage staff roles', time: '3 mins', type: 'Guide' },
-              { title: 'Understanding your analytics', time: '7 mins', type: 'Video' },
-            ]).map((t: any, i: number) => (
+            {TUTORIALS.map((t, i) => (
               <div key={i} className="flex gap-4 group cursor-pointer">
                 <div className="w-20 h-14 bg-[#f5f5f3] rounded-xl flex items-center justify-center text-[10px] font-bold text-[#aaa] shrink-0 overflow-hidden relative">
-                   <div className="absolute inset-0 bg-[#f97316]/0 group-hover:bg-[#f97316]/10 transition-colors flex items-center justify-center">
+                  <div className="absolute inset-0 bg-[#f97316]/0 group-hover:bg-[#f97316]/10 transition-colors flex items-center justify-center">
                     <svg className="w-6 h-6 text-[#f97316] opacity-0 group-hover:opacity-100 transition-opacity" fill="currentColor" viewBox="0 0 24 24"><path d="M8 5v14l11-7z" /></svg>
-                   </div>
-                   {t.type}
+                  </div>
+                  {t.type}
                 </div>
                 <div>
                   <h4 className="text-[14px] font-bold text-[#1a1a1a] group-hover:text-[#f97316] transition-colors">{t.title}</h4>
-                  <p className="text-[12px] text-[#aaa] mt-1">{t.time} • {t.type}</p>
+                  <p className="text-[12px] text-[#aaa] mt-1">{t.time} · {t.type}</p>
                 </div>
               </div>
             ))}

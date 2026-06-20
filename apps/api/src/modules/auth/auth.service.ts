@@ -34,7 +34,12 @@ export class AuthService {
         phone: dto.phone,
         roles: {
           create: {
-            role: { connect: { name: Role.Customer } },
+            role: {
+              connectOrCreate: {
+                where: { name: Role.Customer },
+                create: { name: Role.Customer, isSystem: true },
+              },
+            },
           },
         },
       },

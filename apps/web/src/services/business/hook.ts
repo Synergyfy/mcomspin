@@ -309,6 +309,17 @@ export function useApproveRedemption() {
   });
 }
 
+export function useRejectRedemption() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (id: string) =>
+      api.put(`/business/redemptions/${id}/reject`).then((r) => r.data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: businessKeys.redemptions });
+    },
+  });
+}
+
 /* ─── Game ─── */
 
 export function useBusinessGame() {

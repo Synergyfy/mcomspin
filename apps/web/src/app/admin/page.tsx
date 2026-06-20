@@ -423,58 +423,12 @@ const AgentManagement = () => {
 
           {subTab === 'workload' && (
             <div className="space-y-6">
-              <div className="grid grid-cols-4 gap-4">
-                {[
-                  { label: 'Avg Workload', value: '4.2', desc: 'Businesses/Agent' },
-                  { label: 'Wait Time', value: '< 5m', desc: 'Auto-Assignment' },
-                  { label: 'Completion', value: '94%', desc: 'Setup Rate' },
-                  { label: 'Satisfaction', value: '4.9', desc: 'Business Rating' },
-                ].map((stat, i) => (
-                  <Card key={i}>
-                    <div className="text-[10px] font-bold uppercase text-stone-500 mb-1">{stat.label}</div>
-                    <div className="text-xl font-bold">{stat.value}</div>
-                    <div className="text-[10px] text-stone-400">{stat.desc}</div>
-                  </Card>
-                ))}
-              </div>
               <Card title="Agent Capacity & Workload Balance">
-                <table className="w-full text-left border-collapse">
-                  <thead>
-                    <tr className="text-[10px] uppercase text-stone-500 border-b border-stone-100">
-                      <th className="pb-4">Agent Name</th>
-                      <th className="pb-4">Active Load</th>
-                      <th className="pb-4">Expertise</th>
-                      <th className="pb-4">Setup Quality</th>
-                      <th className="pb-4">Last Active</th>
-                      <th className="pb-4 text-right">Status</th>
-                    </tr>
-                  </thead>
-                  <tbody className="text-xs font-medium text-stone-800">
-                    {[
-                      { name: 'Agent B (Sarah)', load: 4, exp: 'Retail/Barber', quality: '98%', active: '3m ago', status: 'Available' },
-                      { name: 'Agent A (Marcus)', load: 5, exp: 'Hospitality', quality: '92%', active: '12m ago', status: 'Busy' },
-                      { name: 'Agent C (Elena)', load: 7, exp: 'Global/Tech', quality: '95%', active: 'Now', status: 'Max Load' },
-                    ].map((agent, i) => (
-                      <tr key={i} className="border-b border-stone-50 hover:bg-stone-50">
-                        <td className="py-4 font-bold">{agent.name}</td>
-                        <td className="py-4">
-                          <div className="flex items-center gap-2">
-                            <span>{agent.load}</span>
-                            <div className="w-16 bg-stone-100 rounded-full h-1">
-                              <div className="bg-[#1a1a1a] h-1 rounded-full" style={{ width: `${(agent.load / 10) * 100}%` }} />
-                            </div>
-                          </div>
-                        </td>
-                        <td className="py-4 text-stone-500">{agent.exp}</td>
-                        <td className="py-4">{agent.quality}</td>
-                        <td className="py-4 text-stone-400">{agent.active}</td>
-                        <td className="py-4 text-right">
-                          <Badge variant={agent.status === 'Available' ? 'green' : agent.status === 'Busy' ? 'yellow' : 'red'}>{agent.status}</Badge>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
+                <div className="flex flex-col items-center justify-center py-12 text-stone-400">
+                  <Users className="w-10 h-10 mb-3 opacity-20" />
+                  <p className="text-xs font-bold uppercase tracking-widest">Agent Workload Tracking — Coming Soon</p>
+                  <p className="text-[10px] mt-1 text-stone-400 max-w-xs text-center">Live agent capacity and performance metrics will appear here once agents are connected to the platform.</p>
+                </div>
               </Card>
             </div>
           )}
@@ -584,9 +538,9 @@ const ConsumerMonitoring = () => {
               <div className="grid grid-cols-4 gap-4">
                 {[
                   { label: 'Active Users', value: customerList.length, desc: 'Registered' },
-                  { label: 'Avg Plays', value: '3.8', desc: 'Per user/day' },
-                  { label: 'Fav Category', value: 'Retail', desc: 'High engagement' },
-                  { label: 'Youth Active', value: '45%', desc: 'Of total base' },
+                  { label: 'Avg Plays', value: '—', desc: 'Per user/day' },
+                  { label: 'Fav Category', value: '—', desc: 'High engagement' },
+                  { label: 'Youth Active', value: '—', desc: 'Of total base' },
                 ].map((stat, i) => (
                   <Card key={i}>
                     <div className="text-[10px] font-bold uppercase text-stone-500 mb-1">{stat.label}</div>
@@ -650,10 +604,10 @@ const ConsumerMonitoring = () => {
               <Card title="Wallet Performance Metrics">
                 <div className="space-y-6">
                   {[
-                    { label: 'Voucher Redemption Rate', val: '72%', status: 'green' },
-                    { label: 'Avg Claim to Use Time', val: '4.2h', status: 'green' },
-                    { label: 'Unclaimed Prize Volume', val: '£1,240', status: 'yellow' },
-                    { label: 'QR Scan Success Rate', val: '99.2%', status: 'green' },
+                    { label: 'Voucher Redemption Rate', val: '—', status: 'neutral' },
+                    { label: 'Avg Claim to Use Time', val: '—', status: 'neutral' },
+                    { label: 'Unclaimed Prize Volume', val: '—', status: 'neutral' },
+                    { label: 'QR Scan Success Rate', val: '—', status: 'neutral' },
                   ].map((metric, i) => (
                     <div key={i} className="flex justify-between items-center p-3 border border-stone-100 rounded-lg">
                       <span className="text-xs font-medium text-stone-600">{metric.label}</span>
@@ -668,45 +622,17 @@ const ConsumerMonitoring = () => {
 
           {subTab === 'fraud' && (
             <div className="space-y-6">
-              <Card title="Security & Fairness Alerts" isProcessing={isProcessing}>
-                <div className="space-y-4">
-                  {[
-                    { type: 'IP Abuse', desc: 'Multiple accounts detected from same subnet', severity: 'Critical', user: 'Subnet 0x4' },
-                    { type: 'Bot Behavior', desc: 'High frequency play pattern in 10-box game', severity: 'Warning', user: 'User #9921' },
-                    { type: 'Repeat Exploit', desc: 'Attempting to reclaim expired voucher', severity: 'Medium', user: 'User #4412' },
-                  ].map((alert, i) => (
-                    <div key={i} className="flex justify-between items-center p-4 border border-stone-100 rounded-xl">
-                      <div className="flex items-center gap-4">
-                        <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${alert.severity === 'Critical' ? 'bg-red-50 text-red-600' : 'bg-amber-50 text-amber-600'}`}>
-                          <AlertTriangle className="w-5 h-5" />
-                        </div>
-                        <div className="flex flex-col gap-0.5">
-                          <span className="text-xs font-bold text-stone-800">{alert.type} - {alert.user}</span>
-                          <span className="text-[10px] text-stone-500">{alert.desc}</span>
-                        </div>
-                      </div>
-                      <div className="flex items-center gap-4">
-                        <Badge variant={alert.severity === 'Critical' ? 'red' : 'yellow'}>{alert.severity}</Badge>
-                        <button onClick={() => handleConsumerAction(alert.user, 'Security Flag')} className="text-[10px] font-bold text-red-600 hover:underline">Suspend Account</button>
-                      </div>
-                    </div>
-                  ))}
+              <Card title="Security & Fairness Alerts">
+                <div className="flex flex-col items-center justify-center py-12 text-stone-400">
+                  <ShieldAlert className="w-10 h-10 mb-3 opacity-20" />
+                  <p className="text-xs font-bold uppercase tracking-widest">Fraud Detection Coming Soon</p>
+                  <p className="text-[10px] mt-1 text-stone-400 max-w-xs text-center">Real-time fraud alerts and security logs will appear here once the fraud detection engine is active.</p>
                 </div>
               </Card>
               <div className="grid grid-cols-2 gap-6">
                 <Card title="Fraud Prevention Logs">
-                  <div className="space-y-3">
-                    {[
-                      'System: Blocked IP 192.168.1.45 (Rate Limit)',
-                      'Audit: User #4412 flagged for suspicious redemption',
-                      'WAF: Neutralized SQL injection attempt on wallet endpoint',
-                      'Fairness: Re-balancing win distribution for Retail node',
-                    ].map((log, i) => (
-                      <div key={i} className="text-[10px] text-stone-600 font-mono flex items-center gap-2">
-                        <span className="text-stone-300">[{new Date().toLocaleTimeString()}]</span>
-                        {log}
-                      </div>
-                    ))}
+                  <div className="flex flex-col items-center justify-center py-10 text-stone-400">
+                    <p className="text-[10px] font-mono text-stone-300">No fraud events logged yet.</p>
                   </div>
                 </Card>
                 <Card title="Trust Index Global">
@@ -771,18 +697,16 @@ const AnalyticsReporting = () => {
             <div className="space-y-6">
               <div className="grid grid-cols-3 gap-6">
                 <Card title="Total Platform Revenue">
-                  <div className="text-3xl font-black text-stone-900 mb-1">£428,590</div>
-                  <div className="text-[10px] font-bold text-green-600 flex items-center gap-1">
-                    <TrendingUp className="w-3 h-3" /> +12.4% vs last month
-                  </div>
+                  <div className="text-3xl font-black text-stone-900 mb-1">—</div>
+                  <div className="text-[10px] font-bold text-stone-400 uppercase">Revenue tracking not yet connected</div>
                 </Card>
                 <Card title="Lead Conversion Value">
-                  <div className="text-3xl font-black text-stone-900 mb-1">£124,102</div>
-                  <div className="text-[10px] font-bold text-stone-400 uppercase">Averaging $12.50 per lead</div>
+                  <div className="text-3xl font-black text-stone-900 mb-1">—</div>
+                  <div className="text-[10px] font-bold text-stone-400 uppercase">Connect payment provider</div>
                 </Card>
                 <Card title="Sponsored Contribution">
-                  <div className="text-3xl font-black text-stone-900 mb-1">34%</div>
-                  <div className="text-[10px] font-bold text-blue-600 uppercase">Growth in Partner Spend</div>
+                  <div className="text-3xl font-black text-stone-900 mb-1">—</div>
+                  <div className="text-[10px] font-bold text-stone-400 uppercase">Awaiting billing integration</div>
                 </Card>
               </div>
               
@@ -1139,23 +1063,23 @@ export default function AdminDashboard() {
 
                   <div className="bg-white rounded-xl border border-stone-100 shadow-sm p-6">
                     <h3 className="text-sm font-bold mb-4">Recent Activity</h3>
-                    <div className="space-y-3">
-                      {[
-                        'New business request: Elara Wellness (Pending)',
-                        'New campaign submitted: Summer Refresh (Fashion)',
-                        'Agent assignment: John D. -> Meridian Spa',
-                        'Reward spike detected: 20% Voucher (Retail)',
-                        'Fraud alert: High frequency spins - Subnet 0x4',
-                        'High activity business: TechGadgets Inc.',
-                        'Redemption alert: Unusual volume - Cafe Luna',
-                        'Consumer complaint: Reward not applied (User #9982)',
-                      ].map((item, i) => (
-                        <div key={i} className="flex items-center gap-3 text-xs text-stone-600 border-b border-stone-50 last:border-0 pb-2 last:pb-0">
-                          <div className="w-1.5 h-1.5 rounded-full bg-orange-400" />
-                          {item}
-                        </div>
-                      ))}
-                    </div>
+                    {(dash.recentActivity?.length ?? 0) > 0 ? (
+                      <div className="space-y-3">
+                        {dash.recentActivity.map((item: any, i: number) => {
+                          const name = item.customer
+                            ? `${item.customer.firstName ?? ''} ${item.customer.lastName ?? ''}`.trim() || 'Guest'
+                            : 'Guest';
+                          return (
+                            <div key={item.id || i} className="flex items-center gap-3 text-xs text-stone-600 border-b border-stone-50 last:border-0 pb-2 last:pb-0">
+                              <div className="w-1.5 h-1.5 rounded-full bg-orange-400" />
+                              {name} started a play session — {new Date(item.createdAt).toLocaleString('en-GB', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })}
+                            </div>
+                          );
+                        })}
+                      </div>
+                    ) : (
+                      <p className="text-[12px] text-stone-400 text-center py-4">No recent activity yet</p>
+                    )}
                   </div>
                 </div>
               )}

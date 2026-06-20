@@ -6,6 +6,7 @@ import { usePathname } from 'next/navigation';
 import { useDashboardStore } from '@/store/dashboard-store';
 import { useAuthStore } from '@/store/auth-store';
 import { useLogout, useCurrentUser } from '@/services/auth';
+import { AuthProxy } from '../proxy';
 
 /* ─── Sidebar nav config ─── */
 const navItems = [
@@ -59,7 +60,8 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   const currentPage = navItems.find((item) => isActive(item.href))?.label || 'Dashboard';
 
   return (
-    <div className="min-h-screen bg-[#fafaf9] font-body flex">
+    <AuthProxy allowedRoles={['BusinessOwner']}>
+      <div className="min-h-screen bg-[#fafaf9] font-body flex">
 
       {/* ─── Mobile overlay ─── */}
       {sidebarMobileOpen && (
@@ -245,5 +247,6 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         </main>
       </div>
     </div>
+    </AuthProxy>
   );
 }

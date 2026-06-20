@@ -74,7 +74,7 @@ function setUserFromAuth(data: AuthResponse) {
     id: data.user.id,
     name: data.user.name ?? `${data.user.firstName ?? ''} ${data.user.lastName ?? ''}`.trim(),
     email: data.user.email,
-    role: data.user.role,
+    role: data.user.role || (data.user as any).roles?.[0] || '',
   });
 }
 
@@ -180,7 +180,7 @@ export function useCurrentUser() {
         id: data.id,
         name: data.name ?? `${data.firstName ?? ''} ${data.lastName ?? ''}`.trim(),
         email: data.email,
-        role: data.role,
+        role: data.role || data.roles?.[0]?.role?.name || '',
         businessName: data.businessName ?? data.business?.name,
         avatar: data.avatar,
       };

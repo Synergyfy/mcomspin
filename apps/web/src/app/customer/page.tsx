@@ -18,9 +18,15 @@ export default function CustomerDashboard() {
   const { data: activity } = useCustomerActivity();
 
   const profile = dashboard?.profile ?? dashboard ?? {};
-  const wallet = rewards ?? [];
+  const wallet = React.useMemo(() => {
+    if (!rewards || typeof rewards !== 'object') return [];
+    const available = (rewards as any).available || [];
+    const redeemed = (rewards as any).redeemed || [];
+    const expired = (rewards as any).expired || [];
+    return [...available, ...redeemed, ...expired];
+  }, [rewards]);
   const activityList = activity ?? [];
-  const activeRewards = wallet.filter((w: any) => w.status === 'active').length;
+  const activeRewards = (rewards as any)?.available?.length ?? 0;
 
   return (
     <div className="space-y-8">

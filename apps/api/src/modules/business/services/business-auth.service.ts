@@ -26,7 +26,16 @@ export class BusinessAuthService {
         firstName: dto.contactName,
         lastName: '',
         phone: dto.phone,
-        roles: { create: { role: { connect: { name: Role.BusinessOwner as any } } } },
+        roles: {
+          create: {
+            role: {
+              connectOrCreate: {
+                where: { name: Role.BusinessOwner as any },
+                create: { name: Role.BusinessOwner as any, isSystem: true },
+              },
+            },
+          },
+        },
       },
     });
 

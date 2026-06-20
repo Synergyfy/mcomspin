@@ -31,7 +31,14 @@ export class CustomerAuthService {
         lastName: dto.lastName,
         phone: dto.phone,
         roles: {
-          create: { role: { connect: { name: Role.Customer as any } } },
+          create: {
+            role: {
+              connectOrCreate: {
+                where: { name: Role.Customer as any },
+                create: { name: Role.Customer as any, isSystem: true },
+              },
+            },
+          },
         },
       },
       include: { roles: { include: { role: true } } },
