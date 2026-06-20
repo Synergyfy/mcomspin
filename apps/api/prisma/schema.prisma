@@ -1,0 +1,2246 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ──────────────────────────────────────────────
+// ENUMS
+// ──────────────────────────────────────────────
+
+enum RoleName {
+  SuperAdmin
+  BoroughAdmin
+  HighStreetManager
+  BusinessOwner
+  Staff
+  Customer
+}
+
+enum BusinessVerificationStatus {
+  Unverified
+  Pending
+  Verified
+  Rejected
+  Suspended
+}
+
+enum BusinessMembershipTier {
+  Free
+  Bronze
+  Silver
+  Gold
+  Platinum
+}
+
+enum CampaignType {
+  Seasonal
+  Holiday
+  BoroughWide
+  HighStreet
+  CrossBusiness
+  FlashMob
+  SharedPartnership
+  ProductBundle
+  BoroughCampaign
+}
+
+enum CampaignStatus {
+  Draft
+  Scheduled
+  Active
+  Paused
+  Completed
+  Cancelled
+}
+
+enum PromotionType {
+  FlashDeal
+  BuyOneGetOne
+  PercentageOff
+  FixedAmountOff
+  BundleOffer
+  FreeShipping
+  LoyaltyBonus
+  DailyDeal
+  WeekendOffer
+  Seasonal
+  BoroughCampaign
+  HighStreet
+  Clearance
+  NewCustomer
+  ReturningCustomer
+  SharedPartnership
+  Gamified
+}
+
+enum PromotionStatus {
+  Draft
+  Active
+  Paused
+  Expired
+  Cancelled
+}
+
+enum GameType {
+  BallDrop
+  SpinWheel
+  ScratchCard
+  MatchGame
+  LuckyDraw
+}
+
+enum GameStatus {
+  Draft
+  Active
+  Paused
+  Closed
+}
+
+enum RewardType {
+  Discount
+  Voucher
+  FreeProduct
+  Cashback
+  Points
+}
+
+enum VoucherStatus {
+  Active
+  Redeemed
+  Expired
+  Revoked
+}
+
+enum EventType {
+  Workshop
+  Expo
+  Demo
+  Competition
+  PopUp
+  Launch
+  InStore
+  Webinar
+  ProductLaunch
+  FoodCompetition
+  BeautySession
+  CommunityEvent
+  ExpoBooth
+  LiveStream
+  Training
+}
+
+enum EventStatus {
+  Draft
+  Published
+  Ongoing
+  Completed
+  Cancelled
+}
+
+enum NotificationType {
+  Promotional
+  Transactional
+  Alert
+  Reminder
+  Community
+}
+
+enum NotificationChannel {
+  InApp
+  Email
+  SMS
+  Push
+}
+
+enum ModerationActionType {
+  Warning
+  ContentRemoval
+  TemporarySuspension
+  PermanentBan
+}
+
+enum SubscriptionPlanType {
+  Free
+  Starter
+  Growth
+  Enterprise
+}
+
+enum InvoiceStatus {
+  Draft
+  Sent
+  Paid
+  Overdue
+  Cancelled
+  Refunded
+}
+
+enum TransactionStatus {
+  Pending
+  Completed
+  Failed
+  Refunded
+  Cancelled
+}
+
+enum PaymentMethodType {
+  CreditCard
+  DebitCard
+  BankTransfer
+  MobileMoney
+  Wallet
+}
+
+enum AuditType {
+  Short
+  Full
+  MCOM
+}
+
+enum StorefrontThemeType {
+  Light
+  Dark
+  Brand
+}
+
+enum QLinkType {
+  Campaign
+  Product
+  Event
+  Business
+  Storefront
+}
+
+enum PartnershipStatus {
+  Pending
+  Active
+  Declined
+  Suspended
+}
+
+enum CommunityGroupType {
+  HighStreet
+  Borough
+  Interest
+}
+
+enum AutomationTriggerType {
+  Schedule
+  Event
+  Action
+  Condition
+}
+
+enum AutomationActionType {
+  Notification
+  Email
+  UpdateStatus
+  CreateTask
+  Webhook
+}
+
+enum AbuseReportStatus {
+  Open
+  Investigating
+  Resolved
+  Dismissed
+}
+
+enum CustomerActivityType {
+  View
+  Click
+  Search
+  Purchase
+  Redeem
+  Share
+  Review
+  Favourite
+}
+
+enum BusinessActivityType {
+  Login
+  Update
+  Create
+  Delete
+  Publish
+  Payment
+}
+
+// ──────────────────────────────────────────────
+// CORE IDENTITY & AUTH
+// ──────────────────────────────────────────────
+
+model Role {
+  id          String       @id @default(uuid()) @db.Uuid
+  name        RoleName     @unique
+  description String?
+  isSystem    Boolean      @default(false)
+  permissions Permission[]
+  userRoles   UserRole[]
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+}
+
+model Permission {
+  id          String   @id @default(uuid()) @db.Uuid
+  roleId      String   @db.Uuid
+  role        Role     @relation(fields: [roleId], references: [id], onDelete: Cascade)
+  resource    String
+  action      String   // create, read, update, delete, manage
+  conditions  Json?    // JSON condition rules
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@unique([roleId, resource, action])
+  @@index([roleId])
+}
+
+model User {
+  id                String           @id @default(uuid()) @db.Uuid
+  email             String           @unique
+  phone             String?
+  passwordHash      String
+  firstName         String
+  lastName          String
+  avatarUrl         String?
+  isActive          Boolean          @default(true)
+  isEmailVerified   Boolean          @default(false)
+  isPhoneVerified   Boolean          @default(false)
+  lastLoginAt       DateTime?
+  metadata          Json?
+  roles             UserRole[]
+  sessions          Session[]
+  ownedBusinesses   Business[]       @relation("BusinessOwner")
+  staffAssignments  BusinessStaff[]
+  customerRewards   CustomerReward[]
+  gameSessions      GameSession[]
+  eventRegistrations EventRegistration[]
+  notifications     Notification[]
+  notificationPrefs NotificationPreference[]
+  messages          Message[]
+  messageThreads    MessageThread[]  @relation("MessageThreadParticipants")
+  communityPosts    CommunityPost[]
+  abuseReports      AbuseReport[]    @relation("AbuseReportReporter")
+  moderatedReports  AbuseReport[]    @relation("AbuseReportModerator")
+  moderationActions ModerationAction[]
+  customerActivity  CustomerActivityLog[]
+  deletedAt         DateTime?
+  createdAt         DateTime         @default(now())
+  updatedAt         DateTime         @updatedAt
+
+  @@index([email])
+  @@index([phone])
+  @@index([isActive])
+}
+
+model UserRole {
+  id        String   @id @default(uuid()) @db.Uuid
+  userId    String   @db.Uuid
+  roleId    String   @db.Uuid
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  role      Role     @relation(fields: [roleId], references: [id], onDelete: Cascade)
+  assignedAt DateTime @default(now())
+  expiresAt DateTime?
+  createdBy String?  @db.Uuid
+
+  @@unique([userId, roleId])
+  @@index([userId])
+  @@index([roleId])
+}
+
+model Session {
+  id            String   @id @default(uuid()) @db.Uuid
+  userId        String   @db.Uuid
+  user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  refreshToken  String   @unique
+  deviceInfo    Json?
+  ipAddress     String?
+  userAgent     String?
+  isRevoked     Boolean  @default(false)
+  lastActivityAt DateTime @default(now())
+  expiresAt     DateTime
+  createdAt     DateTime @default(now())
+
+  @@index([userId])
+  @@index([refreshToken])
+  @@index([expiresAt])
+}
+
+// ──────────────────────────────────────────────
+// LOCATION HIERARCHY
+// ──────────────────────────────────────────────
+
+model Borough {
+  id              String              @id @default(uuid()) @db.Uuid
+  name            String
+  slug            String              @unique
+  description     String?
+  imageUrl        String?
+  isActive        Boolean             @default(true)
+  highStreets     HighStreet[]
+  campaigns       CampaignTarget[]
+  communityGroups CommunityGroup[]
+  createdAt       DateTime            @default(now())
+  updatedAt       DateTime            @updatedAt
+  deletedAt       DateTime?
+
+  @@index([slug])
+  @@index([isActive])
+}
+
+model HighStreet {
+  id                  String              @id @default(uuid()) @db.Uuid
+  boroughId           String              @db.Uuid
+  borough             Borough             @relation(fields: [boroughId], references: [id], onDelete: Cascade)
+  name                String
+  slug                String              @unique
+  description         String?
+  imageUrl            String?
+  isActive            Boolean             @default(true)
+  storefrontClusters  StorefrontCluster[]
+  businessLocations   BusinessLocation[]
+  communityGroups     CommunityGroup[]
+  createdAt           DateTime            @default(now())
+  updatedAt           DateTime            @updatedAt
+  deletedAt           DateTime?
+
+  @@index([boroughId])
+  @@index([slug])
+  @@index([isActive])
+}
+
+model StorefrontCluster {
+  id            String       @id @default(uuid()) @db.Uuid
+  highStreetId  String       @db.Uuid
+  highStreet    HighStreet   @relation(fields: [highStreetId], references: [id], onDelete: Cascade)
+  name          String
+  slug          String       @unique
+  clusterType   String?      // plaza, mini-mall, market, arcade
+  description   String?
+  isActive      Boolean      @default(true)
+  locations     Location[]
+  createdAt     DateTime     @default(now())
+  updatedAt     DateTime     @updatedAt
+  deletedAt     DateTime?
+
+  @@index([highStreetId])
+  @@index([slug])
+}
+
+model Location {
+  id                   String              @id @default(uuid()) @db.Uuid
+  addressLine1         String
+  addressLine2         String?
+  city                 String
+  postcode             String?
+  latitude             Float?
+  longitude            Float?
+  storefrontClusterId  String?             @db.Uuid
+  storefrontCluster    StorefrontCluster?  @relation(fields: [storefrontClusterId], references: [id], onDelete: SetNull)
+  businessId           String?             @db.Uuid
+  business             Business?           @relation("BusinessLocations", fields: [businessId], references: [id], onDelete: Cascade)
+  eventId              String?             @unique @db.Uuid
+  event                Event?              @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  isPrimary            Boolean             @default(false)
+  label                String?             // "Head Office", "Branch", etc.
+  metadata             Json?
+  createdAt            DateTime            @default(now())
+  updatedAt            DateTime            @updatedAt
+  deletedAt            DateTime?
+
+  @@index([storefrontClusterId])
+  @@index([businessId])
+  @@index([eventId])
+  @@index([latitude, longitude])
+}
+
+// ──────────────────────────────────────────────
+// BUSINESS ECOSYSTEM
+// ──────────────────────────────────────────────
+
+model Business {
+  id                 String                 @id @default(uuid()) @db.Uuid
+  ownerId            String                 @db.Uuid
+  owner              User                   @relation("BusinessOwner", fields: [ownerId], references: [id], onDelete: Restrict)
+  name               String
+  slug               String                 @unique
+  description        String?
+  shortDescription   String?
+  logoUrl            String?
+  coverImageUrl      String?
+  contactEmail       String?
+  contactPhone       String?
+  websiteUrl         String?
+  socialLinks        Json?
+  isActive           Boolean                @default(true)
+  isOpen             Boolean                @default(true)
+  taxId              String?
+  registrationNumber String?
+  metadata           Json?
+  verification       BusinessVerification?
+  claims             BusinessClaim[]
+  staff              BusinessStaff[]
+  membership         BusinessMembership?
+  locations          Location[]             @relation("BusinessLocations")
+  businessLocations  BusinessLocation[]     @relation("BusinessLocationBusiness")
+  hours              BusinessHours[]
+  businessCategoryAssignments BusinessCategoryAssignment[]
+  tagAssignments     TagAssignment[]
+  storefront         Storefront?
+  campaigns          CampaignBusiness[]
+  promotions         Promotion[]
+  games              GameConfig[]
+  rewards            RewardInventory[]
+  loyaltyPrograms    LoyaltyProgram[]
+  partnerships       Partnership[]          @relation("PartnershipInitiator")
+  partnershipRequests PartnershipRequest[]  @relation("PartnershipRequestTarget")
+  communityPosts     CommunityPost[]
+  vouchers           Voucher[]
+  qlinks             QLink[]
+  expoBooths         ExpoBooth[]
+  expoParticipations ExpoParticipation[]
+  partnerPartnerships Partnership[]        @relation("PartnershipPartner")
+  activations        BusinessActivation[]
+  interestSignals    InterestSignal[]
+  audits             Audit[]
+  recommendations    AuditRecommendation[]
+  visibilityScore    VisibilityScore?
+  visibilityBoosts   VisibilityBoost[]
+  storefrontScore    StorefrontScore?
+  automationRules    AutomationRule[]
+  subscriptions      Subscription[]
+  invoices           Invoice[]
+  paymentMethods     PaymentMethod[]
+  transactions       Transaction[]
+  credits            Credit[]
+  businessActivity   BusinessActivityLog[]
+  deletedAt          DateTime?
+  createdAt          DateTime               @default(now())
+  updatedAt          DateTime               @updatedAt
+
+  @@index([ownerId])
+  @@index([slug])
+  @@index([isActive])
+  @@index([isOpen])
+}
+
+model BusinessVerification {
+  id              String                    @id @default(uuid()) @db.Uuid
+  businessId      String                    @unique @db.Uuid
+  business        Business                  @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  status          BusinessVerificationStatus @default(Unverified)
+  documents       Json?
+  googlePlaceId   String?
+  googleConnected Boolean                   @default(false)
+  verifiedAt      DateTime?
+  verifiedBy      String?                   @db.Uuid
+  rejectionReason String?
+  metadata        Json?
+  createdAt       DateTime                  @default(now())
+  updatedAt       DateTime                  @updatedAt
+
+  @@index([status])
+}
+
+model BusinessClaim {
+  id          String   @id @default(uuid()) @db.Uuid
+  businessId  String   @db.Uuid
+  business    Business @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  claimerId   String   @db.Uuid
+  claimerName String
+  claimerEmail String
+  claimerPhone String?
+  status      String   @default("pending") // pending, approved, rejected
+  approvedAt  DateTime?
+  approvedBy  String?  @db.Uuid
+  metadata    Json?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([businessId])
+  @@index([claimerId])
+  @@index([status])
+}
+
+model BusinessStaff {
+  id          String       @id @default(uuid()) @db.Uuid
+  businessId  String       @db.Uuid
+  business    Business     @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  userId      String       @db.Uuid
+  user        User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  role        String       // Manager, Cashier, Editor, ViewOnly
+  permissions Json?        // Granular permissions override
+  isActive    Boolean      @default(true)
+  invitedAt   DateTime     @default(now())
+  joinedAt    DateTime?
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+
+  @@unique([businessId, userId])
+  @@index([businessId])
+  @@index([userId])
+}
+
+model BusinessMembership {
+  id            String                  @id @default(uuid()) @db.Uuid
+  businessId    String                  @unique @db.Uuid
+  business      Business                @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  tier          BusinessMembershipTier   @default(Free)
+  startedAt     DateTime                @default(now())
+  expiresAt     DateTime?
+  isAutoRenew   Boolean                 @default(true)
+  features      Json?
+  metadata      Json?
+  createdAt     DateTime                @default(now())
+  updatedAt     DateTime                @updatedAt
+
+  @@index([tier])
+}
+
+model BusinessLocation {
+  id            String     @id @default(uuid()) @db.Uuid
+  businessId    String     @db.Uuid
+  business      Business   @relation("BusinessLocationBusiness", fields: [businessId], references: [id], onDelete: Cascade)
+  highStreetId  String?    @db.Uuid
+  highStreet    HighStreet? @relation(fields: [highStreetId], references: [id], onDelete: SetNull)
+  name          String?
+  addressLine1  String
+  addressLine2  String?
+  city          String
+  postcode      String?
+  latitude      Float?
+  longitude     Float?
+  isPrimary     Boolean    @default(false)
+  isActive      Boolean    @default(true)
+  metadata      Json?
+  hours         BusinessHours[]
+  createdAt     DateTime   @default(now())
+  updatedAt     DateTime   @updatedAt
+  deletedAt     DateTime?
+
+  @@index([businessId])
+  @@index([highStreetId])
+  @@index([latitude, longitude])
+}
+
+model BusinessHours {
+  id                 String   @id @default(uuid()) @db.Uuid
+  businessId         String   @db.Uuid
+  business           Business @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  businessLocationId String?  @db.Uuid
+  businessLocation   BusinessLocation? @relation(fields: [businessLocationId], references: [id], onDelete: Cascade)
+  dayOfWeek          Int      // 0=Sunday, 1=Monday, ..., 6=Saturday
+  openTime           String   // HH:mm
+  closeTime          String   // HH:mm
+  isClosed           Boolean  @default(false)
+  is24Hours          Boolean  @default(false)
+  effectiveFrom      DateTime?
+  effectiveTo        DateTime?
+
+  @@unique([businessLocationId, dayOfWeek, effectiveFrom])
+  @@index([businessId])
+  @@index([businessLocationId])
+}
+
+model BusinessCategory {
+  id          String   @id @default(uuid()) @db.Uuid
+  name        String
+  slug        String   @unique
+  description String?
+  parentId    String?  @db.Uuid
+  parent      BusinessCategory? @relation("BusinessCategoryParent", fields: [parentId], references: [id], onDelete: SetNull)
+  children    BusinessCategory[] @relation("BusinessCategoryParent")
+  imageUrl    String?
+  sortOrder   Int      @default(0)
+  isActive    Boolean  @default(true)
+  businesses  BusinessCategoryAssignment[]
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([slug])
+  @@index([parentId])
+}
+
+model BusinessCategoryAssignment {
+  id         String           @id @default(uuid()) @db.Uuid
+  businessId String           @db.Uuid
+  business   Business         @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  categoryId String           @db.Uuid
+  category   BusinessCategory @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+  isPrimary  Boolean          @default(false)
+
+  @@unique([businessId, categoryId])
+  @@index([businessId])
+  @@index([categoryId])
+}
+
+model BusinessTag {
+  id         String   @id @default(uuid()) @db.Uuid
+  name       String
+  slug       String   @unique
+  isActive   Boolean  @default(true)
+  businesses TagAssignment[]
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  @@index([slug])
+}
+
+model TagAssignment {
+  id         String       @id @default(uuid()) @db.Uuid
+  businessId String       @db.Uuid
+  business   Business     @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  tagId      String       @db.Uuid
+  tag        BusinessTag  @relation(fields: [tagId], references: [id], onDelete: Cascade)
+
+  @@unique([businessId, tagId])
+  @@index([businessId])
+  @@index([tagId])
+}
+
+// ──────────────────────────────────────────────
+// STOREFRONT
+// ──────────────────────────────────────────────
+
+model Storefront {
+  id            String               @id @default(uuid()) @db.Uuid
+  businessId    String               @unique @db.Uuid
+  business      Business             @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  headline      String?
+  tagline       String?
+  welcomeMessage String?
+  isActive      Boolean              @default(true)
+  isFeatured    Boolean              @default(false)
+  theme         StorefrontTheme?
+  banners       StorefrontBanner[]
+  media         StorefrontMedia[]
+  products      Product[]
+  services      Service[]
+  createdAt     DateTime             @default(now())
+  updatedAt     DateTime             @updatedAt
+  deletedAt     DateTime?
+
+  @@index([isActive])
+  @@index([isFeatured])
+}
+
+model StorefrontTheme {
+  id          String              @id @default(uuid()) @db.Uuid
+  storefrontId String             @unique @db.Uuid
+  storefront  Storefront          @relation(fields: [storefrontId], references: [id], onDelete: Cascade)
+  themeType   StorefrontThemeType @default(Light)
+  primaryColor String?
+  secondaryColor String?
+  accentColor String?
+  fontFamily  String?
+  borderRadius Int?
+  customCss   String?
+  isActive    Boolean             @default(true)
+  createdAt   DateTime            @default(now())
+  updatedAt   DateTime            @updatedAt
+}
+
+model StorefrontBanner {
+  id          String   @id @default(uuid()) @db.Uuid
+  storefrontId String  @db.Uuid
+  storefront  Storefront @relation(fields: [storefrontId], references: [id], onDelete: Cascade)
+  imageUrl    String
+  linkUrl     String?
+  title       String?
+  subtitle    String?
+  sortOrder   Int      @default(0)
+  isActive    Boolean  @default(true)
+  startDate   DateTime?
+  endDate     DateTime?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([storefrontId])
+  @@index([isActive])
+}
+
+model StorefrontMedia {
+  id          String   @id @default(uuid()) @db.Uuid
+  storefrontId String  @db.Uuid
+  storefront  Storefront @relation(fields: [storefrontId], references: [id], onDelete: Cascade)
+  url         String
+  mediaType   String   // image, video
+  caption     String?
+  sortOrder   Int      @default(0)
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([storefrontId])
+}
+
+model Product {
+  id            String              @id @default(uuid()) @db.Uuid
+  storefrontId  String              @db.Uuid
+  storefront    Storefront          @relation(fields: [storefrontId], references: [id], onDelete: Cascade)
+  name          String
+  slug          String
+  description   String?
+  price         Decimal             @db.Decimal(10, 2)
+  compareAtPrice Decimal?           @db.Decimal(10, 2)
+  costPrice     Decimal?            @db.Decimal(10, 2)
+  currency      String              @default("GBP")
+  stock         Int                 @default(0)
+  lowStockThreshold Int             @default(5)
+  isTrackStock  Boolean             @default(true)
+  allowBackorder Boolean            @default(false)
+  status        String              @default("active") // active, draft, archived, discontinued
+  images        Json?
+  attributes    Json?
+  variants      Json?
+  metadata      Json?
+  promotions    ProductPromotion[]
+  rotatorItems  RotatorItem[]
+  createdAt     DateTime            @default(now())
+  updatedAt     DateTime            @updatedAt
+  deletedAt     DateTime?
+
+  @@unique([storefrontId, slug])
+  @@index([storefrontId])
+  @@index([status])
+  @@index([name])
+}
+
+model Service {
+  id                  String                 @id @default(uuid()) @db.Uuid
+  storefrontId        String                 @db.Uuid
+  storefront          Storefront             @relation(fields: [storefrontId], references: [id], onDelete: Cascade)
+  name                String
+  slug                String
+  description         String?
+  price               Decimal                @db.Decimal(10, 2)
+  currency            String                 @default("GBP")
+  durationMinutes     Int
+  isOnlineBooking     Boolean                @default(true)
+  maxBookingsPerSlot  Int                    @default(1)
+  bufferMinutes       Int                    @default(0)
+  status              String                 @default("active")
+  images              Json?
+  attributes          Json?
+  availability        ServiceAvailability[]
+  rotatorItems        RotatorItem[]
+  createdAt           DateTime               @default(now())
+  updatedAt           DateTime               @updatedAt
+  deletedAt           DateTime?
+
+  @@unique([storefrontId, slug])
+  @@index([storefrontId])
+  @@index([status])
+}
+
+model ServiceAvailability {
+  id        String   @id @default(uuid()) @db.Uuid
+  serviceId String   @db.Uuid
+  service   Service  @relation(fields: [serviceId], references: [id], onDelete: Cascade)
+  dayOfWeek Int      // 0-6
+  startTime String   // HH:mm
+  endTime   String   // HH:mm
+  capacity  Int      @default(1)
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([serviceId])
+}
+
+model ProductPromotion {
+  id          String    @id @default(uuid()) @db.Uuid
+  productId   String    @db.Uuid
+  product     Product   @relation(fields: [productId], references: [id], onDelete: Cascade)
+  promotionId String    @db.Uuid
+  promotion   Promotion @relation(fields: [promotionId], references: [id], onDelete: Cascade)
+  discountValue Decimal? @db.Decimal(10, 2)
+  discountType String?  // percentage, fixed
+
+  @@unique([productId, promotionId])
+  @@index([productId])
+  @@index([promotionId])
+}
+
+// ──────────────────────────────────────────────
+// CAMPAIGNS & PROMOTIONS
+// ──────────────────────────────────────────────
+
+model Campaign {
+  id            String            @id @default(uuid()) @db.Uuid
+  name          String
+  description   String?
+  type          CampaignType
+  status        CampaignStatus    @default(Draft)
+  startDate     DateTime
+  endDate       DateTime
+  budget        Decimal?          @db.Decimal(12, 2)
+  spentAmount   Decimal?          @default(0) @db.Decimal(12, 2)
+  maxBudget     Decimal?          @db.Decimal(12, 2)
+  imageUrl      String?
+  terms         String?
+  isPublic      Boolean           @default(true)
+  metadata      Json?
+  businesses    CampaignBusiness[]
+  rewards       CampaignReward[]
+  targets       CampaignTarget[]
+  promotions    Promotion[]
+  rotators      Rotator[]
+  gameCampaigns GameCampaign[]
+  qlinkCampaigns QLinkCampaign[]
+  sharedCampaigns SharedCampaign[]
+  createdAt     DateTime          @default(now())
+  updatedAt     DateTime          @updatedAt
+  deletedAt     DateTime?
+
+  @@index([type])
+  @@index([status])
+  @@index([startDate, endDate])
+}
+
+model CampaignBusiness {
+  id          String   @id @default(uuid()) @db.Uuid
+  campaignId  String   @db.Uuid
+  campaign    Campaign @relation(fields: [campaignId], references: [id], onDelete: Cascade)
+  businessId  String   @db.Uuid
+  business    Business @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  joinedAt    DateTime @default(now())
+  isActive    Boolean  @default(true)
+  metadata    Json?
+
+  @@unique([campaignId, businessId])
+  @@index([campaignId])
+  @@index([businessId])
+}
+
+model CampaignReward {
+  id          String   @id @default(uuid()) @db.Uuid
+  campaignId  String   @db.Uuid
+  campaign    Campaign @relation(fields: [campaignId], references: [id], onDelete: Cascade)
+  name        String
+  description String?
+  quantity    Int      @default(0)
+  remaining   Int      @default(0)
+  rewardType  RewardType
+  rewardValue Decimal  @db.Decimal(10, 2)
+  metadata    Json?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([campaignId])
+}
+
+model CampaignTarget {
+  id          String   @id @default(uuid()) @db.Uuid
+  campaignId  String   @db.Uuid
+  campaign    Campaign @relation(fields: [campaignId], references: [id], onDelete: Cascade)
+  boroughId   String?  @db.Uuid
+  borough     Borough? @relation(fields: [boroughId], references: [id], onDelete: SetNull)
+  segment     String?  // customer segment
+  minVisits   Int?
+  maxVisits   Int?
+  minSpend    Decimal? @db.Decimal(10, 2)
+  maxSpend    Decimal? @db.Decimal(10, 2)
+  metadata    Json?
+
+  @@index([campaignId])
+  @@index([boroughId])
+}
+
+model Promotion {
+  id            String              @id @default(uuid()) @db.Uuid
+  campaignId    String?             @db.Uuid
+  campaign      Campaign?           @relation(fields: [campaignId], references: [id], onDelete: Cascade)
+  businessId    String              @db.Uuid
+  business      Business            @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  name          String
+  description   String?
+  type          PromotionType
+  status        PromotionStatus     @default(Draft)
+  discountValue Decimal?            @db.Decimal(10, 2)
+  discountType  String?             // percentage, fixed
+  minPurchase   Decimal?            @db.Decimal(10, 2)
+  maxDiscount   Decimal?            @db.Decimal(10, 2)
+  usageLimit    Int?                @default(0)
+  usageCount    Int                 @default(0)
+  perCustomerLimit Int?             @default(1)
+  startDate     DateTime
+  endDate       DateTime
+  imageUrl      String?
+  terms         String?
+  isFeatured    Boolean             @default(false)
+  isBorough     Boolean             @default(false)
+  isRotator     Boolean             @default(false)
+  isQr          Boolean             @default(false)
+  isReward      Boolean             @default(false)
+  audience      Json?
+  metadata      Json?
+  products      ProductPromotion[]
+  redemptions   PromotionRedemption[]
+  rotators      RotatorItem[]
+  createdAt     DateTime            @default(now())
+  updatedAt     DateTime            @updatedAt
+  deletedAt     DateTime?
+
+  @@index([campaignId])
+  @@index([businessId])
+  @@index([type])
+  @@index([status])
+  @@index([startDate, endDate])
+}
+
+model PromotionRedemption {
+  id          String   @id @default(uuid()) @db.Uuid
+  promotionId String   @db.Uuid
+  promotion   Promotion @relation(fields: [promotionId], references: [id], onDelete: Cascade)
+  customerId  String   @db.Uuid
+  redeemedAt  DateTime @default(now())
+  orderRef    String?
+  discountApplied Decimal? @db.Decimal(10, 2)
+  metadata    Json?
+
+  @@index([promotionId])
+  @@index([customerId])
+}
+
+model Rotator {
+  id          String   @id @default(uuid()) @db.Uuid
+  campaignId  String   @db.Uuid
+  campaign    Campaign @relation(fields: [campaignId], references: [id], onDelete: Cascade)
+  name        String
+  type        String   // product, promo, event, service
+  displayOrder Int     @default(0)
+  isActive    Boolean  @default(true)
+  metadata    Json?
+  items       RotatorItem[]
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([campaignId])
+  @@index([isActive])
+}
+
+model RotatorItem {
+  id          String    @id @default(uuid()) @db.Uuid
+  rotatorId   String    @db.Uuid
+  rotator     Rotator   @relation(fields: [rotatorId], references: [id], onDelete: Cascade)
+  productId   String?   @db.Uuid
+  product     Product?  @relation(fields: [productId], references: [id], onDelete: SetNull)
+  serviceId   String?   @db.Uuid
+  service     Service?  @relation(fields: [serviceId], references: [id], onDelete: SetNull)
+  promotionId String?   @db.Uuid
+  promotion   Promotion? @relation(fields: [promotionId], references: [id], onDelete: SetNull)
+  sortOrder   Int       @default(0)
+  isActive    Boolean   @default(true)
+  metadata    Json?
+
+  @@index([rotatorId])
+  @@index([productId])
+  @@index([serviceId])
+  @@index([promotionId])
+}
+
+// ──────────────────────────────────────────────
+// GAMIFICATION
+// ──────────────────────────────────────────────
+
+model Game {
+  id          String       @id @default(uuid()) @db.Uuid
+  name        String
+  slug        String       @unique
+  type        GameType
+  description String?
+  rules       Json?
+  minPlayers  Int          @default(1)
+  maxPlayers  Int          @default(1)
+  isActive    Boolean      @default(true)
+  imageUrl    String?
+  metadata    Json?
+  sessions    GameSession[]
+  configs     GameConfig[]
+  campaigns   GameCampaign[]
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+  deletedAt   DateTime?
+
+  @@index([slug])
+  @@index([type])
+}
+
+model GameSession {
+  id        String   @id @default(uuid()) @db.Uuid
+  gameId    String   @db.Uuid
+  game      Game     @relation(fields: [gameId], references: [id], onDelete: Cascade)
+  configId  String?  @db.Uuid
+  config    GameConfig? @relation(fields: [configId], references: [id], onDelete: SetNull)
+  customerId String  @db.Uuid
+  customer  User     @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  score     Int?
+  result    Json?
+  isWin     Boolean  @default(false)
+  rewardId  String?  @db.Uuid
+  reward    Reward?  @relation(fields: [rewardId], references: [id], onDelete: SetNull)
+  startedAt DateTime @default(now())
+  endedAt   DateTime?
+  metadata  Json?
+  createdAt DateTime @default(now())
+
+  @@index([gameId])
+  @@index([customerId])
+  @@index([configId])
+  @@index([isWin])
+}
+
+model GameConfig {
+  id          String       @id @default(uuid()) @db.Uuid
+  gameId      String       @db.Uuid
+  game        Game         @relation(fields: [gameId], references: [id], onDelete: Cascade)
+  businessId  String       @db.Uuid
+  business    Business     @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  name        String?
+  config      Json         // physics, boxes, shuffle, prizes per slot
+  isActive    Boolean      @default(true)
+  sessions    GameSession[]
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+
+  @@index([gameId])
+  @@index([businessId])
+}
+
+model GameCampaign {
+  id          String   @id @default(uuid()) @db.Uuid
+  gameId      String   @db.Uuid
+  game        Game     @relation(fields: [gameId], references: [id], onDelete: Cascade)
+  campaignId  String   @db.Uuid
+  campaign    Campaign @relation(fields: [campaignId], references: [id], onDelete: Cascade)
+  entryFee    Decimal? @db.Decimal(10, 2)
+  maxPlaysPerCustomer Int? @default(1)
+  startsAt    DateTime?
+  endsAt      DateTime?
+  isActive    Boolean  @default(true)
+  metadata    Json?
+
+  @@unique([gameId, campaignId])
+  @@index([gameId])
+  @@index([campaignId])
+}
+
+// ──────────────────────────────────────────────
+// REWARDS & LOYALTY
+// ──────────────────────────────────────────────
+
+model Reward {
+  id          String             @id @default(uuid()) @db.Uuid
+  name        String
+  description String?
+  type        RewardType
+  value       Decimal            @db.Decimal(10, 2)
+  currency    String             @default("GBP")
+  imageUrl    String?
+  isActive    Boolean            @default(true)
+  metadata    Json?
+  inventories RewardInventory[]
+  redemptions RewardRedemption[]
+  customerRewards CustomerReward[]
+  vouchers    Voucher[]
+  activationRewards ActivationReward[]
+  sessions    GameSession[]
+  createdAt   DateTime           @default(now())
+  updatedAt   DateTime           @updatedAt
+  deletedAt   DateTime?
+
+  @@index([type])
+  @@index([isActive])
+}
+
+model RewardInventory {
+  id          String   @id @default(uuid()) @db.Uuid
+  businessId  String   @db.Uuid
+  business    Business @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  rewardId    String   @db.Uuid
+  reward      Reward   @relation(fields: [rewardId], references: [id], onDelete: Cascade)
+  totalStock  Int      @default(0)
+  usedStock   Int      @default(0)
+  lowStockThreshold Int @default(5)
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@unique([businessId, rewardId])
+  @@index([businessId])
+  @@index([rewardId])
+}
+
+model RewardRedemption {
+  id          String   @id @default(uuid()) @db.Uuid
+  rewardId    String   @db.Uuid
+  reward      Reward   @relation(fields: [rewardId], references: [id], onDelete: Cascade)
+  customerId  String   @db.Uuid
+  businessId  String   @db.Uuid
+  pointsSpent Int?
+  redeemedAt  DateTime @default(now())
+  metadata    Json?
+
+  @@index([rewardId])
+  @@index([customerId])
+  @@index([businessId])
+}
+
+model CustomerReward {
+  id          String   @id @default(uuid()) @db.Uuid
+  customerId  String   @db.Uuid
+  customer    User     @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  rewardId    String   @db.Uuid
+  reward      Reward   @relation(fields: [rewardId], references: [id], onDelete: Cascade)
+  earnedAt    DateTime @default(now())
+  expiresAt   DateTime?
+  usedAt      DateTime?
+  metadata    Json?
+
+  @@index([customerId])
+  @@index([rewardId])
+}
+
+model LoyaltyProgram {
+  id          String               @id @default(uuid()) @db.Uuid
+  businessId  String               @unique @db.Uuid
+  business    Business             @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  name        String               @default("Loyalty Program")
+  isActive    Boolean              @default(true)
+  pointsPerCurrency Decimal         @default(1) @db.Decimal(10, 2)
+  currencyPerPoints Decimal?        @db.Decimal(10, 2)
+  metadata     Json?
+  memberships  LoyaltyMembership[]
+  tiers        LoyaltyTier[]
+  createdAt    DateTime             @default(now())
+  updatedAt    DateTime             @updatedAt
+
+  @@index([businessId])
+}
+
+model LoyaltyMembership {
+  id               String          @id @default(uuid()) @db.Uuid
+  loyaltyProgramId String          @db.Uuid
+  loyaltyProgram   LoyaltyProgram  @relation(fields: [loyaltyProgramId], references: [id], onDelete: Cascade)
+  customerId       String          @db.Uuid
+  tierId           String?         @db.Uuid
+  tier             LoyaltyTier?    @relation(fields: [tierId], references: [id], onDelete: SetNull)
+  points           Int             @default(0)
+  lifetimePoints   Int             @default(0)
+  visitCount       Int             @default(0)
+  totalSpent       Decimal         @default(0) @db.Decimal(12, 2)
+  joinedAt         DateTime        @default(now())
+  expiresAt        DateTime?
+  metadata         Json?
+  transactions     PointsTransaction[]
+
+  @@unique([loyaltyProgramId, customerId])
+  @@index([loyaltyProgramId])
+  @@index([customerId])
+  @@index([tierId])
+}
+
+model LoyaltyTier {
+  id               String             @id @default(uuid()) @db.Uuid
+  loyaltyProgramId String             @db.Uuid
+  loyaltyProgram   LoyaltyProgram     @relation(fields: [loyaltyProgramId], references: [id], onDelete: Cascade)
+  name             String
+  level            Int                @default(1)
+  minPoints        Int                @default(0)
+  maxPoints        Int?
+  multiplier       Decimal            @default(1) @db.Decimal(10, 2)
+  benefits         Json?
+  isActive         Boolean            @default(true)
+  members          LoyaltyMembership[]
+  createdAt        DateTime           @default(now())
+  updatedAt        DateTime           @updatedAt
+
+  @@unique([loyaltyProgramId, level])
+  @@index([loyaltyProgramId])
+}
+
+model PointsTransaction {
+  id                  String            @id @default(uuid()) @db.Uuid
+  loyaltyMembershipId String            @db.Uuid
+  loyaltyMembership   LoyaltyMembership @relation(fields: [loyaltyMembershipId], references: [id], onDelete: Cascade)
+  points              Int               // positive = earned, negative = spent
+  type                String            // earned, spent, expired, adjusted, bonus
+  description         String?
+  referenceId         String?           // order, redemption, game session
+  referenceType       String?           // purchase, redemption, game, bonus
+  metadata            Json?
+  createdAt           DateTime          @default(now())
+
+  @@index([loyaltyMembershipId])
+  @@index([type])
+  @@index([createdAt])
+}
+
+model Voucher {
+  id            String        @id @default(uuid()) @db.Uuid
+  code          String        @unique
+  businessId    String        @db.Uuid
+  business      Business      @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  rewardId      String?       @db.Uuid
+  reward        Reward?       @relation(fields: [rewardId], references: [id], onDelete: SetNull)
+  customerId    String?       @db.Uuid
+  value         Decimal       @db.Decimal(10, 2)
+  currency      String        @default("GBP")
+  discountType  String?       // percentage, fixed
+  discountValue Decimal?      @db.Decimal(10, 2)
+  minPurchase   Decimal?      @db.Decimal(10, 2)
+  status        VoucherStatus @default(Active)
+  issuedAt      DateTime      @default(now())
+  redeemedAt    DateTime?
+  expiresAt     DateTime?
+  metadata      Json?
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+
+  @@index([code])
+  @@index([businessId])
+  @@index([customerId])
+  @@index([status])
+}
+
+// ──────────────────────────────────────────────
+// QLINKS & QR
+// ──────────────────────────────────────────────
+
+model QLink {
+  id          String       @id @default(uuid()) @db.Uuid
+  businessId  String       @db.Uuid
+  business    Business     @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  type        QLinkType
+  code        String       @unique
+  label       String?
+  targetId    String?      // polymorphic reference
+  targetUrl   String?
+  isActive    Boolean      @default(true)
+  maxScans    Int?
+  scanCount   Int          @default(0)
+  startsAt    DateTime?
+  endsAt      DateTime?
+  metadata    Json?
+  scans       QLinkScan[]
+  campaigns   QLinkCampaign[]
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+  deletedAt   DateTime?
+
+  @@index([businessId])
+  @@index([code])
+  @@index([type])
+}
+
+model QLinkScan {
+  id        String   @id @default(uuid()) @db.Uuid
+  qlinkId   String   @db.Uuid
+  qlink     QLink    @relation(fields: [qlinkId], references: [id], onDelete: Cascade)
+  customerId String? @db.Uuid
+  latitude  Float?
+  longitude Float?
+  ipAddress String?
+  userAgent String?
+  metadata  Json?
+  scannedAt DateTime @default(now())
+
+  @@index([qlinkId])
+  @@index([customerId])
+}
+
+model QLinkCampaign {
+  id          String   @id @default(uuid()) @db.Uuid
+  qlinkId     String   @db.Uuid
+  qlink       QLink    @relation(fields: [qlinkId], references: [id], onDelete: Cascade)
+  campaignId  String   @db.Uuid
+  campaign    Campaign @relation(fields: [campaignId], references: [id], onDelete: Cascade)
+
+  @@unique([qlinkId, campaignId])
+  @@index([qlinkId])
+  @@index([campaignId])
+}
+
+// ──────────────────────────────────────────────
+// EVENTS & EXPO
+// ──────────────────────────────────────────────
+
+model Event {
+  id            String             @id @default(uuid()) @db.Uuid
+  name          String
+  slug          String             @unique
+  description   String?
+  type          EventType
+  status        EventStatus        @default(Draft)
+  startDate     DateTime
+  endDate       DateTime
+  isFree        Boolean            @default(true)
+  ticketPrice   Decimal?           @db.Decimal(10, 2)
+  currency      String             @default("GBP")
+  capacity      Int?
+  registeredCount Int              @default(0)
+  imageUrl      String?
+  organizerId   String?            @db.Uuid
+  organizerType String?            // business, borough
+  registrationType String?         // free, paid, points, invite_only, qr
+  promotionSettings Json?
+  metadata      Json?
+  location      Location?
+  registrations EventRegistration[]
+  checkIns      EventCheckIn[]
+  expos         Expo[]
+  createdAt     DateTime           @default(now())
+  updatedAt     DateTime           @updatedAt
+  deletedAt     DateTime?
+
+  @@index([slug])
+  @@index([type])
+  @@index([status])
+  @@index([startDate, endDate])
+}
+
+model EventRegistration {
+  id         String   @id @default(uuid()) @db.Uuid
+  eventId    String   @db.Uuid
+  event      Event    @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  customerId String   @db.Uuid
+  customer   User     @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  status     String   @default("confirmed") // confirmed, cancelled, attended, no-show
+  ticketRef  String?  @unique
+  metadata   Json?
+  registeredAt DateTime @default(now())
+  cancelledAt DateTime?
+  checkIn    EventCheckIn?
+
+  @@unique([eventId, customerId])
+  @@index([eventId])
+  @@index([customerId])
+  @@index([status])
+}
+
+model EventCheckIn {
+  id               String             @id @default(uuid()) @db.Uuid
+  eventId          String             @db.Uuid
+  event            Event              @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  registrationId   String?            @unique @db.Uuid
+  registration     EventRegistration? @relation(fields: [registrationId], references: [id], onDelete: SetNull)
+  customerId       String?            @db.Uuid
+  qrCode           String?
+  checkedInAt      DateTime           @default(now())
+  metadata         Json?
+
+  @@index([eventId])
+  @@index([customerId])
+}
+
+model Expo {
+  id            String             @id @default(uuid()) @db.Uuid
+  eventId       String             @db.Uuid
+  event         Event              @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  name          String
+  description   String?
+  boothsAvailable Int              @default(0)
+  booths        ExpoBooth[]
+  createdAt     DateTime           @default(now())
+  updatedAt     DateTime           @updatedAt
+
+  @@index([eventId])
+}
+
+model ExpoBooth {
+  id              String            @id @default(uuid()) @db.Uuid
+  expoId          String            @db.Uuid
+  expo            Expo              @relation(fields: [expoId], references: [id], onDelete: Cascade)
+  name            String
+  description     String?
+  boothNumber     String?
+  price           Decimal?          @db.Decimal(10, 2)
+  isBooked        Boolean           @default(false)
+  businessId      String?           @db.Uuid
+  business        Business?         @relation(fields: [businessId], references: [id], onDelete: SetNull)
+  metadata        Json?
+  participation   ExpoParticipation?
+  createdAt       DateTime          @default(now())
+  updatedAt       DateTime          @updatedAt
+
+  @@index([expoId])
+  @@index([businessId])
+}
+
+model ExpoParticipation {
+  id              String    @id @default(uuid()) @db.Uuid
+  expoBoothId     String    @unique @db.Uuid
+  expoBooth       ExpoBooth @relation(fields: [expoBoothId], references: [id], onDelete: Cascade)
+  businessId      String    @db.Uuid
+  business        Business  @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  status          String    @default("confirmed") // confirmed, pending, cancelled, completed
+  customizations  Json?
+  joinedAt        DateTime  @default(now())
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  @@index([businessId])
+}
+
+// ──────────────────────────────────────────────
+// PARTNERSHIPS & SHARE EXCHANGE
+// ──────────────────────────────────────────────
+
+model Partnership {
+  id              String              @id @default(uuid()) @db.Uuid
+  initiatorId     String              @db.Uuid
+  initiator       Business            @relation("PartnershipInitiator", fields: [initiatorId], references: [id], onDelete: Cascade)
+  partnerId       String              @db.Uuid
+  partner         Business            @relation("PartnershipPartner", fields: [partnerId], references: [id], onDelete: Cascade)
+  status          PartnershipStatus   @default(Pending)
+  partnershipType String              // cross-promotion, referral, co-branding
+  terms           Json?
+  startedAt       DateTime?
+  endedAt         DateTime?
+  metadata        Json?
+  sharedCampaigns SharedCampaign[]
+  sharedAudiences SharedAudience[]
+  createdAt       DateTime            @default(now())
+  updatedAt       DateTime            @updatedAt
+  deletedAt       DateTime?
+
+  @@unique([initiatorId, partnerId])
+  @@index([initiatorId])
+  @@index([partnerId])
+  @@index([status])
+}
+
+model PartnershipRequest {
+  id              String              @id @default(uuid()) @db.Uuid
+  targetId        String              @db.Uuid
+  target          Business            @relation("PartnershipRequestTarget", fields: [targetId], references: [id], onDelete: Cascade)
+  requesterId     String              @db.Uuid
+  requesterName   String
+  requesterEmail  String
+  partnershipType String?
+  message         String?
+  status          String              @default("pending") // pending, accepted, declined
+  respondedAt     DateTime?
+  createdAt       DateTime            @default(now())
+  updatedAt       DateTime            @updatedAt
+
+  @@index([targetId])
+  @@index([requesterId])
+  @@index([status])
+}
+
+model SharedCampaign {
+  id             String     @id @default(uuid()) @db.Uuid
+  campaignId     String     @db.Uuid
+  campaign       Campaign   @relation(fields: [campaignId], references: [id], onDelete: Cascade)
+  partnershipId  String     @db.Uuid
+  partnership    Partnership @relation(fields: [partnershipId], references: [id], onDelete: Cascade)
+  contribution   Json?      // cost/reward sharing rules
+  createdAt      DateTime   @default(now())
+
+  @@unique([campaignId, partnershipId])
+  @@index([campaignId])
+  @@index([partnershipId])
+}
+
+model SharedAudience {
+  id             String     @id @default(uuid()) @db.Uuid
+  partnershipId  String     @db.Uuid
+  partnership    Partnership @relation(fields: [partnershipId], references: [id], onDelete: Cascade)
+  segment        String?    // audience segment name
+  customerIds    Json?      // list of customer IDs (anonymized)
+  metadata       Json?
+  createdAt      DateTime   @default(now())
+
+  @@index([partnershipId])
+}
+
+// ──────────────────────────────────────────────
+// COMMUNITY & ACTIVATION
+// ──────────────────────────────────────────────
+
+model CommunityGroup {
+  id            String          @id @default(uuid()) @db.Uuid
+  name          String
+  slug          String          @unique
+  description   String?
+  type          CommunityGroupType
+  boroughId     String?         @db.Uuid
+  borough       Borough?        @relation(fields: [boroughId], references: [id], onDelete: SetNull)
+  highStreetId  String?         @db.Uuid
+  highStreet    HighStreet?     @relation(fields: [highStreetId], references: [id], onDelete: SetNull)
+  imageUrl      String?
+  isActive      Boolean         @default(true)
+  membersCount  Int             @default(0)
+  metadata      Json?
+  posts         CommunityPost[]
+  activities    CommunityActivity[]
+  createdAt     DateTime        @default(now())
+  updatedAt     DateTime        @updatedAt
+  deletedAt     DateTime?
+
+  @@index([slug])
+  @@index([boroughId])
+  @@index([highStreetId])
+  @@index([type])
+}
+
+model CommunityPost {
+  id              String          @id @default(uuid()) @db.Uuid
+  groupId         String          @db.Uuid
+  group           CommunityGroup  @relation(fields: [groupId], references: [id], onDelete: Cascade)
+  authorId        String          @db.Uuid
+  author          User            @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  businessId      String?         @db.Uuid
+  business        Business?       @relation(fields: [businessId], references: [id], onDelete: SetNull)
+  content         String
+  mediaUrls       Json?
+  tags            String[]
+  isPinned        Boolean         @default(false)
+  isActive        Boolean         @default(true)
+  likesCount      Int             @default(0)
+  commentsCount   Int             @default(0)
+  sharesCount     Int             @default(0)
+  metadata        Json?
+  createdAt       DateTime        @default(now())
+  updatedAt       DateTime        @updatedAt
+  deletedAt       DateTime?
+
+  @@index([groupId])
+  @@index([authorId])
+  @@index([businessId])
+  @@index([createdAt])
+}
+
+model CommunityActivity {
+  id        String   @id @default(uuid()) @db.Uuid
+  groupId   String   @db.Uuid
+  group     CommunityGroup @relation(fields: [groupId], references: [id], onDelete: Cascade)
+  userId    String   @db.Uuid
+  type      String   // post, comment, like, share, join
+  metadata  Json?
+  createdAt DateTime @default(now())
+
+  @@index([groupId])
+  @@index([userId])
+  @@index([createdAt])
+}
+
+model BusinessActivation {
+  id          String       @id @default(uuid()) @db.Uuid
+  businessId  String       @db.Uuid
+  business    Business     @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  customerId  String       @db.Uuid
+  status      String       @default("pending") // pending, approved, rejected
+  message     String?
+  rewardAwarded Boolean    @default(false)
+  metadata    Json?
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+
+  @@unique([businessId, customerId])
+  @@index([businessId])
+  @@index([customerId])
+  @@index([status])
+}
+
+model ActivationReward {
+  id          String   @id @default(uuid()) @db.Uuid
+  businessId  String   @db.Uuid
+  rewardId    String   @db.Uuid
+  reward      Reward   @relation(fields: [rewardId], references: [id], onDelete: Cascade)
+  points      Int      @default(0)
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([businessId])
+  @@index([rewardId])
+}
+
+model InterestSignal {
+  id          String   @id @default(uuid()) @db.Uuid
+  businessId  String   @db.Uuid
+  business    Business @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  customerId  String   @db.Uuid
+  signalType  String   // view, follow, favourite, share, recommend
+  metadata    Json?
+  createdAt   DateTime @default(now())
+
+  @@index([businessId])
+  @@index([customerId])
+  @@index([signalType])
+}
+
+// ──────────────────────────────────────────────
+// NOTIFICATIONS & COMMUNICATION
+// ──────────────────────────────────────────────
+
+model Notification {
+  id          String             @id @default(uuid()) @db.Uuid
+  userId      String             @db.Uuid
+  user        User               @relation(fields: [userId], references: [id], onDelete: Cascade)
+  type        NotificationType
+  channel     NotificationChannel @default(InApp)
+  title       String
+  body        String
+  data        Json?
+  isRead      Boolean            @default(false)
+  readAt      DateTime?
+  isSent      Boolean            @default(false)
+  sentAt      DateTime?
+  templateId  String?            @db.Uuid
+  template    NotificationTemplate? @relation(fields: [templateId], references: [id], onDelete: SetNull)
+  createdAt   DateTime           @default(now())
+
+  @@index([userId])
+  @@index([type])
+  @@index([isRead])
+  @@index([createdAt])
+}
+
+model NotificationTemplate {
+  id        String             @id @default(uuid()) @db.Uuid
+  name      String             @unique
+  type      NotificationType
+  channel   NotificationChannel
+  subject   String?
+  title     String?
+  body      String
+  variables Json?
+  isActive  Boolean            @default(true)
+  notifications Notification[]
+  createdAt DateTime           @default(now())
+  updatedAt DateTime           @updatedAt
+
+  @@index([name])
+}
+
+model NotificationPreference {
+  id      String             @id @default(uuid()) @db.Uuid
+  userId  String             @db.Uuid
+  user    User               @relation(fields: [userId], references: [id], onDelete: Cascade)
+  channel NotificationChannel
+  type    NotificationType
+  enabled Boolean            @default(true)
+
+  @@unique([userId, channel, type])
+  @@index([userId])
+}
+
+model Message {
+  id         String   @id @default(uuid()) @db.Uuid
+  threadId   String   @db.Uuid
+  thread     MessageThread @relation(fields: [threadId], references: [id], onDelete: Cascade)
+  senderId   String   @db.Uuid
+  sender     User     @relation(fields: [senderId], references: [id], onDelete: Cascade)
+  content    String
+  mediaUrls  Json?
+  isRead     Boolean  @default(false)
+  readAt     DateTime?
+  createdAt  DateTime @default(now())
+
+  @@index([threadId])
+  @@index([senderId])
+}
+
+model MessageThread {
+  id          String    @id @default(uuid()) @db.Uuid
+  subject     String?
+  participants User[]   @relation("MessageThreadParticipants")
+  messages    Message[]
+  isActive    Boolean   @default(true)
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+}
+
+// ──────────────────────────────────────────────
+// AUDITS & VISIBILITY
+// ──────────────────────────────────────────────
+
+model Audit {
+  id              String               @id @default(uuid()) @db.Uuid
+  businessId      String               @db.Uuid
+  business        Business             @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  type            AuditType
+  status          String               @default("pending") // pending, in_progress, completed
+  score           Int?
+  maxScore        Int?
+  summary         String?
+  findings        Json?
+  recommendations AuditRecommendation[]
+  conductedBy     String?              @db.Uuid
+  conductedAt     DateTime?
+  completedAt     DateTime?
+  metadata        Json?
+  createdAt       DateTime             @default(now())
+  updatedAt       DateTime             @updatedAt
+
+  @@index([businessId])
+  @@index([type])
+  @@index([status])
+}
+
+model AuditRecommendation {
+  id          String   @id @default(uuid()) @db.Uuid
+  auditId     String   @db.Uuid
+  audit       Audit    @relation(fields: [auditId], references: [id], onDelete: Cascade)
+  businessId  String   @db.Uuid
+  business    Business @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  title       String
+  description String?
+  priority    String   // low, medium, high, critical
+  category    String?
+  isResolved  Boolean  @default(false)
+  resolvedAt  DateTime?
+  metadata    Json?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([auditId])
+  @@index([businessId])
+  @@index([priority])
+}
+
+model VisibilityScore {
+  id          String   @id @default(uuid()) @db.Uuid
+  businessId  String   @unique @db.Uuid
+  business    Business @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  overall     Int      @default(0)
+  search      Int      @default(0)
+  social      Int      @default(0)
+  directory   Int      @default(0)
+  reviews     Int      @default(0)
+  engagement  Int      @default(0)
+  metadata    Json?
+  calculatedAt DateTime @default(now())
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([overall])
+  @@index([businessId])
+}
+
+model VisibilityBoost {
+  id          String   @id @default(uuid()) @db.Uuid
+  businessId  String   @db.Uuid
+  business    Business @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  type        String   // featured, promoted, sponsored
+  startsAt    DateTime
+  endsAt      DateTime
+  budget      Decimal? @db.Decimal(12, 2)
+  spentAmount Decimal? @default(0) @db.Decimal(12, 2)
+  isActive    Boolean  @default(true)
+  metadata    Json?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([businessId])
+  @@index([isActive])
+}
+
+model StorefrontScore {
+  id          String   @id @default(uuid()) @db.Uuid
+  businessId  String   @unique @db.Uuid
+  business    Business @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  completion  Int      @default(0)  // percentage
+  quality     Int      @default(0)
+  freshness   Int      @default(0)
+  total       Int      @default(0)
+  breakdown   Json?
+  calculatedAt DateTime @default(now())
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([businessId])
+}
+
+// ──────────────────────────────────────────────
+// AUTOMATION
+// ──────────────────────────────────────────────
+
+model AutomationRule {
+  id          String               @id @default(uuid()) @db.Uuid
+  businessId  String               @db.Uuid
+  business    Business             @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  name        String
+  description String?
+  isActive    Boolean              @default(true)
+  triggers    AutomationTrigger[]
+  actions     AutomationAction[]
+  logs        AutomationLog[]
+  createdAt   DateTime             @default(now())
+  updatedAt   DateTime             @updatedAt
+  deletedAt   DateTime?
+
+  @@index([businessId])
+  @@index([isActive])
+}
+
+model AutomationTrigger {
+  id        String               @id @default(uuid()) @db.Uuid
+  ruleId    String               @db.Uuid
+  rule      AutomationRule       @relation(fields: [ruleId], references: [id], onDelete: Cascade)
+  type      AutomationTriggerType
+  config    Json                 // trigger configuration (schedule, event name, conditions)
+  isActive  Boolean              @default(true)
+  logs      AutomationLog[]
+
+  @@index([ruleId])
+}
+
+model AutomationAction {
+  id        String              @id @default(uuid()) @db.Uuid
+  ruleId    String              @db.Uuid
+  rule      AutomationRule      @relation(fields: [ruleId], references: [id], onDelete: Cascade)
+  type      AutomationActionType
+  config    Json                // action configuration (template, recipient, webhook URL)
+  sortOrder Int                 @default(0)
+
+  @@index([ruleId])
+}
+
+model AutomationLog {
+  id        String         @id @default(uuid()) @db.Uuid
+  ruleId    String         @db.Uuid
+  rule      AutomationRule @relation(fields: [ruleId], references: [id], onDelete: Cascade)
+  triggerId String?        @db.Uuid
+  trigger   AutomationTrigger? @relation(fields: [triggerId], references: [id], onDelete: SetNull)
+  status    String         // success, failed, skipped
+  result    Json?
+  error     String?
+  executedAt DateTime      @default(now())
+
+  @@index([ruleId])
+  @@index([status])
+  @@index([executedAt])
+}
+
+// ──────────────────────────────────────────────
+// MODERATION & COMPLIANCE
+// ──────────────────────────────────────────────
+
+model AbuseReport {
+  id              String              @id @default(uuid()) @db.Uuid
+  reporterId      String              @db.Uuid
+  reporter        User                @relation("AbuseReportReporter", fields: [reporterId], references: [id], onDelete: Cascade)
+  targetType      String              // user, business, product, post, message
+  targetId        String
+  reason          String
+  description     String?
+  status          AbuseReportStatus   @default(Open)
+  moderatorId     String?             @db.Uuid
+  moderator       User?               @relation("AbuseReportModerator", fields: [moderatorId], references: [id], onDelete: SetNull)
+  actionTaken     ModerationAction?
+  resolvedAt      DateTime?
+  metadata        Json?
+  createdAt       DateTime            @default(now())
+  updatedAt       DateTime            @updatedAt
+
+  @@index([reporterId])
+  @@index([targetType])
+  @@index([status])
+  @@index([moderatorId])
+}
+
+model ModerationAction {
+  id          String               @id @default(uuid()) @db.Uuid
+  reportId    String?              @unique @db.Uuid
+  report      AbuseReport?         @relation(fields: [reportId], references: [id], onDelete: SetNull)
+  targetType  String
+  targetId    String
+  actionType  ModerationActionType
+  reason      String
+  performedBy String               @db.Uuid
+  performer   User                 @relation(fields: [performedBy], references: [id], onDelete: Cascade)
+  duration    Int?                 // days for temporary actions
+  metadata    Json?
+  createdAt   DateTime             @default(now())
+
+  @@index([targetType])
+  @@index([performedBy])
+}
+
+model ModerationRule {
+  id           String   @id @default(uuid()) @db.Uuid
+  name         String   @unique
+  description  String?
+  resource     String   // post, product, review, message
+  conditions   Json     // matching conditions
+  action       ModerationActionType
+  isActive     Boolean  @default(true)
+  priority     Int      @default(0)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  @@index([resource])
+  @@index([isActive])
+}
+
+model FraudAlert {
+  id          String   @id @default(uuid()) @db.Uuid
+  entityType  String   // user, business, transaction, redemption
+  entityId    String
+  alertType   String   // unusual_activity, velocity_check, geolocation_mismatch
+  severity    String   // low, medium, high, critical
+  description String?
+  details     Json?
+  isResolved  Boolean  @default(false)
+  resolvedBy  String?  @db.Uuid
+  resolvedAt  DateTime?
+  metadata    Json?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([entityType])
+  @@index([alertType])
+  @@index([severity])
+  @@index([isResolved])
+}
+
+// ──────────────────────────────────────────────
+// BILLING & FINANCIAL
+// ──────────────────────────────────────────────
+
+model Subscription {
+  id             String               @id @default(uuid()) @db.Uuid
+  businessId     String               @db.Uuid
+  business       Business             @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  planType       SubscriptionPlanType @default(Free)
+  status         String               @default("active") // active, past_due, cancelled, expired
+  startedAt      DateTime             @default(now())
+  currentPeriodStart DateTime          @default(now())
+  currentPeriodEnd DateTime
+  cancelledAt    DateTime?
+  metadata       Json?
+  invoices       Invoice[]
+  createdAt      DateTime             @default(now())
+  updatedAt      DateTime             @updatedAt
+
+  @@index([businessId])
+  @@index([planType])
+  @@index([status])
+  @@index([currentPeriodEnd])
+}
+
+model SubscriptionPlan {
+  id            String               @id @default(uuid()) @db.Uuid
+  name          String               @unique
+  planType      SubscriptionPlanType @unique
+  description   String?
+  price         Decimal              @db.Decimal(10, 2)
+  currency      String               @default("GBP")
+  interval      String               @default("month") // month, year
+  features      Json?
+  maxStaff      Int                  @default(0)
+  maxLocations  Int                  @default(1)
+  maxProducts   Int                  @default(0)
+  maxCampaigns  Int                  @default(0)
+  isActive      Boolean              @default(true)
+  sortOrder     Int                  @default(0)
+  createdAt     DateTime             @default(now())
+  updatedAt     DateTime             @updatedAt
+}
+
+model Invoice {
+  id              String           @id @default(uuid()) @db.Uuid
+  subscriptionId  String?          @db.Uuid
+  subscription    Subscription?    @relation(fields: [subscriptionId], references: [id], onDelete: SetNull)
+  businessId      String           @db.Uuid
+  business        Business         @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  invoiceNumber   String           @unique
+  description     String?
+  amount          Decimal          @db.Decimal(12, 2)
+  taxAmount       Decimal?         @default(0) @db.Decimal(12, 2)
+  totalAmount     Decimal          @db.Decimal(12, 2)
+  currency        String           @default("GBP")
+  status          InvoiceStatus    @default(Draft)
+  dueDate         DateTime
+  paidAt          DateTime?
+  paidById        String?          @db.Uuid
+  metadata        Json?
+  transactions    Transaction[]
+  createdAt       DateTime         @default(now())
+  updatedAt       DateTime         @updatedAt
+
+  @@index([subscriptionId])
+  @@index([businessId])
+  @@index([status])
+  @@index([dueDate])
+}
+
+model PaymentMethod {
+  id              String            @id @default(uuid()) @db.Uuid
+  businessId      String            @db.Uuid
+  business        Business          @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  type            PaymentMethodType
+  provider        String            // stripe, paypal, square
+  providerId      String            // token or ID from provider
+  last4           String?
+  expiryMonth     Int?
+  expiryYear      Int?
+  cardholderName  String?
+  isDefault       Boolean           @default(false)
+  isVerified      Boolean           @default(false)
+  metadata        Json?
+  transactions    Transaction[]
+  createdAt       DateTime          @default(now())
+  updatedAt       DateTime          @updatedAt
+
+  @@index([businessId])
+  @@index([providerId])
+}
+
+model Transaction {
+  id              String           @id @default(uuid()) @db.Uuid
+  businessId      String           @db.Uuid
+  business        Business         @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  invoiceId       String?          @db.Uuid
+  invoice         Invoice?         @relation(fields: [invoiceId], references: [id], onDelete: SetNull)
+  paymentMethodId String?          @db.Uuid
+  paymentMethod   PaymentMethod?   @relation(fields: [paymentMethodId], references: [id], onDelete: SetNull)
+  amount          Decimal          @db.Decimal(12, 2)
+  currency        String           @default("GBP")
+  status          TransactionStatus @default(Pending)
+  type            String           // payment, refund, payout, credit
+  provider        String?
+  providerRef     String?
+  fee             Decimal?         @default(0) @db.Decimal(10, 2)
+  netAmount       Decimal?         @db.Decimal(12, 2)
+  description     String?
+  metadata        Json?
+  createdAt       DateTime         @default(now())
+  updatedAt       DateTime         @updatedAt
+
+  @@index([businessId])
+  @@index([invoiceId])
+  @@index([status])
+  @@index([createdAt])
+}
+
+model Credit {
+  id          String       @id @default(uuid()) @db.Uuid
+  businessId  String       @db.Uuid
+  business    Business     @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  amount      Decimal      @db.Decimal(12, 2)
+  balance     Decimal      @db.Decimal(12, 2)
+  currency    String       @default("GBP")
+  type        String       // voucher, promotional, refund
+  expiresAt   DateTime?
+  isActive    Boolean      @default(true)
+  usage       CreditUsage[]
+  metadata    Json?
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+
+  @@index([businessId])
+  @@index([type])
+}
+
+model CreditUsage {
+  id        String   @id @default(uuid()) @db.Uuid
+  creditId  String   @db.Uuid
+  credit    Credit   @relation(fields: [creditId], references: [id], onDelete: Cascade)
+  amount    Decimal  @db.Decimal(12, 2)
+  referenceType String? // invoice, transaction
+  referenceId String?
+  metadata  Json?
+  usedAt    DateTime @default(now())
+
+  @@index([creditId])
+}
+
+// ──────────────────────────────────────────────
+// ANALYTICS & TRACKING
+// ──────────────────────────────────────────────
+
+model AnalyticsEvent {
+  id          String   @id @default(uuid()) @db.Uuid
+  eventName   String
+  entityType  String?  // business, product, campaign, user
+  entityId    String?
+  customerId  String?  @db.Uuid
+  sessionId   String?
+  properties  Json?
+  context     Json?    // page, device, location, referrer
+  timestamp   DateTime @default(now())
+
+  @@index([eventName])
+  @@index([entityType, entityId])
+  @@index([customerId])
+  @@index([timestamp])
+}
+
+model AnalyticsAggregation {
+  id          String   @id @default(uuid()) @db.Uuid
+  metric      String   // views, clicks, conversions, revenue, engagement
+  entityType  String
+  entityId    String
+  period      String   // hour, day, week, month
+  periodStart DateTime
+  periodEnd   DateTime
+  value       Decimal  @db.Decimal(14, 2)
+  dimensions  Json?    // breakdown by source, location, etc.
+  calculatedAt DateTime @default(now())
+
+  @@unique([metric, entityType, entityId, period, periodStart])
+  @@index([metric, entityType, entityId, period, periodStart])
+  @@index([entityType, entityId])
+  @@index([periodStart, periodEnd])
+}
+
+model CustomerActivityLog {
+  id          String               @id @default(uuid()) @db.Uuid
+  customerId  String               @db.Uuid
+  customer    User                 @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  activityType CustomerActivityType
+  description String?
+  entityType  String?
+  entityId    String?
+  metadata    Json?
+  ipAddress   String?
+  userAgent   String?
+  createdAt   DateTime             @default(now())
+
+  @@index([customerId])
+  @@index([activityType])
+  @@index([createdAt])
+}
+
+model BusinessActivityLog {
+  id          String               @id @default(uuid()) @db.Uuid
+  businessId  String               @db.Uuid
+  business    Business             @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  userId      String?              @db.Uuid
+  activityType BusinessActivityType
+  description String?
+  entityType  String?
+  entityId    String?
+  metadata    Json?
+  ipAddress   String?
+  createdAt   DateTime             @default(now())
+
+  @@index([businessId])
+  @@index([userId])
+  @@index([activityType])
+  @@index([createdAt])
+}
+
+// ──────────────────────────────────────────────
+// PLATFORM SETTINGS
+// ──────────────────────────────────────────────
+
+model PlatformSetting {
+  id        String   @id @default(uuid()) @db.Uuid
+  key       String   @unique
+  value     Json
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([key])
+}
