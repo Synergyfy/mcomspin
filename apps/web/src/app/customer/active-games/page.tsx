@@ -4,7 +4,7 @@ import React, { useState, useEffect, useCallback, useMemo, useRef, Suspense } fr
 import { useSearchParams, useRouter } from 'next/navigation';
 import { useMutation } from '@tanstack/react-query';
 import api from '@/services/api';
-import { useCustomerDashboard, useCustomerCampaigns, useCustomerActivity, useClaimReward } from '@/services/customer';
+import { useCustomerDashboard, useCustomerCampaigns, useCustomerActivity, useClaimReward, usePlayGame, useDropBall } from '@/services/customer';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   Star,
@@ -49,11 +49,13 @@ type Campaign = {
   id: string;
   businessName: string;
   businessCategory: string;
-  theme: 'fashion' | 'tech' | 'food' | 'barber' | 'beauty' | 'event' | 'mall';
-  boxCount: 2 | 4 | 6 | 8;
+  theme?: 'fashion' | 'tech' | 'food' | 'barber' | 'beauty' | 'event' | 'mall';
+  boxCount: number;
   description: string;
   prizes: Prize[];
   logo?: any;
+  gameId?: string;
+  gameName?: string;
 };
 
 const THEMES = {
@@ -573,7 +575,15 @@ const ArcadePlinkoBoard = ({
         {/* SECTOR BACKGROUND IMAGE */}
         <div 
           className="absolute inset-0 z-0 bg-cover bg-center opacity-30 mix-blend-overlay"
-          style={{ backgroundImage: `url(${THEMES[activeGame.theme as keyof typeof THEMES]?.bgImage})` }}
+          style={{ backgroundImage: `url(${THEMES[(activeGame.theme || (
+            activeGame.businessCategory?.toLowerCase().includes('tech') ? 'tech' :
+            activeGame.businessCategory?.toLowerCase().includes('food') ? 'food' :
+            activeGame.businessCategory?.toLowerCase().includes('fashion') ? 'fashion' :
+            activeGame.businessCategory?.toLowerCase().includes('barber') ? 'barber' :
+            activeGame.businessCategory?.toLowerCase().includes('beauty') ? 'beauty' :
+            activeGame.businessCategory?.toLowerCase().includes('event') ? 'event' :
+            'mall'
+          )) as keyof typeof THEMES]?.bgImage})` }}
         />
         <canvas ref={canvasRef} className="absolute inset-0 w-full h-full touch-none z-10" />
       </div>
@@ -595,34 +605,74 @@ function ArcadeGamesPageContent() {
   const { data: campaignsData } = useCustomerCampaigns();
   const { data: activityData } = useCustomerActivity();
   const claimMutation = useClaimReward();
+  const playGame = usePlayGame();
+  const dropBall = useDropBall();
 
   const profile = profileData?.profile ?? profileData ?? {};
   const ACTIVE_CAMPAIGNS: Campaign[] = campaignsData?.campaigns ?? campaignsData ?? [];
   const MOCK_LIVE_ACTIVITIES = activityData ?? [];
 
-  const dropBallMutation = useMutation({
-    mutationFn: (payload: { sessionId: string; boxIndex: number }) =>
-      api.post('/customer/games/drop', payload).then((r) => r.data.data ?? r.data),
-  });
-
   const [activeGame, setActiveGame] = useState<Campaign | null>(null);
-  
-  // Auto-select game if campaignId is provided
-  useEffect(() => {
-    if (campaignId && ACTIVE_CAMPAIGNS.length > 0) {
-      const foundGame = ACTIVE_CAMPAIGNS.find((c: Campaign) => c.id === campaignId) || null;
-      setActiveGame(foundGame);
-    }
-  }, [campaignId, ACTIVE_CAMPAIGNS]);
-
+  const [currentSessionId, setCurrentSessionId] = useState<string | null>(null);
   const [wonPrize, setWonPrize] = useState<Prize | null>(null);
   const [showVictoryModal, setShowVictoryModal] = useState(false);
+  const [showLossModal, setShowLossModal] = useState(false);
+  const [lossLabel, setLossLabel] = useState<string>('Try Again');
+  const [eligibilityError, setEligibilityError] = useState<string | null>(null);
   const [soundEnabled, setSoundEnabled] = useState(true);
   const [activityFeed, setActivityFeed] = useState<any[]>([]);
   const [showRewards, setShowRewards] = useState(false);
   
   const [plinkoState, setPlinkoState] = useState<'sweeping' | 'dropping' | 'landed'>('sweeping');
   const [dropTrigger, setDropTrigger] = useState(0);
+
+  const categoryTheme = useMemo(() => {
+    if (!activeGame) return 'mall';
+    const cat = activeGame.businessCategory?.toLowerCase() || '';
+    if (cat.includes('tech')) return 'tech';
+    if (cat.includes('food') || cat.includes('dining') || cat.includes('kitchen')) return 'food';
+    if (cat.includes('fashion') || cat.includes('style')) return 'fashion';
+    if (cat.includes('barber')) return 'barber';
+    if (cat.includes('beauty') || cat.includes('salon')) return 'beauty';
+    if (cat.includes('event')) return 'event';
+    return 'mall';
+  }, [activeGame]);
+
+  const handleSelectGame = (game: Campaign) => {
+    setActiveGame(game);
+    setEligibilityError(null);
+    setCurrentSessionId(null);
+    
+    playGame.mutate(
+      { gameId: game.gameId, campaignId: game.id },
+      {
+        onSuccess: (res: any) => {
+          if (res?.sessionId) {
+            setCurrentSessionId(res.sessionId);
+          }
+        },
+        onError: (err: any) => {
+          const errMsg = err?.response?.data?.message || 'You are not eligible to play this game right now.';
+          setEligibilityError(errMsg);
+        }
+      }
+    );
+  };
+
+  // Auto-select game if campaignId is provided
+  useEffect(() => {
+    if (campaignId && ACTIVE_CAMPAIGNS.length > 0) {
+      const foundGame = ACTIVE_CAMPAIGNS.find((c: Campaign) => c.id === campaignId) || null;
+      if (foundGame) {
+        setActiveGame(foundGame);
+        if (sessionId) {
+          setCurrentSessionId(sessionId);
+        } else {
+          handleSelectGame(foundGame);
+        }
+      }
+    }
+  }, [campaignId, ACTIVE_CAMPAIGNS, sessionId]);
 
 
 
@@ -674,8 +724,8 @@ function ArcadeGamesPageContent() {
 
   const handlePlinkoWin = useCallback((prizeIndex: number) => {
     if (!activeGame) return;
-    const targetSessionId = sessionId || 'simulated-' + Date.now();
-    dropBallMutation.mutate(
+    const targetSessionId = currentSessionId || sessionId || 'simulated-' + Date.now();
+    dropBall.mutate(
       { sessionId: targetSessionId, boxIndex: prizeIndex % activeGame.boxCount },
       {
         onSuccess: (res: any) => {
@@ -689,26 +739,43 @@ function ArcadeGamesPageContent() {
               expiryDate: '30 days',
               terms: 'Valid at storefront',
             });
+            playSound('victory');
+            fireVictoryConfetti();
+            setTimeout(() => setShowVictoryModal(true), 800);
+          } else {
+            setLossLabel(res?.box?.label || 'Try Again');
+            setTimeout(() => setShowLossModal(true), 800);
           }
+        },
+        onError: (err: any) => {
+          console.error("Drop ball error:", err);
+          setLossLabel('Better luck next time!');
+          setTimeout(() => setShowLossModal(true), 800);
         }
       }
     );
-    const prize = activeGame.prizes[prizeIndex % activeGame.prizes.length];
-    setWonPrize(prize);
-    playSound('victory');
-    fireVictoryConfetti();
-    setTimeout(() => setShowVictoryModal(true), 800);
-  }, [activeGame, sessionId, playSound, fireVictoryConfetti]);
+  }, [activeGame, currentSessionId, sessionId, playSound, fireVictoryConfetti, dropBall]);
 
   const resetGame = () => {
     playSound('click');
     setWonPrize(null);
     setShowVictoryModal(false);
-    const currentId = activeGame?.id;
+    setShowLossModal(false);
+    const currentCampaign = activeGame;
     setActiveGame(null);
-    setTimeout(() => {
-        if(currentId) setActiveGame(ACTIVE_CAMPAIGNS.find(c => c.id === currentId) || null);
-    }, 50);
+    if (currentCampaign) {
+      setTimeout(() => {
+        handleSelectGame(currentCampaign);
+      }, 100);
+    }
+  };
+
+  const exitGame = () => {
+    setActiveGame(null);
+    setEligibilityError(null);
+    setCurrentSessionId(null);
+    setShowVictoryModal(false);
+    setShowLossModal(false);
   };
 
   if (!activeGame) {
@@ -751,7 +818,7 @@ function ArcadeGamesPageContent() {
                 return (
                   <div 
                     key={game.id} 
-                    onClick={() => setActiveGame(game)} 
+                    onClick={() => handleSelectGame(game)} 
                     className="bg-white rounded-3xl border border-[#eee] p-6 shadow-sm hover:border-[#f97316] hover:shadow-md transition-all cursor-pointer group flex flex-col h-full"
                   >
                     <div className="flex items-start justify-between mb-4">
@@ -786,7 +853,7 @@ function ArcadeGamesPageContent() {
     );
   }
 
-  const currentTheme = THEMES[activeGame.theme as keyof typeof THEMES];
+  const currentTheme = THEMES[categoryTheme as keyof typeof THEMES];
 
   return (
     <div className="min-h-screen text-stone-900 flex flex-col font-sans overflow-hidden relative selection:bg-orange-300/30">
@@ -803,7 +870,7 @@ function ArcadeGamesPageContent() {
       <header className="relative z-10 flex items-center justify-between px-4 md:px-6 py-3 bg-white/70 backdrop-blur-xl border-b border-orange-100/50 shadow-sm">
         <div className="flex items-center gap-3">
           <button
-            onClick={() => setActiveGame(null)}
+            onClick={exitGame}
             className="w-9 h-9 md:w-10 md:h-10 rounded-xl bg-orange-50 border border-orange-100 flex items-center justify-center text-stone-600 hover:bg-orange-100 hover:text-orange-600 transition-all flex-shrink-0"
           >
             <ChevronLeft size={20} />
@@ -835,9 +902,9 @@ function ArcadeGamesPageContent() {
         </h2>
         <button
           onClick={() => setDropTrigger(d => d + 1)}
-          disabled={plinkoState !== 'sweeping'}
+          disabled={plinkoState !== 'sweeping' || !currentSessionId || playGame.isPending || !!eligibilityError}
           className={`relative group px-5 md:px-8 py-2 md:py-2.5 rounded-full font-black text-sm md:text-base tracking-wider transition-all duration-300 ${
-            plinkoState === 'sweeping'
+            plinkoState === 'sweeping' && currentSessionId && !playGame.isPending && !eligibilityError
               ? 'bg-gradient-to-r from-orange-500 via-red-500 to-orange-500 text-white shadow-[0_4px_20px_rgba(249,115,22,0.4)] cursor-pointer hover:scale-105 active:scale-95 hover:shadow-[0_6px_25px_rgba(249,115,22,0.5)]'
               : 'bg-stone-200 text-stone-400 shadow-none cursor-not-allowed'
           }`}
@@ -892,14 +959,38 @@ function ArcadeGamesPageContent() {
         </div>
 
         {/* GAME BOARD */}
-        <div className="flex-1 relative flex flex-col justify-between">
-          <ArcadePlinkoBoard
-            activeGame={activeGame}
-            onWin={handlePlinkoWin}
-            playSound={playSound}
-            dropTrigger={dropTrigger}
-            onStateChange={setPlinkoState}
-          />
+        <div className="flex-1 relative flex flex-col justify-center items-center">
+          {playGame.isPending ? (
+            <div className="text-center p-12 bg-white/80 backdrop-blur-md rounded-3xl border border-orange-100 shadow-xl max-w-md w-full">
+              <div className="w-16 h-16 border-4 border-orange-500 border-t-transparent rounded-full animate-spin mx-auto mb-4" />
+              <h3 className="text-lg font-black text-stone-900 uppercase tracking-widest">Validating Ticket...</h3>
+              <p className="text-stone-500 text-xs mt-1">Starting a secure game session...</p>
+            </div>
+          ) : eligibilityError ? (
+            <div className="text-center p-8 md:p-12 bg-white/95 backdrop-blur-xl rounded-3xl border border-red-100 shadow-2xl max-w-md w-full">
+              <div className="w-16 h-16 bg-red-100 text-red-500 rounded-full flex items-center justify-center mx-auto mb-6">
+                <Clock size={32} />
+              </div>
+              <h3 className="text-xl font-black text-stone-900 uppercase tracking-widest mb-3">Daily Limit Reached</h3>
+              <p className="text-stone-600 text-sm leading-relaxed mb-6">
+                {eligibilityError}
+              </p>
+              <button
+                onClick={exitGame}
+                className="w-full py-4 bg-stone-900 hover:bg-stone-800 text-white rounded-2xl font-black text-xs uppercase tracking-widest shadow-xl active:scale-[0.98] transition-all"
+              >
+                Back to Active Games
+              </button>
+            </div>
+          ) : (
+            <ArcadePlinkoBoard
+              activeGame={activeGame}
+              onWin={handlePlinkoWin}
+              playSound={playSound}
+              dropTrigger={dropTrigger}
+              onStateChange={setPlinkoState}
+            />
+          )}
         </div>
 
         {/* Live Winners — Desktop sidebar */}
@@ -1036,26 +1127,41 @@ function ArcadeGamesPageContent() {
                   {/* Primary Action */}
                   <button 
                     onClick={() => {
-                      const targetSessionId = sessionId || 'simulated-' + Date.now();
+                      const targetSessionId = currentSessionId || sessionId || 'simulated-' + Date.now();
                       claimMutation.mutate(
                         { sessionId: targetSessionId },
                         { onSuccess: () => router.push('/customer/wallet') },
                       );
                     }}
-                    className="col-span-2 py-3.5 md:py-4 bg-orange-500 hover:bg-orange-600 text-white py-5 rounded-2xl font-black text-white text-xs md:text-sm uppercase tracking-widest shadow-lg shadow-orange-500/25 active:scale-[0.98] transition-all"
+                    disabled={claimMutation.isPending}
+                    className="col-span-2 py-3.5 md:py-4 bg-orange-500 hover:bg-orange-600 text-white py-5 rounded-2xl font-black text-white text-xs md:text-sm uppercase tracking-widest shadow-lg shadow-orange-500/25 active:scale-[0.98] transition-all disabled:opacity-50 disabled:cursor-not-allowed"
                   >
-                    Redeem Reward
+                    {claimMutation.isPending ? 'Redeeming...' : 'Redeem Reward'}
                   </button>
 
                   {/* Secondary Actions */}
                   <button 
                     onClick={() => {
-                      alert('Reward saved to your wallet!');
+                      const targetSessionId = currentSessionId || sessionId || 'simulated-' + Date.now();
+                      claimMutation.mutate(
+                        { sessionId: targetSessionId },
+                        { 
+                          onSuccess: () => {
+                            alert('Reward saved to your wallet!');
+                            resetGame();
+                          },
+                          onError: (err: any) => {
+                            const errMsg = err?.response?.data?.message || 'Failed to save reward.';
+                            alert(errMsg);
+                          }
+                        }
+                      );
                     }}
-                    className="flex items-center justify-center gap-2 py-2.5 md:py-3 bg-stone-50 border border-stone-200 rounded-xl md:rounded-2xl text-[9px] md:text-[10px] font-black text-stone-600 uppercase tracking-widest hover:bg-stone-100 transition-all"
+                    disabled={claimMutation.isPending}
+                    className="flex items-center justify-center gap-2 py-2.5 md:py-3 bg-stone-50 border border-stone-200 rounded-xl md:rounded-2xl text-[9px] md:text-[10px] font-black text-stone-600 uppercase tracking-widest hover:bg-stone-100 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
                   >
                     <Star size={12} className="fill-orange-400 text-orange-400" />
-                    Save
+                    {claimMutation.isPending ? 'Saving...' : 'Save'}
                   </button>
                   <button 
                     onClick={() => {
@@ -1080,6 +1186,53 @@ function ArcadeGamesPageContent() {
               <button 
                 onClick={resetGame} 
                 className="absolute top-4 right-4 md:top-6 md:right-6 w-8 h-8 md:w-10 md:h-10 rounded-full bg-stone-100 border border-stone-200 flex items-center justify-center text-stone-500 hover:bg-orange-500 hover:text-white transition-all z-[3010]"
+              >
+                <X size={16} />
+              </button>
+            </motion.div>
+          </motion.div>
+        )}
+        {showLossModal && (
+          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 z-[3000] flex items-center justify-center p-4">
+            <div className="absolute inset-0 bg-black/90 backdrop-blur-md" />
+            <motion.div
+              initial={{ scale: 0.8, y: 50, opacity: 0 }}
+              animate={{ scale: 1, y: 0, opacity: 1 }}
+              exit={{ scale: 0.9, y: 20, opacity: 0 }}
+              transition={{ type: 'spring', damping: 25, stiffness: 200 }}
+              className="relative w-full max-w-md bg-white border border-stone-200 rounded-[2rem] overflow-hidden shadow-[0_20px_60px_rgba(0,0,0,0.15)] flex flex-col p-8 text-center"
+            >
+              <div className="w-20 h-20 bg-gradient-to-br from-amber-400 to-orange-500 rounded-full flex items-center justify-center mx-auto mb-6 shadow-lg shadow-orange-500/25">
+                <RotateCcw size={36} className="text-white" />
+              </div>
+              
+              <span className="text-orange-500 text-[10px] font-black uppercase tracking-[0.3em] block mb-2">Unlucky Drop!</span>
+              <h2 className="text-2xl md:text-3xl font-black text-stone-900 leading-tight mb-3 uppercase italic tracking-tighter">
+                {lossLabel}
+              </h2>
+              <p className="text-stone-500 text-sm leading-relaxed mb-8 max-w-xs mx-auto">
+                No prize in this box, but don't give up! You can try again to find the winning surprise.
+              </p>
+
+              <div className="space-y-3">
+                <button 
+                  onClick={resetGame}
+                  className="w-full py-4 bg-gradient-to-r from-orange-500 to-red-500 hover:from-orange-600 hover:to-red-600 text-white rounded-2xl font-black text-sm uppercase tracking-widest shadow-lg shadow-orange-500/25 active:scale-[0.98] transition-all"
+                >
+                  Try Again
+                </button>
+                <button 
+                  onClick={exitGame}
+                  className="w-full py-4 bg-stone-50 border border-stone-200 text-stone-600 rounded-2xl font-black text-xs uppercase tracking-widest hover:bg-stone-100 transition-all"
+                >
+                  Quit Game
+                </button>
+              </div>
+
+              {/* Close Button */}
+              <button 
+                onClick={exitGame} 
+                className="absolute top-4 right-4 w-8 h-8 rounded-full bg-stone-100 border border-stone-200 flex items-center justify-center text-stone-500 hover:bg-orange-500 hover:text-white transition-all z-[3010]"
               >
                 <X size={16} />
               </button>

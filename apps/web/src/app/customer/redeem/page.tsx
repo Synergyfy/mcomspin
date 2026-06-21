@@ -4,6 +4,7 @@ import React, { useState, useEffect, Suspense } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useCustomerRewards, useRedeemReward } from '@/services/customer';
+import QRCode from '@/components/QRCode';
 import { 
   QrCode, 
   Ticket, 
@@ -24,11 +25,11 @@ function RedemptionPageContent() {
   const searchParams = useSearchParams();
   const router = useRouter();
   const rewardId = searchParams.get('rewardId');
-  const { data: walletData } = useCustomerRewards();
+  const { data: walletData, isLoading: walletLoading } = useCustomerRewards();
   const redeemMutation = useRedeemReward();
   
   const [reward, setReward] = useState<any>(null);
-  const [method, setFilter] = useState<'qr' | 'code' | 'nfc' | 'pos'>('qr');
+  const [method, setMethod] = useState<'qr' | 'code' | 'nfc' | 'pos'>('qr');
   const [isProcessing, setIsProcessing] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
   const [manualCode, setManualCode] = useState('');
@@ -82,6 +83,14 @@ function RedemptionPageContent() {
       },
     );
   };
+
+  if (walletLoading) {
+    return (
+      <div className="min-h-screen bg-stone-50 flex items-center justify-center">
+        <div className="w-6 h-6 border-2 border-orange-500 border-t-transparent rounded-full animate-spin" />
+      </div>
+    );
+  }
 
   if (!reward && !isSuccess) {
     return (
@@ -174,7 +183,7 @@ function RedemptionPageContent() {
             ].map((m) => (
               <button
                 key={m.id}
-                onClick={() => setFilter(m.id as any)}
+                onClick={() => setMethod(m.id as any)}
                 className={`flex flex-col items-center justify-center p-4 rounded-3xl border transition-all gap-2 ${
                   method === m.id 
                     ? 'bg-stone-900 border-stone-900 text-white shadow-xl scale-[1.02]' 
@@ -201,16 +210,8 @@ function RedemptionPageContent() {
               >
                 <div className="relative group">
                   <div className="absolute inset-0 bg-orange-500/5 rounded-[2.5rem] blur-2xl group-hover:blur-3xl transition-all" />
-                  <div className="relative bg-white border-2 border-stone-50 rounded-[2.5rem] p-8 shadow-inner flex items-center justify-center w-56 h-56">
-                    <div className="grid grid-cols-7 gap-1 w-full h-full opacity-80">
-                      {[...Array(49)].map((_, i) => (
-                        <div key={i} className={`rounded-sm ${
-                          i === 0 || i === 6 || i === 42 || i === 48 || i % 4 === 0 || i % 9 === 0
-                            ? 'bg-stone-900' 
-                            : 'bg-white'
-                        }`} />
-                      ))}
-                    </div>
+                  <div className="relative bg-white border-2 border-stone-50 rounded-[2.5rem] p-3 shadow-inner flex items-center justify-center w-56 h-56">
+                    <QRCode value={reward?.code || reward?.qrCode || 'MCOM-REWARD'} size={180} />
                   </div>
                 </div>
                 <div className="space-y-2">

@@ -21,6 +21,7 @@ import {
   useBusinessRewards,
   useBusinessRedemptions,
   useBusinessAnalytics,
+  useUpdateBusinessCampaign,
 } from '@/services/business';
 
 export default function CampaignDetailsPage() {
@@ -36,8 +37,13 @@ export default function CampaignDetailsPage() {
   const r = rewards as any;
   const rd = redemptions as any;
 
+  const updateCampaign = useUpdateBusinessCampaign();
   const [activeTab, setActiveTab] = useState('Overview');
-  const [status, setStatus] = useState<'Active' | 'Paused'>('Active');
+  const status = c?.status ?? 'Draft';
+
+  const changeStatus = (newStatus: string) => {
+    updateCampaign.mutate({ id, status: newStatus });
+  };
 
   if (isLoading) {
     return (
@@ -74,13 +80,33 @@ export default function CampaignDetailsPage() {
             <p className="text-white/90 font-medium max-w-lg line-clamp-2">{c?.description ?? '—'}</p>
           </div>
 
-          {/* Quick Action FAB */}
-          <button 
-            onClick={() => setStatus(status === 'Active' ? 'Paused' : 'Active')}
-            className="absolute top-4 right-4 z-30 bg-white text-orange-500 w-12 h-12 rounded-2xl flex items-center justify-center shadow-lg hover:scale-105 active:scale-95 transition-transform"
-          >
-            {status === 'Active' ? <PauseCircle className="w-6 h-6" /> : <PlayCircle className="w-6 h-6" />}
-          </button>
+          {/* Status Controls */}
+          <div className="absolute top-4 right-4 z-30 flex items-center gap-2">
+            <span className={`px-3 py-1.5 rounded-full text-[10px] font-bold uppercase tracking-widest shadow-lg ${
+              status === 'Active' ? 'bg-green-500 text-white' :
+              status === 'Paused' ? 'bg-amber-500 text-white' :
+              'bg-stone-400 text-white'
+            }`}>
+              {status}
+            </span>
+            <div className="flex bg-white rounded-2xl shadow-lg overflow-hidden">
+              {status !== 'Active' && (
+                <button onClick={() => changeStatus('Active')} className="p-3 hover:bg-green-50 text-green-600 transition-colors" title="Activate">
+                  <PlayCircle className="w-5 h-5" />
+                </button>
+              )}
+              {status !== 'Paused' && status === 'Active' && (
+                <button onClick={() => changeStatus('Paused')} className="p-3 hover:bg-amber-50 text-amber-600 transition-colors" title="Pause">
+                  <PauseCircle className="w-5 h-5" />
+                </button>
+              )}
+              {status !== 'Draft' && (
+                <button onClick={() => changeStatus('Draft')} className="p-3 hover:bg-stone-50 text-stone-500 transition-colors" title="Move to Draft">
+                  <Settings className="w-5 h-5" />
+                </button>
+              )}
+            </div>
+          </div>
         </div>
 
         {/* Tab Navigation */}

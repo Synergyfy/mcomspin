@@ -41,7 +41,7 @@ export class BusinessRewardsService {
         name: dto.name,
         description: dto.description,
         type: dto.type,
-        value: Number(dto.value),
+        value: dto.value ? Number(dto.value) : 0,
         currency: dto.currency,
         imageUrl: dto.imageUrl,
         inventories: {

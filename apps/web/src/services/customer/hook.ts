@@ -101,11 +101,11 @@ export function useDiscover(params?: Record<string, string>) {
 
 /* ─── Games ─── */
 
-export function useGameEligibility() {
+export function useGameEligibility(params?: { gameId?: string; campaignId?: string }) {
   return useQuery({
-    queryKey: customerKeys.games.eligibility,
+    queryKey: [...customerKeys.games.eligibility, params],
     queryFn: () =>
-      api.get('/customer/games/eligibility').then((r) => r.data.data ?? r.data),
+      api.get('/customer/games/eligibility', { params }).then((r) => r.data.data ?? r.data),
   });
 }
 
@@ -123,7 +123,7 @@ export function usePlayGame() {
 export function useDropBall() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: (payload: { sessionId: string; pegIndex?: number }) =>
+    mutationFn: (payload: { sessionId: string; boxIndex: number }) =>
       api.post('/customer/games/drop', payload).then((r) => r.data.data ?? r.data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: customerKeys.games.eligibility });
@@ -144,21 +144,29 @@ export function useClaimReward() {
 
 /* ─── Activity ─── */
 
-export function useCustomerActivity() {
+export function useCustomerActivity(params?: { page?: number; limit?: number }) {
+  return useQuery({
+    queryKey: [...customerKeys.activity, params],
+    queryFn: () =>
+      api.get('/customer/activity', { params }).then((r) => r.data.data ?? r.data),
+  });
+}
+
+export function useCustomerActivityInfinite() {
   return useQuery({
     queryKey: customerKeys.activity,
     queryFn: () =>
-      api.get('/customer/activity').then((r) => r.data.data ?? r.data),
+      api.get('/customer/activity', { params: { page: 1, limit: 50 } }).then((r) => r.data.data ?? r.data),
   });
 }
 
 /* ─── Notifications ─── */
 
-export function useCustomerNotifications() {
+export function useCustomerNotifications(params?: { page?: number; limit?: number }) {
   return useQuery({
-    queryKey: customerKeys.notifications,
+    queryKey: [...customerKeys.notifications, params],
     queryFn: () =>
-      api.get('/customer/notifications').then((r) => r.data.data ?? r.data),
+      api.get('/customer/notifications', { params }).then((r) => r.data.data ?? r.data),
   });
 }
 

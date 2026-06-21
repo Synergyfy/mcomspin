@@ -1,10 +1,15 @@
-import { Controller, Post, Body, HttpCode, HttpStatus, UseGuards, Req, Res } from '@nestjs/common';
+import { Controller, Get, Post, Body, HttpCode, HttpStatus, UseGuards, Req, Res } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiBody } from '@nestjs/swagger';
 import { Request, Response } from 'express';
 import { AuthService } from './auth.service';
 import { LoginDto } from './dto/login.dto';
 import { RegisterDto } from './dto/register.dto';
 import { RefreshTokenDto } from './dto/refresh-token.dto';
+import { SendOtpDto } from './dto/send-otp.dto';
+import { VerifyOtpDto } from './dto/verify-otp.dto';
+import { SocialLoginDto } from './dto/social-login.dto';
+import { ForgotPasswordDto } from './dto/forgot-password.dto';
+import { ResetPasswordDto } from './dto/reset-password.dto';
 import { Public } from '../../common/decorators/public.decorator';
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
@@ -57,6 +62,61 @@ export class AuthController {
     res.clearCookie('accessToken');
     res.clearCookie('refreshToken');
     return { message: 'Logged out successfully' };
+  }
+
+  @Public()
+  @Post('otp/send')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: 'Send OTP to email or phone' })
+  sendOtp(@Body() dto: SendOtpDto) {
+    return this.authService.sendOtp(dto);
+  }
+
+  @Public()
+  @Post('otp/verify')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: 'Verify OTP code' })
+  async verifyOtp(@Body() dto: VerifyOtpDto, @Res({ passthrough: true }) res: Response) {
+    const result: any = await this.authService.verifyOtp(dto);
+    if (result.accessToken) {
+      this.setTokenCookies(res, result.accessToken, result.refreshToken);
+    }
+    return result;
+  }
+
+  @Public()
+  @Post('login/social')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: 'Login with social provider (Google, Apple)' })
+  async socialLogin(@Body() dto: SocialLoginDto, @Res({ passthrough: true }) res: Response) {
+    const result: any = await this.authService.socialLogin(dto);
+    if (result.accessToken) {
+      this.setTokenCookies(res, result.accessToken, result.refreshToken);
+    }
+    return result;
+  }
+
+  @Public()
+  @Post('forgot-password')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: 'Request password reset' })
+  forgotPassword(@Body() dto: ForgotPasswordDto) {
+    return this.authService.forgotPassword(dto);
+  }
+
+  @Public()
+  @Post('reset-password')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: 'Reset password with token' })
+  resetPassword(@Body() dto: ResetPasswordDto) {
+    return this.authService.resetPassword(dto);
+  }
+
+  @Get('me')
+  @UseGuards(JwtAuthGuard)
+  @ApiOperation({ summary: 'Get current user profile' })
+  getProfile(@CurrentUser('id') userId: string) {
+    return this.authService.getProfile(userId);
   }
 
   private setTokenCookies(res: Response, accessToken: string, refreshToken: string) {

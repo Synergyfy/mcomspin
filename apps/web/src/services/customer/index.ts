@@ -11,6 +11,7 @@ export {
   useDropBall,
   useClaimReward,
   useCustomerActivity,
+  useCustomerActivityInfinite,
   useCustomerNotifications,
   useMarkNotificationRead,
   useLeaderboard,

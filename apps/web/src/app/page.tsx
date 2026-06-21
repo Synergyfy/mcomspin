@@ -27,8 +27,27 @@ export default function LandingPage() {
   ]);
 
   /* ─── Partners Data ─── */
-  const { data: partnersData, isLoading, isError } = useAdminPartners();
-  const partners: any[] = (partnersData as any[]) ?? [];
+  const [hasToken, setHasToken] = useState(false);
+
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      setHasToken(!!localStorage.getItem('accessToken'));
+    }
+  }, []);
+
+  const { data: partnersData, isLoading: isQueryLoading } = useAdminPartners({
+    enabled: hasToken,
+  });
+
+  const MOCK_PARTNERS = [
+    { name: 'Meridian Apparel', category: 'Fashion & Retail', leads: 342, conversion: '12.4%', revenue: '£4,120' },
+    { name: 'Vantage Electronics', category: 'Consumer Tech', leads: 512, conversion: '8.6%', revenue: '£8,950' },
+    { name: 'Elara Wellness', category: 'Health & Spa', leads: 219, conversion: '15.2%', revenue: '£3,280' },
+    { name: 'Soleil Dining', category: 'Food & Beverage', leads: 403, conversion: '11.8%', revenue: '£5,640' }
+  ];
+
+  const partners: any[] = (hasToken && partnersData ? (partnersData as any[]) : null) ?? MOCK_PARTNERS;
+  const isLoading = hasToken && isQueryLoading;
 
   useEffect(() => {
     if (partners.length === 0) return;

@@ -3,6 +3,8 @@ import { ApiTags, ApiOperation, ApiBearerAuth, ApiQuery } from '@nestjs/swagger'
 import { JwtAuthGuard } from '../../../common/guards/jwt-auth.guard';
 import { BusinessOwnerGuard } from '../guards/business-owner.guard';
 import { BusinessRewardsService } from '../services/business-rewards.service';
+import { CreateRewardDto } from '../../admin/dto/create-reward.dto';
+import { UpdateRewardDto } from '../../admin/dto/update-reward.dto';
 
 @ApiTags('Business - Rewards')
 @ApiBearerAuth()
@@ -32,13 +34,13 @@ export class BusinessRewardsController {
 
   @Post()
   @ApiOperation({ summary: 'Create a reward' })
-  create(@Req() req: any, @Body() dto: any) {
+  create(@Req() req: any, @Body() dto: CreateRewardDto) {
     return this.businessRewardsService.create(req.businessId, dto);
   }
 
   @Put(':id')
   @ApiOperation({ summary: 'Update a reward' })
-  update(@Req() req: any, @Param('id') id: string, @Body() dto: any) {
+  update(@Req() req: any, @Param('id') id: string, @Body() dto: UpdateRewardDto) {
     return this.businessRewardsService.update(req.businessId, id, dto);
   }
 

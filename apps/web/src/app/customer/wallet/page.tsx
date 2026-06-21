@@ -3,11 +3,11 @@
 import React, { useState } from 'react';
 import Link from 'next/link';
 import { motion, AnimatePresence } from 'framer-motion';
-import { useCustomerRewards, useRedeemReward } from '@/services/customer';
+import { useCustomerRewards } from '@/services/customer';
+import QRCode from '@/components/QRCode';
 import { 
   Wallet, 
   Search, 
-  Filter, 
   QrCode, 
   Clock, 
   CheckCircle2, 
@@ -22,8 +22,7 @@ import {
 
 export default function RewardWalletPage() {
   const { data: walletData, isLoading } = useCustomerRewards();
-  const redeemMutation = useRedeemReward();
-  const [filter, setFilter] = useState<'all' | 'active' | 'redeemed' | 'expired' | 'saved'>('all');
+  const [filter, setFilter] = useState<'all' | 'active' | 'redeemed' | 'expired'>('all');
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedReward, setSelectedReward] = useState<any | null>(null);
 
@@ -101,20 +100,22 @@ export default function RewardWalletPage() {
       {/* Toolbar: Search and Filter */}
       <div className="flex flex-col lg:flex-row items-center justify-between gap-4">
         <div className="flex items-center bg-white border border-stone-100 p-2 rounded-2xl shadow-sm w-full lg:w-auto overflow-x-auto custom-scrollbar gap-1">
-          {(['all', 'active', 'redeemed', 'expired', 'saved'] as const).map((tab) => (
+          {([
+            { key: 'all' as const, label: 'All Rewards' },
+            { key: 'active' as const, label: 'Active' },
+            { key: 'redeemed' as const, label: 'Used' },
+            { key: 'expired' as const, label: 'Expired' },
+          ]).map((tab) => (
             <button
-              key={tab}
-              onClick={() => setFilter(tab)}
+              key={tab.key}
+              onClick={() => setFilter(tab.key)}
               className={`px-6 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all whitespace-nowrap ${
-                filter === tab 
+                filter === tab.key 
                   ? 'bg-orange-500 text-white shadow-lg shadow-orange-500/20' 
                   : 'text-stone-400 hover:text-stone-900 hover:bg-stone-50'
               }`}
             >
-              {tab === 'all' ? 'All Rewards' : 
-               tab === 'active' ? 'Active' : 
-               tab === 'redeemed' ? 'Used' :
-               tab === 'expired' ? 'Expired' : 'Saved'}
+              {tab.label}
             </button>
           ))}
         </div>
@@ -134,7 +135,11 @@ export default function RewardWalletPage() {
       {/* Wallet Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
         <AnimatePresence mode="popLayout">
-          {filteredWallet.length > 0 ? (
+          {isLoading ? (
+            <div className="col-span-full flex items-center justify-center py-20">
+              <div className="w-6 h-6 border-2 border-orange-500 border-t-transparent rounded-full animate-spin" />
+            </div>
+          ) : filteredWallet.length > 0 ? (
             filteredWallet.map((item: any) => (
               <motion.div
                 layout
@@ -221,7 +226,7 @@ export default function RewardWalletPage() {
                 <p className="text-sm text-[#888] max-w-xs mx-auto">Your wallet is looking a bit light. Play some active games to start filling it up!</p>
               </div>
               <button 
-                onClick={() => setFilter('all')}
+                onClick={() => { setFilter('all'); setSearchQuery(''); }}
                 className="mt-2 bg-[#1a1a1a] hover:bg-[#f97316] text-white px-8 py-3 rounded-2xl text-[11px] font-bold uppercase tracking-widest transition-all shadow-lg"
               >
                 Show All Rewards
@@ -263,21 +268,12 @@ export default function RewardWalletPage() {
 
               {/* QR Code Section (The "Vault" Reveal) */}
               <div className="p-10 space-y-8">
-                <div className="relative group mx-auto w-48 h-48">
-                  <div className="absolute inset-0 bg-orange-500/5 rounded-[2.5rem] blur-2xl group-hover:blur-3xl transition-all" />
-                  <div className="relative bg-white border-2 border-stone-50 rounded-[2.5rem] p-6 shadow-inner flex items-center justify-center">
-                    {/* Simulated High-Fidelity QR */}
-                    <div className="grid grid-cols-7 gap-1 w-full h-full opacity-80">
-                      {[...Array(49)].map((_, i) => (
-                        <div key={i} className={`rounded-sm ${
-                          i === 0 || i === 6 || i === 42 || i === 48 || i % 4 === 0 || i % 9 === 0
-                            ? 'bg-stone-900' 
-                            : 'bg-white'
-                        }`} />
-                      ))}
+                  <div className="relative group mx-auto w-48 h-48">
+                    <div className="absolute inset-0 bg-orange-500/5 rounded-[2.5rem] blur-2xl group-hover:blur-3xl transition-all" />
+                    <div className="relative bg-white border-2 border-stone-50 rounded-[2.5rem] p-3 shadow-inner flex items-center justify-center">
+                      <QRCode value={selectedReward.code || selectedReward.qrCode || 'MCOM-REWARD'} size={160} />
                     </div>
                   </div>
-                </div>
 
                 <div className="space-y-2">
                   <p className="text-[10px] font-black text-stone-300 uppercase tracking-widest">Digital Vault Key</p>
@@ -344,9 +340,12 @@ export default function RewardWalletPage() {
             If you're having trouble redeeming a voucher or a business isn't listed, our platform support team is here to assist. We ensure every Box Reward experience is seamless for both you and the merchant.
           </p>
         </div>
-        <button className="bg-white border border-[#eee] hover:border-[#1a1a1a] text-[#1a1a1a] px-8 py-4 rounded-2xl text-[11px] font-bold uppercase tracking-wider transition-all whitespace-nowrap shadow-sm active:scale-95">
+        <a
+          href="mailto:support@mcomspin.com?subject=Reward%20Wallet%20Help"
+          className="bg-white border border-[#eee] hover:border-[#1a1a1a] text-[#1a1a1a] px-8 py-4 rounded-2xl text-[11px] font-bold uppercase tracking-wider transition-all whitespace-nowrap shadow-sm active:scale-95 inline-block"
+        >
           Contact Support
-        </button>
+        </a>
       </section>
     </div>
   );

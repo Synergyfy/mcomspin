@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { useQueryClient } from '@tanstack/react-query';
 import { 
   useBusinessRewards, 
   useCreateBusinessReward, 
@@ -34,17 +35,22 @@ import {
   CheckCircle2
 } from 'lucide-react';
 
-/* ─── Config ─── */
 const rewardTypeConfig: Record<string, { bg: string; text: string; icon: any; tooltip: string }> = {
-  'Coupon':         { bg: 'bg-pink-50',    text: 'text-pink-600',    icon: Tag, tooltip: 'Unique codes for one-time or multi-use claims.' },
   'Discount':       { bg: 'bg-orange-50',  text: 'text-orange-600',  icon: Percent, tooltip: 'Percentage or fixed amount off a total purchase.' },
-  'Free service':   { bg: 'bg-emerald-50', text: 'text-emerald-600', icon: Sparkles, tooltip: 'Full complimentary services (e.g., Free Haircut).' },
-  'Product':        { bg: 'bg-blue-50',    text: 'text-blue-600',    icon: Package, tooltip: 'Physical items from your inventory.' },
-  'Ticket':         { bg: 'bg-violet-50', text: 'text-violet-600', icon: Ticket, tooltip: 'Access to events, classes, or special sessions.' },
-  'Gift card':      { bg: 'bg-amber-50',  text: 'text-amber-600',  icon: Gift, tooltip: 'Store credit that can be spent later.' },
-  'Spare capacity': { bg: 'bg-teal-50',    text: 'text-teal-600',    icon: RefreshCw, tooltip: 'Unfilled slots (e.g., "Empty slot at 4pm").' },
-  'Access stock':   { bg: 'bg-indigo-50',  text: 'text-indigo-600',  icon: Layers, tooltip: 'End-of-line or surplus items you want to move.' },
+  'Voucher':        { bg: 'bg-pink-50',    text: 'text-pink-600',    icon: Tag, tooltip: 'Unique codes for one-time or multi-use claims.' },
+  'FreeProduct':    { bg: 'bg-emerald-50', text: 'text-emerald-600', icon: Sparkles, tooltip: 'Full complimentary services (e.g., Free Haircut).' },
+  'Cashback':       { bg: 'bg-amber-50',   text: 'text-amber-600',  icon: Gift, tooltip: 'Store credit that can be spent later.' },
+  'Points':         { bg: 'bg-violet-50',  text: 'text-violet-600', icon: Zap, tooltip: 'Loyalty points added to customer accounts.' },
 };
+
+/* Frontend display labels mapped to backend enum values */
+const rewardTypeOptions = [
+  { label: 'Discount', value: 'Discount' },
+  { label: 'Coupon / Voucher', value: 'Voucher' },
+  { label: 'Free Product / Service', value: 'FreeProduct' },
+  { label: 'Gift Card / Cashback', value: 'Cashback' },
+  { label: 'Loyalty Points', value: 'Points' },
+];
 
 /* ─── UI Components ─── */
 const Badge = ({ children, colorClass }: { children: React.ReactNode, colorClass: string }) => (
@@ -64,6 +70,7 @@ const Tooltip = ({ text }: { text: string }) => (
 );
 
 export default function RewardsAssetsPage() {
+  const queryClient = useQueryClient();
   const { data: rewardsData, isLoading, isError } = useBusinessRewards();
   const createReward = useCreateBusinessReward();
   const updateReward = useUpdateBusinessReward();
@@ -71,39 +78,79 @@ export default function RewardsAssetsPage() {
   const rewardsList: any[] = (rewardsData as any[]) ?? [];
   const [searchTerm, setSearchTerm] = useState('');
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [formError, setFormError] = useState<string | null>(null);
+  const [toast, setToast] = useState<{ type: 'success' | 'error'; message: string } | null>(null);
 
   // Form State
   const [formData, setFormData] = useState({
     name: '',
-    type: 'Coupon',
-    quantity: '',
-    expiryDate: '',
-    visibilityStatus: 'Visible' as 'Visible' | 'Hidden',
-    activeStatus: 'Active' as 'Active' | 'Paused',
+    type: 'Discount',
+    value: '',
+    totalStock: '100',
     description: ''
   });
+  const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
+
+  const resetForm = () => {
+    setFormData({ name: '', type: 'Discount', value: '', totalStock: '100', description: '' });
+    setFormError(null);
+    setFieldErrors({});
+  };
+
+  const validate = (): boolean => {
+    const errors: Record<string, string> = {};
+    if (!formData.name.trim()) errors.name = 'Reward name is required.';
+    if (formData.value && (isNaN(Number(formData.value)) || Number(formData.value) < 0)) {
+      errors.value = 'Must be a valid positive number.';
+    }
+    const stock = parseInt(formData.totalStock);
+    if (isNaN(stock) || stock < 0) errors.totalStock = 'Must be a valid number (0 or more).';
+    setFieldErrors(errors);
+    return Object.keys(errors).length === 0;
+  };
 
   const handleAddReward = (e: React.FormEvent) => {
     e.preventDefault();
-    createReward.mutate({
-      name: formData.name,
-      type: formData.type,
-      quantity: parseInt(formData.quantity) || 0,
-      expiryDate: formData.expiryDate || null,
-      visibilityStatus: formData.visibilityStatus,
-      activeStatus: formData.activeStatus,
-      description: formData.description
-    });
-    setIsModalOpen(false);
-    setFormData({
-      name: '',
-      type: 'Coupon',
-      quantity: '',
-      expiryDate: '',
-      visibilityStatus: 'Visible',
-      activeStatus: 'Active',
-      description: ''
-    });
+    setFormError(null);
+    if (!validate()) return;
+
+    createReward.mutate(
+      {
+        name: formData.name.trim(),
+        type: formData.type,
+        value: formData.value || '0',
+        totalStock: parseInt(formData.totalStock) || 0,
+        description: formData.description.trim() || undefined,
+      },
+      {
+        onSuccess: () => {
+          queryClient.invalidateQueries({ queryKey: ['business', 'rewards'] });
+          setIsModalOpen(false);
+          resetForm();
+          setToast({ type: 'success', message: 'Reward created successfully!' });
+          setTimeout(() => setToast(null), 3000);
+        },
+        onError: (err: any) => {
+          const details = err?.response?.data?.error?.details;
+          if (Array.isArray(details)) {
+            const fieldErrMap: Record<string, string> = {};
+            details.forEach((d: any) => {
+              if (d.field && d.constraints) fieldErrMap[d.field] = d.constraints.join('. ');
+            });
+            if (Object.keys(fieldErrMap).length > 0) {
+              setFieldErrors(fieldErrMap);
+              return;
+            }
+          }
+          const msg =
+            details?.map((d: any) => d.constraints?.join(', ')).filter(Boolean).join('; ') ||
+            err?.response?.data?.error?.message ||
+            err?.message ||
+            'Failed to create reward. Check the form and try again.';
+          setFormError(msg);
+        },
+      },
+    );
   };
 
   // Filtered list
@@ -206,8 +253,10 @@ export default function RewardsAssetsPage() {
           </div>
         ) : (
           filteredRewards.map((reward: any) => {
-            const config = rewardTypeConfig[reward.type];
+            const inv = reward.inventories?.[0];
+            const config = rewardTypeConfig[reward.type] ?? rewardTypeConfig['Voucher'];
             const Icon = config.icon;
+            const isActive = reward.isActive !== false;
             
             return (
               <div 
@@ -225,17 +274,19 @@ export default function RewardsAssetsPage() {
                     </Badge>
                   </div>
                   <div className="flex items-center gap-1.5">
-                    <button 
-                      onClick={() => updateReward.mutate({ id: reward.id, visibilityStatus: reward.visibilityStatus === 'Visible' ? 'Hidden' : 'Visible' })}
+                    <button
+                      onClick={() => updateReward.mutate({ id: reward.id, isActive: !isActive })}
                       className="p-2 text-[#ccc] hover:text-[#1a1a1a] transition-colors rounded-lg hover:bg-[#f5f5f3]"
                     >
-                      {reward.visibilityStatus === 'Visible' ? <Eye className="w-4 h-4" /> : <EyeOff className="w-4 h-4" />}
+                      {isActive ? <Eye className="w-4 h-4" /> : <EyeOff className="w-4 h-4" />}
                     </button>
                     <button 
-                      onClick={() => deleteReward.mutate(reward.id)}
-                      className="p-2 text-[#ccc] hover:text-[#1a1a1a] transition-colors rounded-lg hover:bg-[#f5f5f3]"
+                      onClick={() => {
+                        if (confirm('Delete this reward?')) deleteReward.mutate(reward.id);
+                      }}
+                      className="p-2 text-[#ccc] hover:text-red-500 transition-colors rounded-lg hover:bg-[#f5f5f3]"
                     >
-                      <MoreVertical className="w-4 h-4" />
+                      <Trash2 className="w-4 h-4" />
                     </button>
                   </div>
                 </div>
@@ -246,21 +297,23 @@ export default function RewardsAssetsPage() {
                     {reward.name}
                   </h3>
                   <p className="text-[13px] text-[#888] line-clamp-2 leading-relaxed mb-4">
-                    {reward.description}
+                    {reward.description || 'No description'}
                   </p>
                 </div>
 
                 {/* Metrics Section */}
                 <div className="grid grid-cols-2 gap-3 mb-5 p-4 bg-[#fafaf9] rounded-2xl border border-[#f5f5f3]">
                   <div>
-                    <p className="text-[9px] font-bold text-[#bbb] uppercase tracking-wider mb-1">Quantity</p>
-                    <p className="text-[14px] font-display font-bold text-[#1a1a1a]">{reward.quantity}</p>
+                    <p className="text-[9px] font-bold text-[#bbb] uppercase tracking-wider mb-1">In Stock</p>
+                    <p className="text-[14px] font-display font-bold text-[#1a1a1a]">
+                      {inv ? inv.totalStock - inv.usedStock : 0} / {inv?.totalStock ?? 0}
+                    </p>
                   </div>
                   <div>
                     <p className="text-[9px] font-bold text-[#bbb] uppercase tracking-wider mb-1">Status</p>
                     <div className="flex items-center gap-1.5">
-                      <span className={`w-1.5 h-1.5 rounded-full ${reward.activeStatus === 'Active' ? 'bg-emerald-500 animate-pulse' : 'bg-[#bbb]'}`} />
-                      <p className="text-[12px] font-semibold text-[#1a1a1a]">{reward.activeStatus}</p>
+                      <span className={`w-1.5 h-1.5 rounded-full ${isActive ? 'bg-emerald-500 animate-pulse' : 'bg-[#bbb]'}`} />
+                      <p className="text-[12px] font-semibold text-[#1a1a1a]">{isActive ? 'Active' : 'Paused'}</p>
                     </div>
                   </div>
                 </div>
@@ -268,13 +321,12 @@ export default function RewardsAssetsPage() {
                 {/* Bottom Row */}
                 <div className="flex items-center justify-between pt-4 border-t border-[#f5f5f3] mt-auto">
                   <div className="flex items-center gap-1.5 text-[#aaa]">
-                    <Calendar className="w-3.5 h-3.5" />
                     <span className="text-[11px] font-medium">
-                      {reward.expiryDate ? `Expires: ${reward.expiryDate}` : 'Permanent Asset'}
+                      £{Number(reward.value).toFixed(2)} {reward.currency || 'GBP'}
                     </span>
                   </div>
-                  <div className={`text-[10px] font-bold px-2 py-0.5 rounded ${reward.visibilityStatus === 'Visible' ? 'text-blue-500 bg-blue-50' : 'text-[#888] bg-[#f0f0f0]'}`}>
-                    {reward.visibilityStatus}
+                  <div className={`text-[10px] font-bold px-2 py-0.5 rounded ${isActive ? 'text-emerald-600 bg-emerald-50' : 'text-[#888] bg-[#f0f0f0]'}`}>
+                    {isActive ? 'Live' : 'Paused'}
                   </div>
                 </div>
               </div>
@@ -315,6 +367,20 @@ export default function RewardsAssetsPage() {
         ))}
       </div>
 
+      {/* ── Toast ── */}
+      {toast && (
+        <div className={`fixed bottom-6 right-6 z-[200] px-5 py-3 rounded-2xl shadow-2xl text-[13px] font-bold flex items-center gap-2.5 animate-in slide-in-from-right-4 fade-in duration-300 ${
+          toast.type === 'success' ? 'bg-emerald-600 text-white' : 'bg-red-600 text-white'
+        }`}>
+          {toast.type === 'success' ? (
+            <CheckCircle2 className="w-4 h-4" />
+          ) : (
+            <Info className="w-4 h-4" />
+          )}
+          {toast.message}
+        </div>
+      )}
+
       {/* ═══════════════════════════════════════
           ADD REWARD MODAL
       ═══════════════════════════════════════ */}
@@ -344,115 +410,93 @@ export default function RewardsAssetsPage() {
 
             {/* Form */}
             <form onSubmit={handleAddReward} className="p-8">
+              {formError && (
+                <div className="mb-6 p-4 rounded-2xl bg-red-50 border border-red-100 text-[13px] text-red-700 flex items-start gap-2">
+                  <Info className="w-4 h-4 mt-0.5 shrink-0" />
+                  <span>{formError}</span>
+                </div>
+              )}
+
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 {/* Reward Name */}
                 <div className="space-y-1.5">
                   <label className="text-[11px] font-bold text-[#666] uppercase tracking-wider flex items-center">
-                    Reward Name
-                    <Tooltip text="The public name of your reward as it appears to customers (e.g., 'Free Latte', '20% Discount')." />
+                    Reward Name *
+                    <Tooltip text="The public name of your reward as it appears to customers." />
                   </label>
                   <input 
-                    required
                     type="text" 
-                    placeholder="Enter a catchy name..."
+                    placeholder="e.g. 20% Discount, Free Latte"
                     value={formData.name}
-                    onChange={e => setFormData({...formData, name: e.target.value})}
-                    className="w-full bg-[#fcfcfb] border border-[#eee] rounded-xl px-4 py-3 text-[14px] focus:outline-none focus:ring-2 focus:ring-[#f97316]/20 focus:border-[#f97316] transition-all"
+                    onChange={e => { setFormData({...formData, name: e.target.value}); setFieldErrors(prev => ({...prev, name: ''})); }}
+                    className={`w-full bg-[#fcfcfb] border rounded-xl px-4 py-3 text-[14px] focus:outline-none focus:ring-2 transition-all ${
+                      fieldErrors.name ? 'border-red-300 focus:ring-red-200 focus:border-red-400' : 'border-[#eee] focus:ring-[#f97316]/20 focus:border-[#f97316]'
+                    }`}
                   />
+                  {fieldErrors.name && <p className="text-[11px] text-red-500 mt-1">{fieldErrors.name}</p>}
                 </div>
 
                 {/* Reward Type */}
                 <div className="space-y-1.5">
                   <label className="text-[11px] font-bold text-[#666] uppercase tracking-wider flex items-center">
-                    Category
-                    <Tooltip text="Classify your reward. This helps the system determine the best gamification strategy." />
+                    Category *
+                    <Tooltip text="The reward category determines how it's displayed and distributed." />
                   </label>
                   <select 
                     value={formData.type}
-                    onChange={e => setFormData({...formData, type: e.target.value as string})}
+                    onChange={e => setFormData({...formData, type: e.target.value})}
                     className="w-full bg-[#fcfcfb] border border-[#eee] rounded-xl px-4 py-3 text-[14px] focus:outline-none focus:ring-2 focus:ring-[#f97316]/20 focus:border-[#f97316] transition-all appearance-none cursor-pointer"
                   >
-                    {Object.keys(rewardTypeConfig).map(type => (
-                      <option key={type} value={type}>{type}</option>
+                    {rewardTypeOptions.map(opt => (
+                      <option key={opt.value} value={opt.value}>{opt.label}</option>
                     ))}
                   </select>
                 </div>
 
-                {/* Quantity */}
+                {/* Value / Amount */}
                 <div className="space-y-1.5">
                   <label className="text-[11px] font-bold text-[#666] uppercase tracking-wider flex items-center">
-                    Quantity / Stock
-                    <Tooltip text="How many of these rewards are available to be won in total?" />
+                    Value (£)
+                    <Tooltip text="The monetary value of this reward (e.g. 10 for £10 discount)." />
                   </label>
                   <input 
-                    required
                     type="number" 
-                    placeholder="e.g. 100"
-                    value={formData.quantity}
-                    onChange={e => setFormData({...formData, quantity: e.target.value})}
-                    className="w-full bg-[#fcfcfb] border border-[#eee] rounded-xl px-4 py-3 text-[14px] focus:outline-none focus:ring-2 focus:ring-[#f97316]/20 focus:border-[#f97316] transition-all"
+                    step="0.01"
+                    min="0"
+                    placeholder="e.g. 10.00"
+                    value={formData.value}
+                    onChange={e => { setFormData({...formData, value: e.target.value}); setFieldErrors(prev => ({...prev, value: ''})); }}
+                    className={`w-full bg-[#fcfcfb] border rounded-xl px-4 py-3 text-[14px] focus:outline-none focus:ring-2 transition-all ${
+                      fieldErrors.value ? 'border-red-300 focus:ring-red-200 focus:border-red-400' : 'border-[#eee] focus:ring-[#f97316]/20 focus:border-[#f97316]'
+                    }`}
                   />
+                  {fieldErrors.value && <p className="text-[11px] text-red-500 mt-1">{fieldErrors.value}</p>}
                 </div>
 
-                {/* Expiry Date */}
+                {/* Total Stock */}
                 <div className="space-y-1.5">
                   <label className="text-[11px] font-bold text-[#666] uppercase tracking-wider flex items-center">
-                    Expiry Date
-                    <Tooltip text="Optional. When should this reward stop being available? Leave empty for permanent assets." />
+                    Total Stock *
+                    <Tooltip text="How many of this reward are available to be won?" />
                   </label>
                   <input 
-                    type="date" 
-                    value={formData.expiryDate}
-                    onChange={e => setFormData({...formData, expiryDate: e.target.value})}
-                    className="w-full bg-[#fcfcfb] border border-[#eee] rounded-xl px-4 py-3 text-[14px] focus:outline-none focus:ring-2 focus:ring-[#f97316]/20 focus:border-[#f97316] transition-all"
+                    type="number" 
+                    min="0"
+                    placeholder="e.g. 100"
+                    value={formData.totalStock}
+                    onChange={e => { setFormData({...formData, totalStock: e.target.value}); setFieldErrors(prev => ({...prev, totalStock: ''})); }}
+                    className={`w-full bg-[#fcfcfb] border rounded-xl px-4 py-3 text-[14px] focus:outline-none focus:ring-2 transition-all ${
+                      fieldErrors.totalStock ? 'border-red-300 focus:ring-red-200 focus:border-red-400' : 'border-[#eee] focus:ring-[#f97316]/20 focus:border-[#f97316]'
+                    }`}
                   />
-                </div>
-
-                {/* Visibility */}
-                <div className="space-y-1.5">
-                  <label className="text-[11px] font-bold text-[#666] uppercase tracking-wider flex items-center">
-                    Visibility
-                    <Tooltip text="Visible rewards can be seen by customers in their potential prize pool. Hidden rewards are surprise wins." />
-                  </label>
-                  <div className="flex bg-[#f5f5f3] p-1 rounded-xl">
-                    {(['Visible', 'Hidden'] as const).map(v => (
-                      <button
-                        key={v}
-                        type="button"
-                        onClick={() => setFormData({...formData, visibilityStatus: v})}
-                        className={`flex-1 py-2 text-[12px] font-bold rounded-lg transition-all ${formData.visibilityStatus === v ? 'bg-white shadow-sm text-[#1a1a1a]' : 'text-[#888] hover:text-[#666]'}`}
-                      >
-                        {v}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-
-                {/* Status */}
-                <div className="space-y-1.5">
-                  <label className="text-[11px] font-bold text-[#666] uppercase tracking-wider flex items-center">
-                    Campaign Status
-                    <Tooltip text="Active rewards are live and can be won. Paused rewards are temporarily disabled." />
-                  </label>
-                  <div className="flex bg-[#f5f5f3] p-1 rounded-xl">
-                    {(['Active', 'Paused'] as const).map(s => (
-                      <button
-                        key={s}
-                        type="button"
-                        onClick={() => setFormData({...formData, activeStatus: s})}
-                        className={`flex-1 py-2 text-[12px] font-bold rounded-lg transition-all ${formData.activeStatus === s ? 'bg-white shadow-sm text-[#1a1a1a]' : 'text-[#888] hover:text-[#666]'}`}
-                      >
-                        {s}
-                      </button>
-                    ))}
-                  </div>
+                  {fieldErrors.totalStock && <p className="text-[11px] text-red-500 mt-1">{fieldErrors.totalStock}</p>}
                 </div>
 
                 {/* Description */}
                 <div className="md:col-span-2 space-y-1.5">
                   <label className="text-[11px] font-bold text-[#666] uppercase tracking-wider flex items-center">
-                    Detailed Description
-                    <Tooltip text="Briefly describe the reward and any terms (e.g., 'Valid for dine-in only')." />
+                    Description
+                    <Tooltip text="Briefly describe the reward and any terms." />
                   </label>
                   <textarea 
                     rows={3}
@@ -468,17 +512,23 @@ export default function RewardsAssetsPage() {
               <div className="flex items-center justify-end gap-3 mt-8 pt-6 border-t border-[#f5f5f3]">
                 <button 
                   type="button"
-                  onClick={() => setIsModalOpen(false)}
+                  onClick={() => { setIsModalOpen(false); resetForm(); }}
                   className="px-6 py-3 text-[13px] font-bold text-[#666] hover:text-[#1a1a1a] transition-colors"
+                  disabled={createReward.isPending}
                 >
                   Cancel
                 </button>
                 <button 
                   type="submit"
-                  className="bg-[#1a1a1a] text-white px-8 py-3 rounded-2xl font-bold text-[13px] hover:bg-[#333] transition-all shadow-xl active:scale-95 flex items-center gap-2"
+                  disabled={createReward.isPending}
+                  className="bg-[#1a1a1a] text-white px-8 py-3 rounded-2xl font-bold text-[13px] hover:bg-[#333] transition-all shadow-xl active:scale-95 flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
                 >
-                  <CheckCircle2 className="w-4 h-4" />
-                  Create Asset
+                  {createReward.isPending ? (
+                    <span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                  ) : (
+                    <CheckCircle2 className="w-4 h-4" />
+                  )}
+                  {createReward.isPending ? 'Creating...' : 'Create Asset'}
                 </button>
               </div>
             </form>

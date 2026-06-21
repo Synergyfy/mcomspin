@@ -14,6 +14,16 @@ interface Customer {
   status: 'New' | 'Returning';
 }
 
+function getInitials(name: string | undefined | null) {
+  if (!name) return '';
+  return name
+    .split(' ')
+    .filter(Boolean)
+    .map((n) => n[0])
+    .join('')
+    .toUpperCase();
+}
+
 export default function CustomersPage() {
   const { data: customersData, isLoading, isError } = useBusinessCustomers();
   const [searchTerm, setSearchTerm] = useState('');
@@ -21,11 +31,14 @@ export default function CustomersPage() {
 
   const customersList: any[] = (customersData as any[]) ?? [];
 
-  const filteredCustomers = customersList.filter(c => 
-    c.name.toLowerCase().includes(searchTerm.toLowerCase()) || 
-    c.phone.includes(searchTerm) || 
-    c.email.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  const filteredCustomers = customersList.filter(c => {
+    const name = c.name ? String(c.name).toLowerCase() : '';
+    const phone = c.phone ? String(c.phone) : '';
+    const email = c.email ? String(c.email).toLowerCase() : '';
+    const term = searchTerm.toLowerCase();
+    
+    return name.includes(term) || phone.includes(searchTerm) || email.includes(term);
+  });
 
   if (isLoading && customersList.length === 0) {
     return (
@@ -124,16 +137,16 @@ export default function CustomersPage() {
                         <td className="px-6 py-5">
                           <div className="flex items-center gap-3">
                             <div className="w-10 h-10 rounded-full bg-[#f5f5f3] flex items-center justify-center text-[13px] font-bold text-[#1a1a1a] group-hover:bg-[#f97316] group-hover:text-white transition-colors shrink-0">
-                              {customer.name.split(' ').map((n: string) => n[0]).join('')}
+                              {getInitials(customer.name)}
                             </div>
                             <div className="min-w-0">
-                              <p className="text-[14px] font-bold text-[#1a1a1a] truncate">{customer.name}</p>
-                              <p className="text-[12px] text-[#888] truncate">{customer.email}</p>
+                              <p className="text-[14px] font-bold text-[#1a1a1a] truncate">{customer.name || 'Unnamed Customer'}</p>
+                              <p className="text-[12px] text-[#888] truncate">{customer.email || 'No email'}</p>
                             </div>
                           </div>
                         </td>
                         <td className="px-6 py-5">
-                          <p className="text-[13px] font-medium text-[#444]">{customer.phone}</p>
+                          <p className="text-[13px] font-medium text-[#444]">{customer.phone || 'No phone'}</p>
                         </td>
                         <td className="px-6 py-5">
                           <div className="flex items-center justify-center gap-6">
@@ -182,10 +195,10 @@ export default function CustomersPage() {
                     <div className="flex items-start justify-between gap-3">
                       <div className="flex items-center gap-3">
                         <div className="w-12 h-12 rounded-2xl bg-[#f5f5f3] flex items-center justify-center text-[15px] font-bold text-[#1a1a1a]">
-                          {customer.name.split(' ').map((n: string) => n[0]).join('')}
+                          {getInitials(customer.name)}
                         </div>
                         <div>
-                          <h4 className="text-[15px] font-bold text-[#1a1a1a]">{customer.name}</h4>
+                          <h4 className="text-[15px] font-bold text-[#1a1a1a]">{customer.name || 'Unnamed Customer'}</h4>
                           <span className={`inline-block px-2 py-0.5 rounded-md text-[9px] font-bold uppercase tracking-wider mt-1 ${
                             customer.status === 'Returning' 
                               ? 'bg-green-100 text-green-600' 
@@ -204,8 +217,8 @@ export default function CustomersPage() {
                     <div className="grid grid-cols-2 gap-3">
                       <div className="p-3 bg-[#fafaf9] rounded-2xl border border-[#f0f0ee]">
                         <p className="text-[10px] font-bold text-[#aaa] uppercase tracking-wider mb-1">Contact Info</p>
-                        <p className="text-[12px] font-medium text-[#444] truncate">{customer.phone}</p>
-                        <p className="text-[11px] text-[#888] truncate">{customer.email}</p>
+                        <p className="text-[12px] font-medium text-[#444] truncate">{customer.phone || 'No phone'}</p>
+                        <p className="text-[11px] text-[#888] truncate">{customer.email || 'No email'}</p>
                       </div>
                       <div className="p-3 bg-[#fafaf9] rounded-2xl border border-[#f0f0ee] flex items-center justify-around">
                         <div className="text-center">
@@ -232,9 +245,9 @@ export default function CustomersPage() {
             <div className="bg-white rounded-[32px] border border-[#eee] p-6 shadow-sm sticky top-24 space-y-8">
               <div className="text-center">
                 <div className="w-20 h-20 rounded-full bg-[#f97316]/10 text-[#f97316] flex items-center justify-center text-2xl font-bold mx-auto mb-4 border-2 border-white shadow-xl">
-                  {selectedCustomer.name.split(' ').map((n: string) => n[0]).join('')}
+                  {getInitials(selectedCustomer.name)}
                 </div>
-                <h3 className="text-lg font-bold text-[#1a1a1a]">{selectedCustomer.name}</h3>
+                <h3 className="text-lg font-bold text-[#1a1a1a]">{selectedCustomer.name || 'Unnamed Customer'}</h3>
                 <p className="text-[13px] text-[#888]">{selectedCustomer.status} Customer</p>
               </div>
 

@@ -2,9 +2,10 @@ import { IsString, IsOptional } from 'class-validator';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 
 export class CustomerGameStartDto {
-  @ApiProperty()
+  @ApiPropertyOptional()
+  @IsOptional()
   @IsString()
-  gameId: string;
+  gameId?: string;
 
   @ApiPropertyOptional()
   @IsOptional()

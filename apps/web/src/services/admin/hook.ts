@@ -256,11 +256,12 @@ export function useUpdateAdminRedemption() {
 
 /* ─── Partners ─── */
 
-export function useAdminPartners() {
+export function useAdminPartners(options?: { enabled?: boolean }) {
   return useQuery({
     queryKey: adminKeys.partners,
     queryFn: () =>
       api.get('/admin/partners').then((r) => r.data.data ?? r.data),
+    ...options,
   });
 }
 

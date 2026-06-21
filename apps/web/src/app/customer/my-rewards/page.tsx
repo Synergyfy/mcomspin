@@ -3,6 +3,7 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useCustomerRewards } from '@/services/customer';
+import QRCode from '@/components/QRCode';
 import { 
   Gift, 
   Clock, 
@@ -17,8 +18,9 @@ import Link from 'next/link';
 
 export default function MyRewardsPage() {
   const { data: walletData, isLoading } = useCustomerRewards();
-  const [filter, setFilter] = useState<'all' | 'unclaimed' | 'featured' | 'expiring'>('all');
+  const [filter, setFilter] = useState<'all' | 'unclaimed' | 'expiring'>('all');
   const [selectedReward, setSelectedReward] = useState<any>(null);
+  const [searchQuery, setSearchQuery] = useState('');
 
   const walletList = React.useMemo(() => {
     if (!walletData || typeof walletData !== 'object') return [];
@@ -39,17 +41,37 @@ export default function MyRewardsPage() {
         details: reward.description || '',
         code: code,
         qrCode: code,
+        expiresAt: item.expiresAt,
         expiry: item.expiresAt ? new Date(item.expiresAt).toLocaleDateString() : 'N/A',
         status: item.status,
       };
     });
   }, [walletData]);
 
-  // Filter logic based on the architecture doc requirements:
+  // Filter logic
   const filteredRewards = walletList.filter((reward: any) => {
-    if (filter === 'unclaimed') return reward.status === 'active';
-    return true; 
+    const matchesFilter = filter === 'all' || (
+      filter === 'unclaimed' ? reward.status === 'active' :
+      filter === 'expiring' ? reward.status === 'active' && reward.expiresAt && new Date(reward.expiresAt).getTime() - Date.now() < 7 * 86400000 :
+      true
+    );
+    const matchesSearch = !searchQuery || 
+      (reward.title || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
+      (reward.provider || '').toLowerCase().includes(searchQuery.toLowerCase());
+    return matchesFilter && matchesSearch;
   });
+
+  const getExpiryLabel = (reward: any) => {
+    if (!reward.expiresAt || reward.expiresAt === 'N/A') return 'No expiry';
+    const diffMs = new Date(reward.expiresAt).getTime() - Date.now();
+    if (diffMs < 0) return 'Expired';
+    const diffDays = Math.floor(diffMs / 86400000);
+    if (diffDays === 0) return 'Expires today';
+    if (diffDays === 1) return 'Expires tomorrow';
+    if (diffDays < 30) return `Expires in ${diffDays}d`;
+    const diffMonths = Math.floor(diffDays / 30);
+    return `Expires in ${diffMonths}m`;
+  };
 
   return (
     <div className="space-y-8 pb-20 text-left bg-stone-50/20 min-h-screen">
@@ -80,17 +102,21 @@ export default function MyRewardsPage() {
       {/* Filter Tabs & Search */}
       <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
         <div className="flex items-center bg-white border border-stone-100 p-2 rounded-2xl shadow-sm overflow-x-auto w-full sm:w-auto custom-scrollbar gap-1">
-          {(['all', 'unclaimed', 'expiring', 'featured'] as const).map((tab) => (
+          {([
+            { key: 'all' as const, label: 'All Rewards' },
+            { key: 'unclaimed' as const, label: 'Available' },
+            { key: 'expiring' as const, label: 'Expiring' },
+          ]).map((tab) => (
             <button
-              key={tab}
-              onClick={() => setFilter(tab)}
+              key={tab.key}
+              onClick={() => setFilter(tab.key)}
               className={`px-5 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all whitespace-nowrap ${
-                filter === tab 
+                filter === tab.key 
                   ? 'bg-orange-500 text-white shadow-lg shadow-orange-500/20' 
                   : 'text-stone-400 hover:text-stone-900 hover:bg-stone-50'
               }`}
             >
-              {tab === 'unclaimed' ? 'Available' : tab}
+              {tab.label}
             </button>
           ))}
         </div>
@@ -100,6 +126,8 @@ export default function MyRewardsPage() {
           <input 
             type="text" 
             placeholder="Search rewards..." 
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
             className="w-full pl-11 pr-4 py-4 bg-white border border-stone-200 rounded-2xl text-sm focus:outline-none focus:border-orange-500 focus:ring-4 focus:ring-orange-500/5 transition-all font-bold placeholder:text-stone-300 text-stone-900"
           />
         </div>
@@ -108,7 +136,11 @@ export default function MyRewardsPage() {
       {/* Rewards Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         <AnimatePresence mode="popLayout">
-          {filteredRewards.length > 0 ? (
+          {isLoading ? (
+            <div className="col-span-full flex items-center justify-center py-20">
+              <div className="w-6 h-6 border-2 border-orange-500 border-t-transparent rounded-full animate-spin" />
+            </div>
+          ) : filteredRewards.length > 0 ? (
             filteredRewards.map((reward: any) => (
               <motion.div
                 layout
@@ -149,7 +181,7 @@ export default function MyRewardsPage() {
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-2 text-stone-300">
                       <Clock className="w-3.5 h-3.5" />
-                      <span className="text-[10px] font-black uppercase tracking-widest">Expires in 12d</span>
+                      <span className="text-[10px] font-black uppercase tracking-widest">{getExpiryLabel(reward)}</span>
                     </div>
                     <div className="text-xl font-black text-stone-900 tracking-tighter">
                       {reward.value}
@@ -190,7 +222,7 @@ export default function MyRewardsPage() {
                 <p className="text-stone-400 text-sm font-medium">Try adjusting your filters or play a game to win!</p>
               </div>
               <button 
-                onClick={() => setFilter('all')}
+                onClick={() => { setFilter('all'); setSearchQuery(''); }}
                 className="text-[10px] font-black text-orange-500 uppercase tracking-widest hover:underline mt-2"
               >
                 Clear all filters
@@ -240,13 +272,8 @@ export default function MyRewardsPage() {
 
                 {/* Vault Key Section */}
                 <div className="bg-stone-50 border border-stone-100 rounded-[2.5rem] p-8 flex flex-col items-center gap-6 shadow-inner">
-                  <div className="w-40 h-40 bg-white border border-stone-100 rounded-[2rem] p-6 flex items-center justify-center shadow-sm">
-                    {/* Simulated QR */}
-                    <div className="grid grid-cols-6 gap-1.5 w-full h-full opacity-80">
-                      {[...Array(36)].map((_, i) => (
-                        <div key={i} className={`rounded-sm ${i % 3 === 0 || i % 7 === 0 ? 'bg-stone-900' : 'bg-white'}`} />
-                      ))}
-                    </div>
+                  <div className="w-40 h-40 bg-white border border-stone-100 rounded-[2rem] p-3 flex items-center justify-center shadow-sm">
+                    <QRCode value={selectedReward.code || selectedReward.qrCode || 'MCOM-REWARD'} size={130} />
                   </div>
                   <div className="text-center space-y-2">
                     <p className="text-[10px] font-black text-stone-300 uppercase tracking-[0.3em]">Vault Access Code</p>

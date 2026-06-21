@@ -15,6 +15,9 @@ import { CustomerLeaderboardController } from './controllers/customer-leaderboar
 import { CustomerReferralsController } from './controllers/customer-referrals.controller';
 import { CustomerProfileController } from './controllers/customer-profile.controller';
 import { CustomerSettingsController } from './controllers/customer-settings.controller';
+import { CustomerFeaturesController } from './controllers/customer-features.controller';
+import { CustomerEventsController } from './controllers/customer-events.controller';
+import { CustomerPromotionsController } from './controllers/customer-promotions.controller';
 import { CustomerAuthService } from './services/customer-auth.service';
 import { CustomerDashboardService } from './services/customer-dashboard.service';
 import { CustomerDiscoverService } from './services/customer-discover.service';
@@ -28,6 +31,8 @@ import { CustomerLeaderboardService } from './services/customer-leaderboard.serv
 import { CustomerReferralsService } from './services/customer-referrals.service';
 import { CustomerProfileService } from './services/customer-profile.service';
 import { CustomerSettingsService } from './services/customer-settings.service';
+import { CustomerEventsService } from './services/customer-events.service';
+import { CustomerPromotionsService } from './services/customer-promotions.service';
 import { CustomerGuard } from './guards/customer.guard';
 
 @Module({
@@ -56,6 +61,9 @@ import { CustomerGuard } from './guards/customer.guard';
     CustomerReferralsController,
     CustomerProfileController,
     CustomerSettingsController,
+    CustomerFeaturesController,
+    CustomerEventsController,
+    CustomerPromotionsController,
   ],
   providers: [
     CustomerAuthService,
@@ -71,6 +79,8 @@ import { CustomerGuard } from './guards/customer.guard';
     CustomerReferralsService,
     CustomerProfileService,
     CustomerSettingsService,
+    CustomerEventsService,
+    CustomerPromotionsService,
     CustomerGuard,
   ],
   exports: [CustomerGuard],

@@ -14,6 +14,36 @@ export class CustomerGameService {
       : await this.prisma.game.findFirst({ where: { type: 'BallDrop', isActive: true, deletedAt: null } });
     if (!game) throw new NotFoundException('No active game found');
 
+    // Resolve which business owns this campaign so we can read the right GameConfig limits
+    let configLimits: { daily: number; weekly: number } = { daily: 5, weekly: 20 };
+    try {
+      let gameConfigQuery: any = { gameId: game.id, isActive: true };
+      if (campaignId) {
+        const campaignBusiness = await this.prisma.campaignBusiness.findFirst({
+          where: { campaignId },
+          select: { businessId: true },
+        });
+        if (campaignBusiness?.businessId) {
+          gameConfigQuery = { ...gameConfigQuery, businessId: campaignBusiness.businessId };
+        }
+      }
+      const gameConfig = await this.prisma.gameConfig.findFirst({
+        where: gameConfigQuery,
+        orderBy: { createdAt: 'desc' },
+      });
+      if (gameConfig) {
+        const cfg = gameConfig.config as any;
+        if (cfg?.limits) {
+          configLimits = {
+            daily: Number(cfg.limits.daily) || 5,
+            weekly: Number(cfg.limits.weekly) || 20,
+          };
+        }
+      }
+    } catch {
+      // fall back to defaults
+    }
+
     const today = new Date();
     today.setHours(0, 0, 0, 0);
     const todayEnd = new Date(today);
@@ -22,9 +52,6 @@ export class CustomerGameService {
     const todayPlays = await this.prisma.gameSession.count({
       where: { customerId, gameId: game.id, startedAt: { gte: today, lt: todayEnd } },
     });
-
-    const dailyLimit = 5;
-    const weeklyLimit = 20;
 
     const weekStart = new Date(today);
     weekStart.setDate(weekStart.getDate() - weekStart.getDay());
@@ -39,12 +66,17 @@ export class CustomerGameService {
         where: { gameId_campaignId: { gameId: game.id, campaignId } },
       });
       if (gameCampaign) {
-        maxPlaysPerCustomer = gameCampaign.maxPlaysPerCustomer ?? null;
+        // maxPlaysPerCustomer defaults to 1 in the DB schema — only enforce if explicitly > 0
+        const rawMax = gameCampaign.maxPlaysPerCustomer;
+        maxPlaysPerCustomer = rawMax != null && rawMax > 0 ? rawMax : null;
         campaignPlays = await this.prisma.gameSession.count({
           where: { customerId, gameId: game.id, metadata: { path: ['campaignId'], equals: campaignId } },
         });
       }
     }
+
+    const dailyLimit = configLimits.daily;
+    const weeklyLimit = configLimits.weekly;
 
     return {
       eligible: todayPlays < dailyLimit && weekPlays < weeklyLimit && (!maxPlaysPerCustomer || campaignPlays < maxPlaysPerCustomer),
@@ -61,19 +93,46 @@ export class CustomerGameService {
     const eligibility = await this.checkEligibility(customerId, dto.gameId, dto.campaignId);
     if (!eligibility.eligible) throw new ForbiddenException('Daily play limit reached');
 
-    let config = dto.configId
-      ? await this.prisma.gameConfig.findUnique({ where: { id: dto.configId } })
-      : await this.prisma.gameConfig.findFirst({
-          where: { gameId: dto.gameId, isActive: true },
+    const gameId = eligibility.game.id;
+
+    let config = null;
+    if (dto.configId) {
+      config = await this.prisma.gameConfig.findUnique({ where: { id: dto.configId } });
+    } else {
+      let campaignBusinessId = null;
+      if (dto.campaignId) {
+        const campaignBusiness = await this.prisma.campaignBusiness.findFirst({
+          where: { campaignId: dto.campaignId },
+          select: { businessId: true },
+        });
+        campaignBusinessId = campaignBusiness?.businessId;
+      }
+
+      if (campaignBusinessId) {
+        config = await this.prisma.gameConfig.findFirst({
+          where: { gameId, businessId: campaignBusinessId, isActive: true },
           orderBy: { createdAt: 'desc' },
         });
+      }
+
+      if (!config) {
+        config = await this.prisma.gameConfig.findFirst({
+          where: { gameId, isActive: true },
+          orderBy: { createdAt: 'desc' },
+        });
+      }
+    }
     if (!config) throw new NotFoundException('No active game configuration found');
 
-    const boxes = this.shuffleBoxes(config.config as any[] || []);
+    const rawConfig = config.config as any;
+    const boxList: any[] = Array.isArray(rawConfig)
+      ? rawConfig
+      : (rawConfig?.boxes ?? this.generateDefaultBoxes());
+    const boxes = this.shuffleBoxes(boxList);
 
     const session = await this.prisma.gameSession.create({
       data: {
-        gameId: dto.gameId,
+        gameId,
         configId: config.id,
         customerId,
         metadata: { campaignId: dto.campaignId, boxes },

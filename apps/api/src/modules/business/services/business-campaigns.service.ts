@@ -44,7 +44,7 @@ export class BusinessCampaignsService {
         name: dto.name,
         description: dto.description,
         type: dto.type,
-        status: 'Draft',
+        status: dto.status ?? 'Active',
         startDate: new Date(dto.startDate),
         endDate: new Date(dto.endDate),
         budget: dto.budget ? Number(dto.budget) : undefined,

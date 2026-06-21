@@ -1,4 +1,4 @@
-import { IsOptional, IsObject, IsBoolean, IsString } from 'class-validator';
+import { IsOptional, IsObject, IsBoolean, IsArray, IsString } from 'class-validator';
 import { ApiPropertyOptional } from '@nestjs/swagger';
 
 export class UpdateGameConfigDto {
@@ -14,6 +14,7 @@ export class UpdateGameConfigDto {
 
   @ApiPropertyOptional()
   @IsOptional()
-  @IsString()
-  campaignId?: string;
+  @IsArray()
+  @IsString({ each: true })
+  campaignIds?: string[];
 }

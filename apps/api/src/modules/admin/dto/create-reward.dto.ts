@@ -1,4 +1,4 @@
-import { IsString, IsOptional, IsEnum, IsDecimal, IsBoolean, IsObject } from 'class-validator';
+import { IsString, IsOptional, IsEnum, IsDecimal, IsBoolean, IsObject, IsNumber, Min } from 'class-validator';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { RewardType } from '@prisma/client';
 
@@ -16,9 +16,10 @@ export class CreateRewardDto {
   @IsEnum(RewardType)
   type: RewardType;
 
-  @ApiProperty()
+  @ApiPropertyOptional()
+  @IsOptional()
   @IsDecimal()
-  value: string;
+  value?: string;
 
   @ApiPropertyOptional()
   @IsOptional()
@@ -39,4 +40,16 @@ export class CreateRewardDto {
   @IsOptional()
   @IsObject()
   metadata?: Record<string, any>;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsNumber()
+  @Min(0)
+  totalStock?: number;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsNumber()
+  @Min(0)
+  lowStockThreshold?: number;
 }

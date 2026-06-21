@@ -15,7 +15,9 @@ import {
   Menu,
   X,
   PanelLeftClose,
-  PanelLeftOpen
+  PanelLeftOpen,
+  Trophy,
+  Bell
 } from 'lucide-react';
 import { AuthProxy } from '../proxy';
 
@@ -25,6 +27,8 @@ const navItems = [
   { name: 'Active Games', href: '/customer/active-games', icon: Gamepad2 },
   { name: 'Reward Wallet', href: '/customer/wallet', icon: Wallet },
   { name: 'Favorite Businesses', href: '/customer/favorites', icon: Heart },
+  { name: 'Leaderboard', href: '/customer/leaderboard', icon: Trophy },
+  { name: 'Notifications', href: '/customer/notifications', icon: Bell },
   { name: 'Activity History', href: '/customer/history', icon: History },
 ];
 

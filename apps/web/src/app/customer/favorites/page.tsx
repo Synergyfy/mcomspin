@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useDiscover, useFollowBusiness } from '@/services/customer';
 import { 
@@ -23,6 +23,8 @@ export default function FavoritesPage() {
   const { data: businesses } = useDiscover({ followed: 'true' });
   const followMutation = useFollowBusiness();
   const [searchQuery, setSearchQuery] = useState('');
+  const [notifEnabled, setNotifEnabled] = useState(true);
+  const [menuOpenId, setMenuOpenId] = useState<string | null>(null);
 
   const favorites = Array.isArray(businesses) ? businesses : (businesses?.data ?? businesses?.businesses ?? []);
   const filteredFavorites = favorites.filter((f: any) => 
@@ -32,7 +34,16 @@ export default function FavoritesPage() {
 
   const removeFavorite = (id: string) => {
     followMutation.mutate(id);
+    setMenuOpenId(null);
   };
+
+  // Close MoreVertical menu on outside click
+  useEffect(() => {
+    if (!menuOpenId) return;
+    const handler = () => setMenuOpenId(null);
+    document.addEventListener('click', handler);
+    return () => document.removeEventListener('click', handler);
+  }, [menuOpenId]);
 
   return (
     <div className="space-y-8 pb-20 text-left">
@@ -52,8 +63,11 @@ export default function FavoritesPage() {
             <span className="text-[12px] font-bold text-[#1a1a1a]">{favorites.length || 0} Followed</span>
           </div>
           <div className="w-px h-6 bg-[#eee]" />
-          <button className="text-[10px] font-bold text-[#bbb] hover:text-[#f97316] uppercase tracking-widest transition-colors">
-            Manage Notifications
+          <button
+            onClick={() => setNotifEnabled(!notifEnabled)}
+            className={`text-[10px] font-bold uppercase tracking-widest transition-colors ${notifEnabled ? 'text-[#f97316] hover:text-[#bbb]' : 'text-[#bbb] hover:text-[#f97316]'}`}
+          >
+            {notifEnabled ? 'Notifications On' : 'Notifications Off'}
           </button>
         </div>
       </header>
@@ -169,13 +183,46 @@ export default function FavoritesPage() {
                   )}
 
                   {/* Actions */}
-                  <div className="flex gap-2 pt-4">
-                    <button className="flex-1 bg-[#1a1a1a] hover:bg-[#f97316] text-white py-3 rounded-2xl text-[10px] font-bold uppercase tracking-[0.15em] transition-all shadow-md active:scale-95">
+                  <div className="flex gap-2 pt-4 relative">
+                    <Link
+                      href={biz.externalUrl || biz.website || '/customer/active-games'}
+                      target={biz.externalUrl || biz.website ? '_blank' : undefined}
+                      rel={biz.externalUrl || biz.website ? 'noopener noreferrer' : undefined}
+                      className="flex-1 bg-[#1a1a1a] hover:bg-[#f97316] text-white py-3 rounded-2xl text-[10px] font-bold uppercase tracking-[0.15em] transition-all shadow-md active:scale-95 text-center"
+                    >
                       Visit MCOM
-                    </button>
-                    <button className="px-4 border border-[#eee] hover:border-[#1a1a1a] rounded-2xl text-[#bbb] hover:text-[#1a1a1a] transition-all">
-                      <MoreVertical className="w-4 h-4" />
-                    </button>
+                    </Link>
+                    <div className="relative">
+                      <button
+                        onClick={(e) => { e.stopPropagation(); setMenuOpenId(menuOpenId === biz.id ? null : biz.id); }}
+                        className="px-4 border border-[#eee] hover:border-[#1a1a1a] rounded-2xl text-[#bbb] hover:text-[#1a1a1a] transition-all h-full"
+                      >
+                        <MoreVertical className="w-4 h-4" />
+                      </button>
+                      {menuOpenId === biz.id && (
+                        <motion.div
+                          initial={{ opacity: 0, y: -5 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          onClick={(e) => e.stopPropagation()}
+                          className="absolute right-0 bottom-full mb-2 w-44 bg-white border border-[#eee] rounded-2xl shadow-xl overflow-hidden z-50"
+                        >
+                          <button
+                            onClick={() => removeFavorite(biz.id)}
+                            className="w-full flex items-center gap-3 px-4 py-3 text-[11px] font-bold text-red-500 hover:bg-red-50 transition-colors"
+                          >
+                            <Heart className="w-4 h-4" />
+                            Unfollow
+                          </button>
+                          <Link
+                            href="/customer/history"
+                            className="w-full flex items-center gap-3 px-4 py-3 text-[11px] font-bold text-[#666] hover:bg-stone-50 transition-colors"
+                          >
+                            <History className="w-4 h-4" />
+                            View History
+                          </Link>
+                        </motion.div>
+                      )}
+                    </div>
                   </div>
                 </div>
               </motion.div>
@@ -222,9 +269,12 @@ export default function FavoritesPage() {
             </p>
           </div>
           <div className="flex justify-center gap-4">
-            <button className="bg-white text-[#f97316] px-10 py-4 rounded-2xl text-[11px] font-bold uppercase tracking-[0.2em] shadow-xl hover:scale-105 transition-transform active:scale-95">
+            <Link
+              href="/customer/active-games"
+              className="bg-white text-[#f97316] px-10 py-4 rounded-2xl text-[11px] font-bold uppercase tracking-[0.2em] shadow-xl hover:scale-105 transition-transform active:scale-95 inline-block"
+            >
               Discover New
-            </button>
+            </Link>
           </div>
         </div>
       </section>

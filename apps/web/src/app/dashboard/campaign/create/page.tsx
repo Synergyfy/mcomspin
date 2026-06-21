@@ -2,7 +2,7 @@
 
 import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { useCreateBusinessCampaign } from '@/services/business';
+import { useCreateBusinessCampaign, useUpdateBusinessGame } from '@/services/business';
 import { 
   ArrowLeft, 
   ArrowRight, 
@@ -19,9 +19,19 @@ import {
   Target
 } from 'lucide-react';
 
+type RewardSlot = {
+  id: string;
+  label: string;
+  hasReward: boolean;
+  rewardType: 'Discount' | 'Voucher' | 'FreeProduct' | 'Cashback' | 'Points';
+  rewardValue: number;
+  quantity: number;
+};
+
 export default function CreateCampaignWizard() {
   const router = useRouter();
   const createCampaign = useCreateBusinessCampaign();
+  const updateGame = useUpdateBusinessGame();
   const [step, setStep] = useState(1);
   const totalSteps = 4;
 
@@ -30,18 +40,56 @@ export default function CreateCampaignWizard() {
   const [campaignDesc, setCampaignDesc] = useState('');
   const [winProbability, setWinProbability] = useState(30);
   const [dailyDropLimit, setDailyDropLimit] = useState(500);
+  const [startDate, setStartDate] = useState('');
+  const [endDate, setEndDate] = useState('');
+  const [slots, setSlots] = useState<RewardSlot[]>([]);
+
+  const addSlot = () => setSlots([...slots, {
+    id: crypto.randomUUID(),
+    label: '',
+    hasReward: false,
+    rewardType: 'Discount' as const,
+    rewardValue: 0,
+    quantity: 1,
+  }]);
+
+  const updateSlot = (id: string, patch: Partial<RewardSlot>) =>
+    setSlots(slots.map(s => s.id === id ? { ...s, ...patch } : s));
+
+  const removeSlot = (id: string) =>
+    setSlots(slots.filter(s => s.id !== id));
 
   const nextStep = () => setStep(prev => Math.min(prev + 1, totalSteps));
   const prevStep = () => setStep(prev => Math.max(prev - 1, 1));
 
-  const handleLaunch = async () => {
-    const result = await createCampaign.mutateAsync({
+  const handleLaunch = async (status: 'Active' | 'Draft' = 'Active') => {
+    const campaign = await createCampaign.mutateAsync({
       name: campaignName,
       description: campaignDesc,
-      winProbability,
-      dailyDropLimit,
+      type: 'HighStreet',
+      status: status,
+      startDate: new Date(startDate).toISOString(),
+      endDate: new Date(endDate).toISOString(),
     });
-    router.push(`/dashboard/campaign/${result.id ?? result._id}`);
+    const campaignId = campaign.id ?? campaign._id;
+
+    await updateGame.mutateAsync({
+      config: {
+        winProbability,
+        dailyDropLimit,
+        boxes: slots.map((s, i) => ({
+          index: i,
+          hasReward: s.hasReward,
+          label: s.label,
+          ...(s.hasReward ? { rewardType: s.rewardType, rewardValue: s.rewardValue } : {}),
+          quantity: s.quantity,
+        })),
+      },
+      isActive: true,
+      campaignIds: [campaignId],
+    });
+
+    router.push(`/dashboard/campaign/${campaignId}`);
   };
 
   return (
@@ -179,11 +227,11 @@ export default function CreateCampaignWizard() {
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <label className="font-label-sm font-bold text-on-surface-variant block mb-1">Start Date</label>
-                  <input type="date" className="w-full p-3 rounded-lg bg-surface-container-low border-none font-medium text-sm outline-none focus:ring-2 focus:ring-primary/20" />
+                  <input type="date" value={startDate} onChange={(e) => setStartDate(e.target.value)} className="w-full p-3 rounded-lg bg-surface-container-low border-none font-medium text-sm outline-none focus:ring-2 focus:ring-primary/20" />
                 </div>
                 <div>
                   <label className="font-label-sm font-bold text-on-surface-variant block mb-1">End Date</label>
-                  <input type="date" className="w-full p-3 rounded-lg bg-surface-container-low border-none font-medium text-sm outline-none focus:ring-2 focus:ring-primary/20" />
+                  <input type="date" value={endDate} onChange={(e) => setEndDate(e.target.value)} className="w-full p-3 rounded-lg bg-surface-container-low border-none font-medium text-sm outline-none focus:ring-2 focus:ring-primary/20" />
                 </div>
               </div>
             </div>
@@ -197,17 +245,55 @@ export default function CreateCampaignWizard() {
               <h3 className="font-display font-bold text-lg flex items-center gap-2">
                 <Gift className="w-5 h-5 text-primary" /> Pegboard Slots
               </h3>
-              <button className="text-sm font-bold text-primary bg-primary/10 px-3 py-1.5 rounded-lg flex items-center gap-1 hover:bg-primary/20 transition-colors">
+              <button onClick={addSlot} className="text-sm font-bold text-primary bg-primary/10 px-3 py-1.5 rounded-lg flex items-center gap-1 hover:bg-primary/20 transition-colors">
                 <Plus className="w-4 h-4" /> Add Slot
               </button>
             </div>
 
             <div className="space-y-4">
-              <div className="flex flex-col items-center justify-center p-8 bg-surface-container-low border border-dashed border-outline-variant/30 rounded-xl text-center">
-                <Gift className="w-10 h-10 text-outline-variant mb-3" />
-                <p className="font-bold text-on-surface-variant">No reward slots configured</p>
-                <p className="text-sm text-on-surface-variant/70">Click &quot;Add Slot&quot; above to configure prizes for your pegboard.</p>
-              </div>
+              {slots.length === 0 ? (
+                <div className="flex flex-col items-center justify-center p-8 bg-surface-container-low border border-dashed border-outline-variant/30 rounded-xl text-center">
+                  <Gift className="w-10 h-10 text-outline-variant mb-3" />
+                  <p className="font-bold text-on-surface-variant">No reward slots configured</p>
+                  <p className="text-sm text-on-surface-variant/70">Click &quot;Add Slot&quot; above to configure prizes for your pegboard.</p>
+                </div>
+              ) : (
+                <div className="space-y-3">
+                  {slots.map((slot) => (
+                    <div key={slot.id} className="bg-surface-container-low rounded-xl p-4 border border-outline-variant/20 flex flex-col gap-3">
+                      <div className="flex items-center gap-3">
+                        <input
+                          type="text"
+                          value={slot.label}
+                          onChange={(e) => updateSlot(slot.id, { label: e.target.value })}
+                          placeholder="Slot label (e.g. Small Win)"
+                          className="flex-1 h-10 px-3 rounded-lg bg-surface-container border border-outline-variant/30 outline-none focus:border-primary text-sm font-medium"
+                        />
+                        <button onClick={() => removeSlot(slot.id)} className="text-red-400 hover:text-red-600 text-sm font-bold px-2">Delete</button>
+                      </div>
+                      <div className="flex flex-wrap items-center gap-4">
+                        <label className="flex items-center gap-2 text-sm font-medium text-on-surface-variant">
+                          <input type="checkbox" checked={slot.hasReward} onChange={(e) => updateSlot(slot.id, { hasReward: e.target.checked })} className="accent-primary" />
+                          Has reward
+                        </label>
+                        {slot.hasReward && (
+                          <>
+                            <select value={slot.rewardType} onChange={(e) => updateSlot(slot.id, { rewardType: e.target.value as RewardSlot['rewardType'] })} className="h-9 px-2 rounded-lg bg-surface-container border border-outline-variant/30 outline-none text-sm">
+                              <option value="Discount">Discount</option>
+                              <option value="Voucher">Voucher</option>
+                              <option value="FreeProduct">Free Product</option>
+                              <option value="Cashback">Cashback</option>
+                              <option value="Points">Points</option>
+                            </select>
+                            <input type="number" value={slot.rewardValue} onChange={(e) => updateSlot(slot.id, { rewardValue: Number(e.target.value) })} placeholder="Value" className="w-24 h-9 px-3 rounded-lg bg-surface-container border border-outline-variant/30 outline-none text-sm" />
+                            <input type="number" value={slot.quantity} onChange={(e) => updateSlot(slot.id, { quantity: Number(e.target.value) })} placeholder="Qty" className="w-20 h-9 px-3 rounded-lg bg-surface-container border border-outline-variant/30 outline-none text-sm" />
+                          </>
+                        )}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
           </div>
         )}
@@ -244,7 +330,7 @@ export default function CreateCampaignWizard() {
                 <Trophy className="w-5 h-5 text-primary shrink-0 mt-0.5" />
                 <div>
                   <h4 className="font-bold text-sm">Rewards Active</h4>
-                  <p className="text-on-surface-variant text-sm font-medium">Configured in reward slots</p>
+                  <p className="text-on-surface-variant text-sm font-medium">{slots.length} slot{slots.length !== 1 ? 's' : ''} configured</p>
                 </div>
               </div>
             </div>
@@ -273,12 +359,20 @@ export default function CreateCampaignWizard() {
               Continue <ArrowRight className="w-5 h-5" />
             </button>
           ) : (
-            <button 
-              onClick={handleLaunch}
-              className="flex-1 h-14 bg-primary text-white font-label-md font-bold rounded-full shadow-[0_4px_0_0_#7b2f00] flex items-center justify-center gap-2 hover:translate-y-[1px] hover:shadow-[0_3px_0_0_#7b2f00] active:translate-y-[3px] active:shadow-[0_1px_0_0_#7b2f00] transition-all uppercase tracking-widest"
-            >
-              <Rocket className="w-5 h-5" /> Launch Campaign
-            </button>
+            <>
+              <button 
+                onClick={() => handleLaunch('Draft')}
+                className="flex-1 h-14 bg-white text-stone-900 border-2 border-stone-200 font-label-md font-bold rounded-full flex items-center justify-center gap-2 hover:border-stone-400 active:scale-95 transition-all uppercase tracking-widest"
+              >
+                Save as Draft
+              </button>
+              <button 
+                onClick={() => handleLaunch('Active')}
+                className="flex-1 h-14 bg-primary text-white font-label-md font-bold rounded-full shadow-[0_4px_0_0_#7b2f00] flex items-center justify-center gap-2 hover:translate-y-[1px] hover:shadow-[0_3px_0_0_#7b2f00] active:translate-y-[3px] active:shadow-[0_1px_0_0_#7b2f00] transition-all uppercase tracking-widest"
+              >
+                <Rocket className="w-5 h-5" /> Launch Campaign
+              </button>
+            </>
           )}
         </div>
       </div>

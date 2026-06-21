@@ -36,6 +36,8 @@ import { BusinessPromotionsService } from './services/business-promotions.servic
 import { BusinessEventsService } from './services/business-events.service';
 import { BusinessGamificationService } from './services/business-gamification.service';
 import { BusinessSalesSettingsService } from './services/business-sales-settings.service';
+import { BusinessMembershipController } from './controllers/business-membership.controller';
+import { BusinessToolsController } from './controllers/business-tools.controller';
 import { BusinessOwnerGuard } from './guards/business-owner.guard';
 
 @Module({
@@ -68,6 +70,8 @@ import { BusinessOwnerGuard } from './guards/business-owner.guard';
     BusinessEventsController,
     BusinessGamificationController,
     BusinessSalesSettingsController,
+    BusinessMembershipController,
+    BusinessToolsController,
   ],
   providers: [
     BusinessAuthService,

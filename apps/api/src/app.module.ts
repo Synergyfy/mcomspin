@@ -8,6 +8,14 @@ import { UploadsModule } from './modules/uploads/uploads.module';
 import { AdminModule } from './modules/admin/admin.module';
 import { BusinessModule } from './modules/business/business.module';
 import { CustomerModule } from './modules/customer/customer.module';
+import { StorefrontModule } from './modules/storefront/storefront.module';
+import { MallAdminModule } from './modules/mall-admin/mall-admin.module';
+import { NotificationsModule } from './modules/notifications/notifications.module';
+import { BillingModule } from './modules/billing/billing.module';
+import { ModerationModule } from './modules/moderation/moderation.module';
+import { WebhooksModule } from './modules/webhooks/webhooks.module';
+import { WebsocketModule } from './modules/websocket/websocket.module';
+import { PublicModule } from './modules/public/public.module';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { APP_GUARD } from '@nestjs/core';
@@ -18,6 +26,7 @@ import { ThrottleGuard } from './common/guards/throttle.guard';
 import { BoroughScopeGuard } from './common/guards/borough-scope.guard';
 import { RequestLoggerMiddleware } from './common/middleware/request-logger.middleware';
 import { DeviceDetectorMiddleware } from './common/middleware/device-detector.middleware';
+import { WebhookHmacMiddleware } from './common/middleware/webhook-hmac.middleware';
 
 @Module({
   imports: [
@@ -30,6 +39,14 @@ import { DeviceDetectorMiddleware } from './common/middleware/device-detector.mi
     AdminModule,
     BusinessModule,
     CustomerModule,
+    StorefrontModule,
+    MallAdminModule,
+    NotificationsModule,
+    BillingModule,
+    ModerationModule,
+    WebhooksModule,
+    WebsocketModule,
+    PublicModule,
   ],
   controllers: [AppController],
   providers: [
@@ -45,6 +62,8 @@ export class AppModule implements NestModule {
   configure(consumer: MiddlewareConsumer) {
     consumer
       .apply(RequestLoggerMiddleware, DeviceDetectorMiddleware)
-      .forRoutes('*');
+      .forRoutes('*')
+      .apply(WebhookHmacMiddleware)
+      .forRoutes('webhooks');
   }
 }

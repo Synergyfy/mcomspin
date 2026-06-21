@@ -8,10 +8,21 @@ export class BusinessGameService {
 
   async getConfig(businessId: string) {
     const config = await this.prisma.gameConfig.findFirst({
-      where: { businessId, isActive: true },
+      where: { businessId },
       include: { game: true, sessions: { take: 5, orderBy: { createdAt: 'desc' } } },
     });
-    return config;
+    if (!config) return null;
+
+    const gameCampaigns = await this.prisma.gameCampaign.findMany({
+      where: { gameId: config.gameId },
+      include: { campaign: { select: { id: true, name: true } } },
+    });
+
+    return {
+      ...config,
+      config: config.config ?? {},
+      gameCampaigns,
+    };
   }
 
   async updateConfig(businessId: string, dto: UpdateGameConfigDto) {
@@ -19,20 +30,51 @@ export class BusinessGameService {
       where: { businessId },
     });
 
+    const game = await this.prisma.game.findFirst({ where: { type: 'BallDrop' } });
+    if (!game) throw new NotFoundException('No BallDrop game found');
+
     if (!config) {
-      const game = await this.prisma.game.findFirst({ where: { type: 'BallDrop' } });
-      if (!game) throw new NotFoundException('No BallDrop game found');
       config = await this.prisma.gameConfig.create({
-        data: { gameId: game.id, businessId, config: dto.config ?? {} },
+        data: { gameId: game.id, businessId, config: {} },
       });
+    }
+
+    const updateData: Record<string, any> = {};
+    if (dto.config !== undefined) updateData.config = dto.config;
+    if (dto.isActive !== undefined) updateData.isActive = dto.isActive;
+
+    if (dto.campaignIds !== undefined) {
+      // Find all campaigns owned by this business
+      const businessCampaigns = await this.prisma.campaign.findMany({
+        where: {
+          businesses: { some: { businessId } },
+        },
+        select: { id: true },
+      });
+      const businessCampaignIds = businessCampaigns.map((c) => c.id);
+
+      // Only delete game campaigns that are for this game AND belong to this business's campaigns
+      await this.prisma.gameCampaign.deleteMany({
+        where: {
+          gameId: game.id,
+          campaignId: { in: businessCampaignIds },
+        },
+      });
+
+      if (dto.campaignIds.length > 0) {
+        await this.prisma.gameCampaign.createMany({
+          data: dto.campaignIds.map((campaignId) => ({
+            gameId: game.id,
+            campaignId,
+            maxPlaysPerCustomer: null, // null = no per-campaign cap; rely on config daily/weekly limits
+          })),
+        });
+      }
     }
 
     return this.prisma.gameConfig.update({
       where: { id: config.id },
-      data: {
-        config: dto.config ?? undefined,
-        isActive: dto.isActive ?? undefined,
-      },
+      data: updateData,
     });
   }
 }
