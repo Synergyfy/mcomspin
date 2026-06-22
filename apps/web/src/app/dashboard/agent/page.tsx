@@ -19,7 +19,8 @@ import { useAutomations, useLiveMonitoring } from '@/services/dashboard';
 
 export default function AgentTrackerPage() {
   const [isRequesting, setIsRequesting] = useState(false);
-  const [hasRequested, setHasRequested] = useState(true); // Default to true for high-fidelity preview
+  const [hasRequested, setHasRequested] = useState(true);
+  const [replyText, setReplyText] = useState('');
 
   const { data: automations, isLoading: automationsLoading } = useAutomations();
   const { data: liveData } = useLiveMonitoring();
@@ -217,9 +218,20 @@ export default function AgentTrackerPage() {
                 <input 
                   type="text" 
                   placeholder="Reply to Sarah..."
+                  value={replyText}
+                  onChange={(e) => setReplyText(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' && replyText.trim()) {
+                      alert('Message sent to Sarah Jenkins');
+                      setReplyText('');
+                    }
+                  }}
                   className="w-full bg-[#f5f5f3] border-none rounded-2xl pl-4 pr-12 py-3.5 text-[13px] focus:outline-none focus:ring-2 focus:ring-[#f97316]/20 transition-all"
                 />
-                <button className="absolute right-2 top-1/2 -translate-y-1/2 w-8 h-8 bg-[#1a1a1a] text-white rounded-xl flex items-center justify-center hover:bg-[#f97316] transition-all">
+                <button
+                  onClick={() => { if (replyText.trim()) { alert('Message sent to Sarah Jenkins'); setReplyText(''); } }}
+                  className="absolute right-2 top-1/2 -translate-y-1/2 w-8 h-8 bg-[#1a1a1a] text-white rounded-xl flex items-center justify-center hover:bg-[#f97316] transition-all"
+                >
                   <ArrowRight className="w-4 h-4" />
                 </button>
               </div>

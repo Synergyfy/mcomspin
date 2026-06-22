@@ -1,11 +1,17 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
 import { PrismaService } from '../../../prisma/prisma.service';
+import { CreateRuleDto } from '../dto/create-rule.dto';
+import { UpdateRuleDto } from '../dto/update-rule.dto';
 
 @Injectable()
 export class ModerationService {
   constructor(private prisma: PrismaService) {}
 
   async getReports(page: number = 1, limit: number = 20, status?: string) {
+    const validStatuses = ['Pending', 'Resolved', 'Dismissed'];
+    if (status && !validStatuses.includes(status)) {
+      throw new BadRequestException(`Invalid status. Must be one of: ${validStatuses.join(', ')}`);
+    }
     const where: any = {};
     if (status) where.status = status;
 
@@ -92,11 +98,11 @@ export class ModerationService {
     return this.prisma.moderationRule.findMany({ orderBy: { priority: 'desc' } });
   }
 
-  async createRule(dto: any) {
-    return this.prisma.moderationRule.create({ data: dto });
+  async createRule(dto: CreateRuleDto) {
+    return this.prisma.moderationRule.create({ data: dto as any });
   }
 
-  async updateRule(id: string, dto: any) {
-    return this.prisma.moderationRule.update({ where: { id }, data: dto });
+  async updateRule(id: string, dto: UpdateRuleDto) {
+    return this.prisma.moderationRule.update({ where: { id }, data: dto as any });
   }
 }

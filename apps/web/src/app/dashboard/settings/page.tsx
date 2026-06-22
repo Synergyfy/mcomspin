@@ -13,9 +13,12 @@ export default function SettingsPage() {
     push: true,
   });
 
-  const { data: profile } = useBusinessProfile();
+  const { data: profile, isLoading } = useBusinessProfile();
   const updateProfile = useUpdateBusinessProfile();
   const updateSettings = useUpdateBusinessSettings();
+
+  const [profileError, setProfileError] = useState('');
+  const [brandingError, setBrandingError] = useState('');
 
   const nameRef = useRef<HTMLInputElement>(null);
   const industryRef = useRef<HTMLSelectElement>(null);
@@ -26,6 +29,22 @@ export default function SettingsPage() {
 
   const toggleNotif = (key: keyof typeof notifs) => {
     setNotifs(prev => ({ ...prev, [key]: !prev[key] }));
+  };
+
+  const handleSaveProfile = () => {
+    setProfileError('');
+    updateProfile.mutate(
+      { name: nameRef.current?.value, contactPhone: phoneRef.current?.value, contactEmail: emailRef.current?.value, description: descRef.current?.value },
+      { onError: (err: any) => setProfileError(err?.response?.data?.message ?? 'Failed to save profile') },
+    );
+  };
+
+  const handleSaveBranding = () => {
+    setBrandingError('');
+    updateSettings.mutate(
+      { primaryColor: colorRef.current?.value },
+      { onError: (err: any) => setBrandingError(err?.response?.data?.message ?? 'Failed to save branding') },
+    );
   };
 
   return (
@@ -58,6 +77,20 @@ export default function SettingsPage() {
           {/* Profile Tab */}
           {activeTab === 'Profile' && (
             <section className="bg-white rounded-[40px] border border-[#eee] p-8 shadow-sm space-y-8">
+              {isLoading ? (
+                <div className="animate-pulse space-y-6">
+                  <div className="h-6 w-40 bg-[#f0f0f0] rounded" />
+                  <div className="grid grid-cols-2 gap-6">
+                    <div className="h-12 bg-[#f0f0f0] rounded-2xl" />
+                    <div className="h-12 bg-[#f0f0f0] rounded-2xl" />
+                    <div className="h-24 bg-[#f0f0f0] rounded-2xl col-span-2" />
+                    <div className="h-12 bg-[#f0f0f0] rounded-2xl" />
+                    <div className="h-12 bg-[#f0f0f0] rounded-2xl" />
+                  </div>
+                </div>
+              ) : (
+              <>
+              {profileError && <div className="p-3 rounded-xl bg-red-50 border border-red-200 text-red-600 text-[13px] font-medium">{profileError}</div>}
               <h3 className="text-lg font-bold text-[#1a1a1a]">Business Details</h3>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div className="space-y-2">
@@ -86,8 +119,10 @@ export default function SettingsPage() {
                 </div>
               </div>
               <div className="flex justify-end pt-4">
-                <button onClick={() => updateProfile.mutate({ businessName: nameRef.current?.value, industry: industryRef.current?.value, description: descRef.current?.value, phone: phoneRef.current?.value, email: emailRef.current?.value })} className="px-8 py-3 bg-[#1a1a1a] text-white rounded-2xl font-bold text-[13px] hover:bg-[#f97316] transition-all shadow-lg">Save Changes</button>
+                <button onClick={handleSaveProfile} disabled={updateProfile.isPending} className="px-8 py-3 bg-[#1a1a1a] text-white rounded-2xl font-bold text-[13px] hover:bg-[#f97316] transition-all shadow-lg disabled:opacity-50">{updateProfile.isPending ? 'Saving...' : 'Save Changes'}</button>
               </div>
+              </>
+              )}
             </section>
           )}
 
@@ -118,8 +153,9 @@ export default function SettingsPage() {
                    <span className="text-[11px] font-bold text-[#aaa]">Click to upload wide banner image</span>
                 </div>
               </div>
+              {brandingError && <div className="p-3 rounded-xl bg-red-50 border border-red-200 text-red-600 text-[13px] font-medium">{brandingError}</div>}
               <div className="flex justify-end pt-4">
-                <button onClick={() => updateSettings.mutate({ primaryColor: colorRef.current?.value })} className="px-8 py-3 bg-[#1a1a1a] text-white rounded-2xl font-bold text-[13px] hover:bg-[#f97316] transition-all shadow-lg">Save Branding</button>
+                <button onClick={handleSaveBranding} disabled={updateSettings.isPending} className="px-8 py-3 bg-[#1a1a1a] text-white rounded-2xl font-bold text-[13px] hover:bg-[#f97316] transition-all shadow-lg disabled:opacity-50">{updateSettings.isPending ? 'Saving...' : 'Save Branding'}</button>
               </div>
             </section>
           )}

@@ -113,7 +113,7 @@ export default function CampaignsHome() {
               </div>
               <div className="flex-1">
                 <h4 className="font-bold text-stone-900 uppercase tracking-tight text-lg">{campaign.name}</h4>
-                <p className="text-stone-400 text-[10px] font-semibold uppercase tracking-widest">{campaign.status} • {campaign.plays ?? 0} Plays</p>
+                <p className="text-stone-400 text-[10px] font-semibold uppercase tracking-widest">{campaign.status} • {campaign._count?.rewards ?? 0} Rewards</p>
               </div>
               <button 
                 onClick={() => router.push(`/dashboard/campaign/${campaign.id}`)}

@@ -13,6 +13,34 @@ export default function StaffManagementPage() {
   const [inviteName, setInviteName] = useState('');
   const [inviteEmail, setInviteEmail] = useState('');
   const [inviteRole, setInviteRole] = useState('Cashier');
+  const [inviteError, setInviteError] = useState('');
+
+  const validateInvite = () => {
+    if (!inviteName.trim()) { setInviteError('Name is required'); return false; }
+    if (!inviteEmail.trim()) { setInviteError('Email is required'); return false; }
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(inviteEmail)) { setInviteError('Invalid email format'); return false; }
+    setInviteError('');
+    return true;
+  };
+
+  const handleSendInvite = () => {
+    if (!validateInvite()) return;
+    inviteStaff.mutate(
+      { name: inviteName.trim(), email: inviteEmail.trim(), role: inviteRole },
+      {
+        onSuccess: () => {
+          setIsInviteModalOpen(false);
+          setInviteName('');
+          setInviteEmail('');
+          setInviteRole('Cashier');
+          setInviteError('');
+        },
+        onError: (err: any) => {
+          setInviteError(err?.response?.data?.message?.[0] ?? err?.response?.data?.message ?? 'Failed to send invite');
+        },
+      },
+    );
+  };
 
   if (isLoading) {
     return (
@@ -205,14 +233,11 @@ export default function StaffManagementPage() {
                   </select>
                 </div>
                 <div className="space-y-2 flex flex-col justify-end">
-                   <button
-                    onClick={() => {
-                      inviteStaff.mutate({ name: inviteName, email: inviteEmail, role: inviteRole });
-                      setIsInviteModalOpen(false);
-                      setInviteName('');
-                      setInviteEmail('');
-                      setInviteRole('Cashier');
-                    }}
+                  {inviteError && (
+                    <div className="p-2 rounded-lg bg-red-50 border border-red-200 text-red-600 text-[11px] font-medium">{inviteError}</div>
+                  )}
+                  <button
+                    onClick={handleSendInvite}
                     disabled={inviteStaff.isPending}
                     className="w-full py-3 bg-[#1a1a1a] text-white rounded-2xl font-bold text-[13px] hover:bg-[#f97316] transition-all disabled:opacity-50"
                   >

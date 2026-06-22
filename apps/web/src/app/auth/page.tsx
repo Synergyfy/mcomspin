@@ -2,13 +2,17 @@
 
 import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { useLogin, useRegister } from '@/services/auth';
+import { useLogin, useRegister, useForgotPassword } from '@/services/auth';
 
 export default function AuthPage() {
   const router = useRouter();
   const loginMutation = useLogin();
   const registerMutation = useRegister();
+  const forgotPasswordMutation = useForgotPassword();
   const [activeTab, setActiveTab] = useState<'login' | 'register'>('login');
+  const [showForgotPassword, setShowForgotPassword] = useState(false);
+  const [forgotEmail, setForgotEmail] = useState('');
+  const [forgotSent, setForgotSent] = useState(false);
   const [loginEmail, setLoginEmail] = useState('');
   const [loginPassword, setLoginPassword] = useState('');
   const [regName, setRegName] = useState('');
@@ -20,6 +24,14 @@ export default function AuthPage() {
   const handleLogin = (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
+    if (!loginEmail.trim() || !loginPassword.trim()) {
+      setError('Email and password are required');
+      return;
+    }
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(loginEmail)) {
+      setError('Please enter a valid email address');
+      return;
+    }
     loginMutation.mutate(
       { email: loginEmail, password: loginPassword },
       {
@@ -42,11 +54,23 @@ export default function AuthPage() {
 
   const handleRegister = (e: React.FormEvent) => {
     e.preventDefault();
+    setError('');
+    if (!regName.trim() || !regEmail.trim() || !regPassword.trim() || !regConfirm.trim()) {
+      setError('All fields are required');
+      return;
+    }
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(regEmail)) {
+      setError('Please enter a valid email address');
+      return;
+    }
+    if (regPassword.length < 6) {
+      setError('Password must be at least 6 characters');
+      return;
+    }
     if (regPassword !== regConfirm) {
       setError('Passwords do not match');
       return;
     }
-    setError('');
     registerMutation.mutate(
       {
         email: regEmail,
@@ -152,7 +176,7 @@ export default function AuthPage() {
                   <input type="checkbox" className="accent-[#f97316] w-3.5 h-3.5 rounded" />
                   Remember me
                 </label>
-                <a href="#" className="text-[#f97316] font-semibold hover:underline">Forgot password?</a>
+                <button onClick={() => setShowForgotPassword(true)} className="text-[#f97316] font-semibold hover:underline text-[11px] bg-transparent border-none cursor-pointer">Forgot password?</button>
               </div>
               <button
                 type="submit"
@@ -215,6 +239,56 @@ export default function AuthPage() {
                 {isPending ? 'Creating account...' : 'Create Account'}
               </button>
             </form>
+          )}
+
+          {/* Forgot Password Form */}
+          {showForgotPassword && (
+            <div className="space-y-4">
+              <div className="flex items-center justify-between">
+                <h3 className="text-[13px] font-bold text-[#1a1a1a]">Reset Password</h3>
+                <button
+                  onClick={() => { setShowForgotPassword(false); setForgotSent(false); setForgotEmail(''); }}
+                  className="text-[11px] text-[#999] hover:text-[#666] bg-transparent border-none cursor-pointer"
+                >
+                  Back
+                </button>
+              </div>
+              {forgotSent ? (
+                <p className="text-[12px] text-[#666] leading-relaxed">
+                  If an account with that email exists, a reset link has been sent.
+                </p>
+              ) : (
+                <form
+                  onSubmit={(e) => {
+                    e.preventDefault();
+                    if (!forgotEmail.trim()) return;
+                    forgotPasswordMutation.mutate(
+                      { email: forgotEmail },
+                      { onSuccess: () => setForgotSent(true), onError: () => setForgotSent(true) },
+                    );
+                  }}
+                  className="space-y-4"
+                >
+                  <div>
+                    <label className="block text-[10px] font-bold uppercase tracking-[0.12em] text-[#888] mb-1.5">Email Address</label>
+                    <input
+                      type="email"
+                      value={forgotEmail}
+                      onChange={(e) => setForgotEmail(e.target.value)}
+                      placeholder="you@business.com"
+                      className="w-full px-4 py-3 rounded-xl border border-[#eee] bg-[#fafaf9] text-sm text-[#1a1a1a] placeholder:text-[#ccc] focus:outline-none focus:border-[#f97316]/40 focus:ring-2 focus:ring-[#f97316]/10 transition-all"
+                    />
+                  </div>
+                  <button
+                    type="submit"
+                    disabled={forgotPasswordMutation.isPending}
+                    className="w-full bg-[#1a1a1a] hover:bg-[#f97316] text-white py-3.5 rounded-xl text-[11px] font-bold uppercase tracking-[0.15em] transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed shadow-sm"
+                  >
+                    {forgotPasswordMutation.isPending ? 'Sending...' : 'Send Reset Link'}
+                  </button>
+                </form>
+              )}
+            </div>
           )}
         </div>
 

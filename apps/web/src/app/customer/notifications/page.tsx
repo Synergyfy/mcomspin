@@ -169,7 +169,7 @@ export default function NotificationsPage() {
                     }`}
                     onClick={() => {
                       if (!notif.isRead) {
-                        markRead.mutate(notif.id);
+                        markRead.mutate(notif.id, { onError: () => {} });
                       }
                     }}
                   >
@@ -194,7 +194,7 @@ export default function NotificationsPage() {
                       <button
                         onClick={(e) => {
                           e.stopPropagation();
-                          markRead.mutate(notif.id);
+                          markRead.mutate(notif.id, { onError: () => {} });
                         }}
                         className="shrink-0 px-3 py-1.5 rounded-xl text-[8px] font-black text-stone-400 uppercase tracking-widest border border-stone-100 hover:border-orange-200 hover:text-orange-500 transition-all"
                       >

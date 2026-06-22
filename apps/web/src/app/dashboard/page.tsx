@@ -47,16 +47,36 @@ function ChartTooltip({ active, payload, label }: { active?: boolean; payload?: 
   );
 }
 
+interface DashboardSummary {
+  activeCampaigns: number;
+  totalPlays: number;
+  rewardsIssued: number;
+  rewardsRedeemed: number;
+  customersEngaged: number;
+  redemptionRate: number;
+  chartData?: { date: string; value: number }[];
+  recentActivity?: { id: string; customer: { firstName?: string; lastName?: string }; createdAt: string }[];
+}
+
+interface KpiItem {
+  label: string;
+  value: string | number;
+  change: string;
+  trend: string;
+  icon: React.ReactNode;
+  subtext?: string;
+}
+
 export default function DashboardOverview() {
   const [chartMetric, setChartMetric] = useState<'engagement' | 'leads' | 'rewards'>('engagement');
 
   const { data: rawSummary, isLoading: summaryLoading } = useDashboardSummary();
   const { data: rawLive, isLoading: liveLoading } = useLiveMonitoring();
 
-  const summaryData = rawSummary as any;
+  const summaryData = rawSummary as DashboardSummary | undefined;
   const liveData = rawLive as any;
 
-  const engagementData: any[] = React.useMemo(() => {
+  const engagementData: { date: string; value: number }[] = React.useMemo(() => {
     if (summaryData?.chartData?.length) return summaryData.chartData;
     return [];
   }, [summaryData]);
@@ -74,7 +94,7 @@ export default function DashboardOverview() {
     });
   }, [summaryData?.recentActivity]);
 
-  const kpis: any[] = summaryData ? [
+  const kpis: KpiItem[] = summaryData ? [
     { label: 'Active Campaigns', value: summaryData.activeCampaigns ?? 0, change: '', trend: 'neutral', icon: (
       <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="1.8" viewBox="0 0 24 24">
         <path strokeLinecap="round" strokeLinejoin="round" d="M15.59 14.37a6 6 0 01-5.84 7.38v-4.8m5.84-2.58a14.98 14.98 0 006.16-12.12A14.98 14.98 0 009.631 8.41m5.96 5.96a14.926 14.926 0 01-5.841 2.58m-.119-8.54a6 6 0 00-7.381 5.84h4.8m2.581-5.84a14.927 14.927 0 00-2.58 5.84m2.699 2.7c-.103.021-.207.041-.311.06a15.09 15.09 0 01-2.448-2.448 14.9 14.9 0 01.06-.312m-2.24 2.39a4.493 4.493 0 00-1.757 4.306 4.493 4.493 0 004.306-1.758M16.5 9a1.5 1.5 0 11-3 0 1.5 1.5 0 013 0z" />

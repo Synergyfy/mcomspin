@@ -10,6 +10,10 @@ export enum StaffRole {
 
 export class InviteStaffDto {
   @ApiProperty()
+  @IsString()
+  name: string;
+
+  @ApiProperty()
   @IsEmail()
   email: string;
 

@@ -138,6 +138,7 @@ export const CampaignControl = () => {
 
   const togglePromo = (item: string) => {
     setPromoStates(prev => ({ ...prev, [item]: !prev[item] }));
+    // In a real app this would call an API to persist the toggle
   };
 
   const tabs = [

@@ -32,6 +32,6 @@ export class BoroughScopeGuard implements CanActivate {
       return true;
     }
 
-    return true;
+    throw new ForbiddenException('Insufficient permissions to access this resource');
   }
 }

@@ -54,12 +54,15 @@ export default function AcquirePage() {
   const prevStep = () => setStep(prev => Math.max(prev - 1, 1));
 
   const handleLaunch = () => {
+    if (!businessName.trim()) { alert('Business name is required'); return; }
+    if (!email.trim() || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) { alert('Valid email is required'); return; }
+    if (!password.trim() || password.length < 6) { alert('Password must be at least 6 characters'); return; }
     businessRegister.mutate(
       {
-        businessName: businessName || 'My Business',
+        businessName,
         contactName: email?.split('@')[0] || 'Business Owner',
-        email: email || '',
-        password: password || '',
+        email,
+        password,
         businessType: 'Other',
       },
       {
@@ -72,9 +75,8 @@ export default function AcquirePage() {
           }
           nextStep();
         },
-        onError: () => {
-          // Continue to success screen anyway so user sees progress
-          nextStep();
+        onError: (err: any) => {
+          alert(err?.response?.data?.message || 'Launch failed. Please try again.');
         },
       },
     );
@@ -629,8 +631,8 @@ export default function AcquirePage() {
             <div className="bg-surface-container p-6 rounded-2xl text-center space-y-4">
               <p className="text-sm font-medium">By clicking launch, you agree to our Terms of Service and will begin your first billing cycle. Your kinetic pegboard will go live immediately.</p>
               <div className="flex flex-col gap-3">
-                <button onClick={handleLaunch} className="w-full py-4 bg-primary text-on-primary rounded-xl font-bold shadow-md hover:bg-on-primary-fixed-variant transition-colors flex items-center justify-center gap-2 text-lg">
-                  Launch Your Arcade <Rocket className="w-5 h-5" />
+                <button onClick={handleLaunch} disabled={businessRegister.isPending} className="w-full py-4 bg-primary text-on-primary rounded-xl font-bold shadow-md hover:bg-on-primary-fixed-variant transition-colors flex items-center justify-center gap-2 text-lg disabled:opacity-50">
+                  {businessRegister.isPending ? 'Launching...' : 'Launch Your Arcade'} <Rocket className="w-5 h-5" />
                 </button>
                 <button onClick={prevStep} className="text-label-sm font-bold text-on-surface-variant uppercase hover:text-primary py-2 flex justify-center items-center gap-1"><ArrowLeft className="w-4 h-4" /> Previous Step</button>
               </div>

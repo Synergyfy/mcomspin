@@ -39,14 +39,7 @@ export default function LandingPage() {
     enabled: hasToken,
   });
 
-  const MOCK_PARTNERS = [
-    { name: 'Meridian Apparel', category: 'Fashion & Retail', leads: 342, conversion: '12.4%', revenue: '£4,120' },
-    { name: 'Vantage Electronics', category: 'Consumer Tech', leads: 512, conversion: '8.6%', revenue: '£8,950' },
-    { name: 'Elara Wellness', category: 'Health & Spa', leads: 219, conversion: '15.2%', revenue: '£3,280' },
-    { name: 'Soleil Dining', category: 'Food & Beverage', leads: 403, conversion: '11.8%', revenue: '£5,640' }
-  ];
-
-  const partners: any[] = (hasToken && partnersData ? (partnersData as any[]) : null) ?? MOCK_PARTNERS;
+  const partners: any[] = (hasToken && partnersData ? (partnersData as any[]) : []);
   const isLoading = hasToken && isQueryLoading;
 
   useEffect(() => {

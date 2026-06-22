@@ -59,7 +59,8 @@ export default function BallDropGamePage() {
   const [resultBox, setResultBox] = useState<number | null>(null);
   const animRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  const [savedMsg, setSavedMsg] = useState<'saving' | 'saved' | null>(null);
+  const [savedMsg, setSavedMsg] = useState<'saving' | 'saved' | 'error' | null>(null);
+  const [saveError, setSaveError] = useState('');
   const saveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const campaigns: any[] = Array.isArray(campaignsData) ? campaignsData : (campaignsData as any)?.data ?? [];
@@ -98,7 +99,12 @@ export default function BallDropGamePage() {
         {
           onSuccess: () => {
             setSavedMsg('saved');
+            setSaveError('');
             saveTimer.current = setTimeout(() => setSavedMsg(null), 2000);
+          },
+          onError: (err: any) => {
+            setSavedMsg('error');
+            setSaveError(err?.response?.data?.message ?? 'Failed to save game settings');
           },
         },
       );
@@ -301,7 +307,7 @@ export default function BallDropGamePage() {
             </svg>
             {savedMsg === 'saving' ? 'Saving...' : 'Save Changes'}
           </button>
-          {savedMsg === 'saved' && (
+            {savedMsg === 'saved' && (
             <span className="text-green-600 flex items-center gap-1.5 text-[12px] font-medium">
               <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M5 13l4 4L19 7" />
@@ -309,6 +315,7 @@ export default function BallDropGamePage() {
               Saved
             </span>
           )}
+          {saveError && <span className="text-red-500 text-[12px] font-medium">{saveError}</span>}
         </div>
       </div>
 

@@ -14,15 +14,18 @@ jobs:
         working-directory: apps/api
     steps:
       - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v2
+        with:
+          version: 8
       - uses: actions/setup-node@v4
         with:
           node-version: 20
-          cache: npm
-          cache-dependency-path: apps/api/package-lock.json
-      - run: npm ci
-      - run: npx prisma generate
-      - run: npm run lint
-      - run: npx tsc --noEmit
+          cache: pnpm
+          cache-dependency-path: apps/api/pnpm-lock.yaml
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm dlx prisma generate
+      - run: pnpm run lint
+      - run: pnpm dlx tsc --noEmit
 
   test:
     runs-on: ubuntu-latest
@@ -45,16 +48,19 @@ jobs:
           --health-retries 5
     steps:
       - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v2
+        with:
+          version: 8
       - uses: actions/setup-node@v4
         with:
           node-version: 20
-          cache: npm
-          cache-dependency-path: apps/api/package-lock.json
-      - run: npm ci
-      - run: npx prisma generate
-      - run: npx prisma db push
+          cache: pnpm
+          cache-dependency-path: apps/api/pnpm-lock.yaml
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm dlx prisma generate
+      - run: pnpm dlx prisma db push
         env:
           DATABASE_URL: postgresql://mcomspin:mcomspin@localhost:5432/mcomspin_test
-      - run: npm test
+      - run: pnpm test
         env:
           DATABASE_URL: postgresql://mcomspin:mcomspin@localhost:5432/mcomspin_test

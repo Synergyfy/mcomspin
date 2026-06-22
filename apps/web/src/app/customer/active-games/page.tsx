@@ -724,7 +724,8 @@ function ArcadeGamesPageContent() {
 
   const handlePlinkoWin = useCallback((prizeIndex: number) => {
     if (!activeGame) return;
-    const targetSessionId = currentSessionId || sessionId || 'simulated-' + Date.now();
+    if (!currentSessionId && !sessionId) return;
+    const targetSessionId = (currentSessionId || sessionId)!;
     dropBall.mutate(
       { sessionId: targetSessionId, boxIndex: prizeIndex % activeGame.boxCount },
       {
@@ -1130,7 +1131,7 @@ function ArcadeGamesPageContent() {
                       const targetSessionId = currentSessionId || sessionId || 'simulated-' + Date.now();
                       claimMutation.mutate(
                         { sessionId: targetSessionId },
-                        { onSuccess: () => router.push('/customer/wallet') },
+                        { onSuccess: () => router.push('/customer/wallet'), onError: () => alert('Failed to claim reward') },
                       );
                     }}
                     disabled={claimMutation.isPending}
@@ -1142,10 +1143,11 @@ function ArcadeGamesPageContent() {
                   {/* Secondary Actions */}
                   <button 
                     onClick={() => {
-                      const targetSessionId = currentSessionId || sessionId || 'simulated-' + Date.now();
+                      if (!currentSessionId && !sessionId) return;
+                      const targetSessionId = (currentSessionId || sessionId)!;
                       claimMutation.mutate(
                         { sessionId: targetSessionId },
-                        { 
+                        {
                           onSuccess: () => {
                             alert('Reward saved to your wallet!');
                             resetGame();

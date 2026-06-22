@@ -8,6 +8,8 @@ import {
   MessageBody,
 } from '@nestjs/websockets';
 import { Server, Socket } from 'socket.io';
+import { JwtService } from '@nestjs/jwt';
+import { ConfigService } from '@nestjs/config';
 
 @WebSocketGateway({
   cors: {
@@ -22,18 +24,36 @@ export class AppGateway implements OnGatewayConnection, OnGatewayDisconnect {
 
   private userSockets = new Map<string, Set<string>>();
 
+  constructor(
+    private jwtService: JwtService,
+    private configService: ConfigService,
+  ) {}
+
   handleConnection(client: Socket) {
-    const userId = client.handshake.query.userId as string;
-    const role = client.handshake.query.role as string;
-    if (userId) {
+    const token = client.handshake.query.token as string;
+    if (!token) {
+      client.disconnect();
+      return;
+    }
+
+    try {
+      const payload = this.jwtService.verify(token, {
+        secret: this.configService.get('JWT_ACCESS_SECRET', 'access-secret'),
+      });
+      const userId = payload.sub as string;
+      const roles: string[] = payload.roles || [];
+
       if (!this.userSockets.has(userId)) {
         this.userSockets.set(userId, new Set());
       }
       this.userSockets.get(userId)!.add(client.id);
       client.join(`user:${userId}`);
-    }
-    if (role) {
-      client.join(`role:${role}`);
+
+      for (const role of roles) {
+        client.join(`role:${role}`);
+      }
+    } catch {
+      client.disconnect();
     }
   }
 

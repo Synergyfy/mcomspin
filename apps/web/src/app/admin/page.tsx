@@ -90,22 +90,20 @@ const BusinessManagement = () => {
       updateBusinessMutation.mutate(
         { id: bizId, isActive: true },
         {
-          onSuccess: () => {
-            alert(`Activated business successfully`);
-          },
+          onSuccess: () => alert(`Activated business successfully`),
+          onError: () => alert('Failed to activate business'),
         }
       );
     } else if (action === 'Suspend') {
       updateBusinessMutation.mutate(
         { id: bizId, isActive: false },
         {
-          onSuccess: () => {
-            alert(`Suspended business successfully`);
-          },
+          onSuccess: () => alert(`Suspended business successfully`),
+          onError: () => alert('Failed to suspend business'),
         }
       );
     } else {
-      alert(`${action} successful`);
+      alert(`Action "${action}" is not yet connected to the backend. This is a UI mockup.`);
     }
   };
 
@@ -171,7 +169,7 @@ const BusinessManagement = () => {
                       <td className="py-4 text-stone-400">{biz.createdAt ? new Date(biz.createdAt).toLocaleDateString() : 'N/A'}</td>
                       <td className="py-4"><Badge variant="yellow">Pending</Badge></td>
                       <td className="py-4 text-right">
-                        <button onClick={() => handleAction(biz.id, 'Approve')} className="text-[10px] font-bold bg-[#1a1a1a] text-white px-3 py-1.5 rounded-lg hover:bg-black transition-colors">Approve</button>
+                        <button onClick={() => handleAction(biz.id, 'Approve')} disabled={updateBusinessMutation.isPending} className="text-[10px] font-bold bg-[#1a1a1a] text-white px-3 py-1.5 rounded-lg hover:bg-black transition-colors disabled:opacity-50">Approve</button>
                       </td>
                     </tr>
                   )) : (
@@ -212,7 +210,7 @@ const BusinessManagement = () => {
                       </td>
                       <td className="py-4 font-mono text-[11px]">85%</td>
                       <td className="py-4 text-right">
-                        <button onClick={() => handleAction(biz.id, 'Suspend')} className="text-[10px] font-bold text-red-600 hover:underline transition-all">Suspend</button>
+                        <button onClick={() => handleAction(biz.id, 'Suspend')} disabled={updateBusinessMutation.isPending} className="text-[10px] font-bold text-red-600 hover:underline transition-all disabled:opacity-50">Suspend</button>
                       </td>
                     </tr>
                   );
@@ -327,12 +325,16 @@ const AgentManagement = () => {
   const [subTab, setSubTab] = useState('assignment');
   const [isProcessing, setIsProcessing] = useState(false);
 
-  const handleAgentAction = (agentName: string, action: string) => {
+  const handleAgentAction = async (agentName: string, action: string) => {
     setIsProcessing(true);
-    setTimeout(() => {
+    try {
+      const res = await fetch(`/api/admin/agents/${encodeURIComponent(agentName)}/${encodeURIComponent(action)}`, { method: 'POST' });
+      if (!res.ok) throw new Error(`Failed: ${res.statusText}`);
+    } catch (err) {
+      console.error('Agent action failed:', err);
+    } finally {
       setIsProcessing(false);
-      alert(`${action} successful for ${agentName}`);
-    }, 800);
+    }
   };
 
   const agentTabs = [
@@ -499,7 +501,7 @@ const ConsumerMonitoring = () => {
   const isProcessing = customersQuery.isLoading || redemptionsQuery.isLoading;
 
   const handleConsumerAction = (userId: string, action: string) => {
-    alert(`${action} executed for user ${userId}`);
+    alert(`Action "${action}" for user ${userId} is not yet connected to the backend.`);
   };
 
   const consumerTabs = [
@@ -720,7 +722,7 @@ const AnalyticsReporting = () => {
                     { cat: 'Youth', val: '58%' },
                   ].map((bar, i) => (
                     <div key={i} className="flex-1 flex flex-col items-center gap-3">
-                      <motion.div initial={{ height: 0 }} animate={{ height: bar.val }} className="w-full bg-stone-800 rounded-lg shadow-sm" />
+                      <motion.div initial={{ height: '0%' }} animate={{ height: bar.val }} className="w-full bg-stone-800 rounded-lg shadow-sm" />
                       <span className="text-[10px] font-bold text-stone-500 uppercase">{bar.cat}</span>
                     </div>
                   ))}

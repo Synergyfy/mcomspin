@@ -188,7 +188,7 @@ export default function PlayPage() {
             {/* Hero Section */}
             <div className="relative h-[40vh] overflow-hidden">
               <img 
-                src={campaign?.storeImage} 
+                src={campaign?.storeImage || campaign?.imageUrl || '/placeholder-store.jpg'} 
                 alt={campaign?.businessName}
                 className="w-full h-full object-cover"
               />
@@ -386,12 +386,17 @@ export default function PlayPage() {
                             setSessionId(res.sessionId);
                           }
                         },
+                        onError: () => {
+                          setStep('token_check');
+                          alert('Failed to start game. Please try again.');
+                        },
                       }
                     );
                   }}
-                  className="w-full bg-orange-500 hover:bg-orange-600 text-white py-5 rounded-2xl font-black tracking-widest text-sm uppercase transition-all shadow-lg shadow-orange-500/25 active:scale-[0.98]"
+                  disabled={playGame.isPending}
+                  className="w-full bg-orange-500 hover:bg-orange-600 text-white py-5 rounded-2xl font-black tracking-widest text-sm uppercase transition-all shadow-lg shadow-orange-500/25 active:scale-[0.98] disabled:opacity-50"
                 >
-                  Prepare Game Board
+                  {playGame.isPending ? 'Starting...' : 'Prepare Game Board'}
                 </button>
               ) : (
                 <div className="space-y-4">

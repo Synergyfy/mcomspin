@@ -1,4 +1,5 @@
 import axios, { AxiosError, InternalAxiosRequestConfig } from 'axios';
+import { getAccessToken, getRefreshToken, setTokens, clearTokens } from './token-store';
 
 const api = axios.create({
   baseURL: process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5005/api/v1',
@@ -7,7 +8,7 @@ const api = axios.create({
 });
 
 api.interceptors.request.use((config: InternalAxiosRequestConfig) => {
-  const token = localStorage.getItem('accessToken');
+  const token = getAccessToken();
   if (token && config.headers) {
     config.headers.Authorization = `Bearer ${token}`;
   }
@@ -52,16 +53,16 @@ api.interceptors.response.use(
       isRefreshing = true;
 
       try {
-        const refreshToken = localStorage.getItem('refreshToken');
+        const token = getRefreshToken();
         const { data } = await axios.post(
           `${api.defaults.baseURL}/auth/refresh`,
-          { refreshToken },
+          token ? { refreshToken: token } : {},
+          { withCredentials: true },
         );
         const newToken = data.data?.accessToken ?? data.accessToken;
         const newRefresh = data.data?.refreshToken ?? data.refreshToken;
 
-        localStorage.setItem('accessToken', newToken);
-        if (newRefresh) localStorage.setItem('refreshToken', newRefresh);
+        if (newToken) setTokens(newToken, newRefresh);
 
         processQueue(null, newToken);
 
@@ -71,8 +72,7 @@ api.interceptors.response.use(
         return api(originalRequest);
       } catch (refreshError) {
         processQueue(refreshError, null);
-        localStorage.removeItem('accessToken');
-        localStorage.removeItem('refreshToken');
+        clearTokens();
         if (typeof window !== 'undefined') {
           window.location.href = '/auth';
         }
@@ -85,5 +85,24 @@ api.interceptors.response.use(
     return Promise.reject(error);
   },
 );
+
+export async function initAuth(): Promise<boolean> {
+  try {
+    const { data } = await axios.post(
+      `${api.defaults.baseURL}/auth/refresh`,
+      {},
+      { withCredentials: true },
+    );
+    const newToken = data.data?.accessToken ?? data.accessToken;
+    const newRefresh = data.data?.refreshToken ?? data.refreshToken;
+    if (newToken) {
+      setTokens(newToken, newRefresh);
+      return true;
+    }
+  } catch {
+    // No valid session exists
+  }
+  return false;
+}
 
 export default api;

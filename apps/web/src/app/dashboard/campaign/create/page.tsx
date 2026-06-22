@@ -34,6 +34,8 @@ export default function CreateCampaignWizard() {
   const updateGame = useUpdateBusinessGame();
   const [step, setStep] = useState(1);
   const totalSteps = 4;
+  const [error, setError] = useState('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   // Form State
   const [campaignName, setCampaignName] = useState('');
@@ -59,37 +61,58 @@ export default function CreateCampaignWizard() {
   const removeSlot = (id: string) =>
     setSlots(slots.filter(s => s.id !== id));
 
-  const nextStep = () => setStep(prev => Math.min(prev + 1, totalSteps));
-  const prevStep = () => setStep(prev => Math.max(prev - 1, 1));
+  const nextStep = () => {
+    setError('');
+    if (step === 1 && !campaignName.trim()) { setError('Campaign name is required'); return; }
+    if (step === 2) {
+      if (!startDate) { setError('Start date is required'); return; }
+      if (!endDate) { setError('End date is required'); return; }
+      if (new Date(endDate) <= new Date(startDate)) { setError('End date must be after start date'); return; }
+    }
+    setStep(prev => Math.min(prev + 1, totalSteps));
+  };
+  const prevStep = () => { setError(''); setStep(prev => Math.max(prev - 1, 1)); };
 
   const handleLaunch = async (status: 'Active' | 'Draft' = 'Active') => {
-    const campaign = await createCampaign.mutateAsync({
-      name: campaignName,
-      description: campaignDesc,
-      type: 'HighStreet',
-      status: status,
-      startDate: new Date(startDate).toISOString(),
-      endDate: new Date(endDate).toISOString(),
-    });
-    const campaignId = campaign.id ?? campaign._id;
+    setError('');
+    if (!campaignName.trim()) { setError('Campaign name is required'); return; }
+    if (!startDate) { setError('Start date is required'); return; }
+    if (!endDate) { setError('End date is required'); return; }
+    if (new Date(endDate) <= new Date(startDate)) { setError('End date must be after start date'); return; }
+    setIsSubmitting(true);
+    try {
+      const campaign = await createCampaign.mutateAsync({
+        name: campaignName,
+        description: campaignDesc,
+        type: 'HighStreet',
+        status: status,
+        startDate: new Date(startDate).toISOString(),
+        endDate: new Date(endDate).toISOString(),
+      });
+      const campaignId = campaign.id ?? campaign._id;
 
-    await updateGame.mutateAsync({
-      config: {
-        winProbability,
-        dailyDropLimit,
-        boxes: slots.map((s, i) => ({
-          index: i,
-          hasReward: s.hasReward,
-          label: s.label,
-          ...(s.hasReward ? { rewardType: s.rewardType, rewardValue: s.rewardValue } : {}),
-          quantity: s.quantity,
-        })),
-      },
-      isActive: true,
-      campaignIds: [campaignId],
-    });
+      await updateGame.mutateAsync({
+        config: {
+          winProbability,
+          dailyDropLimit,
+          boxes: slots.map((s, i) => ({
+            index: i,
+            hasReward: s.hasReward,
+            label: s.label,
+            ...(s.hasReward ? { rewardType: s.rewardType, rewardValue: s.rewardValue } : {}),
+            quantity: s.quantity,
+          })),
+        },
+        isActive: true,
+        campaignIds: [campaignId],
+      });
 
-    router.push(`/dashboard/campaign/${campaignId}`);
+      router.push(`/dashboard/campaign/${campaignId}`);
+    } catch (err: any) {
+      setError(err?.response?.data?.message?.[0] ?? err?.response?.data?.message ?? 'Failed to create campaign. Please try again.');
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -126,6 +149,10 @@ export default function CreateCampaignWizard() {
             ))}
           </div>
         </div>
+
+        {error && (
+          <div className="p-4 rounded-xl bg-red-50 border border-red-200 text-red-600 text-[13px] font-medium mb-4">{error}</div>
+        )}
 
         {/* STEP 1: CAMPAIGN INFORMATION */}
         {step === 1 && (
@@ -354,7 +381,8 @@ export default function CreateCampaignWizard() {
           {step < 4 ? (
             <button 
               onClick={nextStep}
-              className="flex-1 h-14 bg-primary text-white font-label-md font-bold rounded-full shadow-[0_4px_0_0_#7b2f00] flex items-center justify-center gap-2 hover:translate-y-[1px] hover:shadow-[0_3px_0_0_#7b2f00] active:translate-y-[3px] active:shadow-[0_1px_0_0_#7b2f00] transition-all uppercase tracking-widest"
+              disabled={isSubmitting}
+              className="flex-1 h-14 bg-primary text-white font-label-md font-bold rounded-full shadow-[0_4px_0_0_#7b2f00] flex items-center justify-center gap-2 hover:translate-y-[1px] hover:shadow-[0_3px_0_0_#7b2f00] active:translate-y-[3px] active:shadow-[0_1px_0_0_#7b2f00] transition-all uppercase tracking-widest disabled:opacity-50 disabled:active:translate-y-0"
             >
               Continue <ArrowRight className="w-5 h-5" />
             </button>
@@ -362,15 +390,17 @@ export default function CreateCampaignWizard() {
             <>
               <button 
                 onClick={() => handleLaunch('Draft')}
-                className="flex-1 h-14 bg-white text-stone-900 border-2 border-stone-200 font-label-md font-bold rounded-full flex items-center justify-center gap-2 hover:border-stone-400 active:scale-95 transition-all uppercase tracking-widest"
+                disabled={isSubmitting}
+                className="flex-1 h-14 bg-white text-stone-900 border-2 border-stone-200 font-label-md font-bold rounded-full flex items-center justify-center gap-2 hover:border-stone-400 active:scale-95 transition-all uppercase tracking-widest disabled:opacity-50"
               >
-                Save as Draft
+                {isSubmitting ? 'Saving...' : 'Save as Draft'}
               </button>
               <button 
                 onClick={() => handleLaunch('Active')}
-                className="flex-1 h-14 bg-primary text-white font-label-md font-bold rounded-full shadow-[0_4px_0_0_#7b2f00] flex items-center justify-center gap-2 hover:translate-y-[1px] hover:shadow-[0_3px_0_0_#7b2f00] active:translate-y-[3px] active:shadow-[0_1px_0_0_#7b2f00] transition-all uppercase tracking-widest"
+                disabled={isSubmitting}
+                className="flex-1 h-14 bg-primary text-white font-label-md font-bold rounded-full shadow-[0_4px_0_0_#7b2f00] flex items-center justify-center gap-2 hover:translate-y-[1px] hover:shadow-[0_3px_0_0_#7b2f00] active:translate-y-[3px] active:shadow-[0_1px_0_0_#7b2f00] transition-all uppercase tracking-widest disabled:opacity-50 disabled:active:translate-y-0"
               >
-                <Rocket className="w-5 h-5" /> Launch Campaign
+                {isSubmitting ? 'Launching...' : <><Rocket className="w-5 h-5" /> Launch Campaign</>}
               </button>
             </>
           )}

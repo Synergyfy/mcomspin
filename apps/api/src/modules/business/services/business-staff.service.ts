@@ -1,4 +1,6 @@
 import { Injectable, NotFoundException, ConflictException } from '@nestjs/common';
+import * as bcrypt from 'bcryptjs';
+import * as crypto from 'crypto';
 import { PrismaService } from '../../../prisma/prisma.service';
 import { InviteStaffDto } from '../dto/invite-staff.dto';
 import { UpdateStaffDto } from '../dto/update-staff.dto';
@@ -21,16 +23,38 @@ export class BusinessStaffService {
     let user = await this.prisma.user.findUnique({ where: { email: dto.email } });
 
     if (!user) {
-      const passwordHash = '';
+      const nameParts = dto.name.trim().split(/\s+/);
+      const firstName = nameParts[0] || dto.email.split('@')[0];
+      const lastName = nameParts.slice(1).join(' ') || '';
+      const tempPassword = crypto.randomBytes(16).toString('hex');
+      const passwordHash = await bcrypt.hash(tempPassword, 12);
       user = await this.prisma.user.create({
         data: {
           email: dto.email,
           passwordHash,
-          firstName: dto.email.split('@')[0],
-          lastName: '',
+          firstName,
+          lastName,
           roles: { create: { role: { connect: { name: 'Staff' as any } } } },
         },
       });
+
+      const staffRecord = await this.prisma.businessStaff.create({
+        data: {
+          businessId,
+          userId: user.id,
+          role: dto.role,
+          permissions: dto.permissions,
+        },
+        include: {
+          user: { select: { id: true, firstName: true, lastName: true, email: true } },
+        },
+      });
+
+      return {
+        staff: staffRecord,
+        tempPassword,
+        message: 'Staff created. Share the temporary password with them securely.',
+      };
     }
 
     const existing = await this.prisma.businessStaff.findFirst({
@@ -38,7 +62,7 @@ export class BusinessStaffService {
     });
     if (existing) throw new ConflictException('Staff member already exists');
 
-    return this.prisma.businessStaff.create({
+    const staffRecord = await this.prisma.businessStaff.create({
       data: {
         businessId,
         userId: user.id,
@@ -49,6 +73,8 @@ export class BusinessStaffService {
         user: { select: { id: true, firstName: true, lastName: true, email: true } },
       },
     });
+
+    return { staff: staffRecord, tempPassword: null, message: 'Staff added from existing user.' };
   }
 
   async update(businessId: string, id: string, dto: UpdateStaffDto) {

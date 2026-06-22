@@ -38,21 +38,27 @@ export class WebhooksService {
   }
 
   async handleGoogleNotification(payload: any) {
-    const { googlePlaceId, businessId, notificationType, ...rest } = payload;
-    const notificationMeta = {
+    const { googlePlaceId, businessId, notificationType, ...rest } = payload || {};
+    if (!notificationType || typeof notificationType !== 'string') {
+      return { received: true, status: 'skipped', reason: 'Missing or invalid notificationType' };
+    }
+    const notificationMeta: Record<string, unknown> = {
       lastGoogleNotification: new Date().toISOString(),
       notificationType,
       payload: rest,
     };
+    if (!businessId && !googlePlaceId) {
+      return { received: true, status: 'skipped', reason: 'No businessId or googlePlaceId provided' };
+    }
     if (businessId) {
       await this.prisma.businessVerification.updateMany({
-        where: { businessId },
-        data: { metadata: notificationMeta },
+        where: { businessId: businessId as string },
+        data: { metadata: notificationMeta as any },
       });
-    } else if (googlePlaceId) {
+    } else {
       await this.prisma.businessVerification.updateMany({
-        where: { googlePlaceId },
-        data: { metadata: notificationMeta },
+        where: { googlePlaceId: googlePlaceId as string },
+        data: { metadata: notificationMeta as any },
       });
     }
     return { received: true, status: 'processed' };

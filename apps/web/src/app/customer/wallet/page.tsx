@@ -271,7 +271,7 @@ export default function RewardWalletPage() {
                   <div className="relative group mx-auto w-48 h-48">
                     <div className="absolute inset-0 bg-orange-500/5 rounded-[2.5rem] blur-2xl group-hover:blur-3xl transition-all" />
                     <div className="relative bg-white border-2 border-stone-50 rounded-[2.5rem] p-3 shadow-inner flex items-center justify-center">
-                      <QRCode value={selectedReward.code || selectedReward.qrCode || 'MCOM-REWARD'} size={160} />
+                      <QRCode value={selectedReward.code || selectedReward.qrCode || ''} size={160} />
                     </div>
                   </div>
 

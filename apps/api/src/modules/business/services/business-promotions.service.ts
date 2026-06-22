@@ -5,11 +5,20 @@ import { UpdatePromotionDto } from '../dto/update-promotion.dto';
 import { CreateVoucherDto } from '../dto/create-voucher.dto';
 import { GenerateQrDto } from '../dto/generate-qr.dto';
 
+const cache = new Map<string, { data: any; expiresAt: number }>();
+const CACHE_TTL_MS = 30_000;
+
 @Injectable()
 export class BusinessPromotionsService {
   constructor(private prisma: PrismaService) {}
 
   async getSummary(businessId: string) {
+    const cacheKey = `summary:${businessId}`;
+    const cached = cache.get(cacheKey);
+    if (cached && Date.now() < cached.expiresAt) {
+      return cached.data;
+    }
+
     const now = new Date();
     const [activePromotions, activeEvents, activeCampaigns, totalRedemptions, totalPlays] =
       await Promise.all([
@@ -37,7 +46,7 @@ export class BusinessPromotionsService {
     const qrCount = await this.prisma.qLink.count({ where: { businessId, isActive: true } });
     const voucherCount = await this.prisma.voucher.count({ where: { businessId, status: 'Active' } });
 
-    return {
+    const result = {
       activePromotions,
       activeEvents,
       activeCampaigns,
@@ -46,6 +55,10 @@ export class BusinessPromotionsService {
       qrCount,
       voucherCount,
     };
+
+    cache.set(cacheKey, { data: result, expiresAt: Date.now() + CACHE_TTL_MS });
+
+    return result;
   }
 
   async getPromotions(

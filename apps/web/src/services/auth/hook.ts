@@ -1,5 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import api from '../api';
+import { setTokens, clearTokens, hasToken } from '../token-store';
 import { useAuthStore } from '@/store/auth-store';
 
 /* ─── Types ─── */
@@ -64,8 +65,7 @@ export interface AuthResponse {
 /* ─── Helpers ─── */
 
 function saveTokens(data: AuthResponse) {
-  localStorage.setItem('accessToken', data.accessToken);
-  localStorage.setItem('refreshToken', data.refreshToken);
+  setTokens(data.accessToken, data.refreshToken);
 }
 
 function setUserFromAuth(data: AuthResponse) {
@@ -115,13 +115,11 @@ export function useLogout() {
     mutationFn: () =>
       api.post('/auth/logout').then((r) => r.data),
     onSuccess: () => {
-      localStorage.removeItem('accessToken');
-      localStorage.removeItem('refreshToken');
+      clearTokens();
       useAuthStore.getState().clearUser();
     },
     onError: () => {
-      localStorage.removeItem('accessToken');
-      localStorage.removeItem('refreshToken');
+      clearTokens();
       useAuthStore.getState().clearUser();
     },
   });
@@ -168,13 +166,14 @@ export function useResetPassword() {
 
 export function useCurrentUser() {
   const { setUser, user } = useAuthStore();
-  const hasToken = typeof window !== 'undefined' && !!localStorage.getItem('accessToken');
+  const tokenExists = typeof window !== 'undefined' && hasToken();
   return useQuery({
     queryKey: userKeys.me,
     queryFn: () =>
       api.get<{ success: boolean; data: any }>('/users/me').then((r) => r.data.data),
-    enabled: hasToken,
+    enabled: typeof window !== 'undefined',
     staleTime: 60_000,
+    retry: false,
     select: (data) => {
       const mapped = {
         id: data.id,

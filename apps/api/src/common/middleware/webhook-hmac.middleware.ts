@@ -21,8 +21,7 @@ export class WebhookHmacMiddleware implements NestMiddleware {
 
     const secret = process.env.WEBHOOK_SECRET;
     if (!secret) {
-      this.logger.warn('WEBHOOK_SECRET not configured — skipping HMAC verification');
-      return next();
+      throw new UnauthorizedException('WEBHOOK_SECRET not configured');
     }
 
     const rawBody = (req as any).rawBody;

@@ -29,9 +29,33 @@ export default function CustomersPage() {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCustomer, setSelectedCustomer] = useState<Customer | null>(null);
 
-  const customersList: any[] = (customersData as any[]) ?? [];
+  const customerRows: any[] = React.useMemo(() => {
+    const raw = customersData ?? [];
+    const arr = Array.isArray(raw) ? raw : [];
+    return arr.map((c: any) => {
+      const sessionCount = Array.isArray(c.gameSessions) ? c.gameSessions.length : 0;
+      const rewardsWon = Array.isArray(c.customerRewards) ? c.customerRewards.length : 0;
+      const lastSession = Array.isArray(c.gameSessions) && c.gameSessions.length > 0
+        ? c.gameSessions.reduce((latest: any, s: any) =>
+            !latest || new Date(s.createdAt) > new Date(latest.createdAt) ? s : latest
+          , null)
+        : null;
+      return {
+        id: c.id,
+        name: [c.firstName, c.lastName].filter(Boolean).join(' ') || 'Unnamed Customer',
+        phone: c.phone ?? '',
+        email: c.email ?? '',
+        rewardsWon,
+        rewardsRedeemed: 0,
+        lastVisit: lastSession
+          ? new Date(lastSession.createdAt).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })
+          : '—',
+        status: sessionCount > 1 ? 'Returning' : 'New' as 'New' | 'Returning',
+      };
+    });
+  }, [customersData]);
 
-  const filteredCustomers = customersList.filter(c => {
+  const filteredCustomers = customerRows.filter(c => {
     const name = c.name ? String(c.name).toLowerCase() : '';
     const phone = c.phone ? String(c.phone) : '';
     const email = c.email ? String(c.email).toLowerCase() : '';
@@ -40,7 +64,7 @@ export default function CustomersPage() {
     return name.includes(term) || phone.includes(searchTerm) || email.includes(term);
   });
 
-  if (isLoading && customersList.length === 0) {
+  if (isLoading && customerRows.length === 0) {
     return (
       <div className="max-w-6xl mx-auto space-y-8 pb-20">
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">

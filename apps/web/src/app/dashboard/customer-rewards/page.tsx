@@ -14,8 +14,7 @@ export default function RedemptionsPage() {
   const approveRedemption = useApproveRedemption();
   const rejectRedemption = useRejectRedemption();
 
-  // Backend returns { data: [...], meta: {...} }
-  const redemptions: any[] = (redemptionsData as any)?.data ?? (Array.isArray(redemptionsData) ? redemptionsData : []);
+  const redemptions: any[] = Array.isArray(redemptionsData) ? redemptionsData : (redemptionsData as any)?.data ?? [];
 
   const stats: Record<RedemptionStatus, number> = {
     Pending: redemptions.filter((r: any) => r.status === 'Pending').length,
@@ -70,7 +69,7 @@ export default function RedemptionsPage() {
           <button
             onClick={() => {
               const match = redemptions.find((r: any) => r.code === redeemCode.toUpperCase() && r.status === 'Pending');
-              if (match) approveRedemption.mutate(match.id);
+              if (match) approveRedemption.mutate(match.id, { onError: () => alert('Failed to approve redemption') });
               else alert('No pending redemption found for this code.');
             }}
             className="px-6 py-3 bg-[#f97316] text-white rounded-2xl text-[13px] font-bold hover:bg-[#ea580c] transition-all shadow-lg shadow-[#f97316]/20"
@@ -175,14 +174,14 @@ export default function RedemptionsPage() {
                       <td className="px-8 py-5 text-right">
                         <div className="flex items-center justify-end gap-2">
                           <button
-                            onClick={() => approveRedemption.mutate(r.id)}
+                            onClick={() => approveRedemption.mutate(r.id, { onError: () => alert('Failed to approve') })}
                             disabled={approveRedemption.isPending}
                             className="px-4 py-1.5 bg-green-500 text-white rounded-xl text-[12px] font-bold hover:bg-green-600 transition-colors shadow-sm disabled:opacity-50"
                           >
-                            Redeem
+                            Approve
                           </button>
                           <button
-                            onClick={() => rejectRedemption.mutate(r.id)}
+                            onClick={() => rejectRedemption.mutate(r.id, { onError: () => alert('Failed to reject') })}
                             disabled={rejectRedemption.isPending}
                             className="px-4 py-1.5 bg-[#f5f5f3] text-[#666] rounded-xl text-[12px] font-bold hover:bg-red-50 hover:text-red-500 transition-colors disabled:opacity-50"
                           >
@@ -239,14 +238,14 @@ export default function RedemptionsPage() {
                   {activeTab === 'Pending' && (
                     <div className="flex gap-2">
                       <button
-                        onClick={() => approveRedemption.mutate(r.id)}
+                        onClick={() => approveRedemption.mutate(r.id, { onError: () => alert('Failed to approve') })}
                         disabled={approveRedemption.isPending}
                         className="w-10 h-10 bg-green-500 text-white rounded-xl flex items-center justify-center shadow-lg shadow-green-500/20 active:scale-95 transition-all disabled:opacity-50"
                       >
                         <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M5 13l4 4L19 7" /></svg>
                       </button>
                       <button
-                        onClick={() => rejectRedemption.mutate(r.id)}
+                        onClick={() => rejectRedemption.mutate(r.id, { onError: () => alert('Failed to reject') })}
                         disabled={rejectRedemption.isPending}
                         className="w-10 h-10 bg-white text-red-500 border border-red-100 rounded-xl flex items-center justify-center shadow-sm active:scale-95 transition-all disabled:opacity-50"
                       >

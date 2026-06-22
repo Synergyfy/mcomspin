@@ -63,12 +63,20 @@ export class BusinessRedemptionsService {
     return { data: normalised, meta: { total, page, limit, totalPages: Math.ceil(total / limit) } };
   }
 
-  async approve(businessId: string, id: string) {
+  private async verifyBusinessOwnership(customerRewardId: string, businessId: string) {
     const customerReward = await this.prisma.customerReward.findUnique({
-      where: { id },
-      include: { reward: { include: { inventories: { where: { businessId } } } } },
+      where: { id: customerRewardId },
+      include: { reward: { include: { inventories: { where: { businessId } }, } } },
     });
     if (!customerReward) throw new NotFoundException('Redemption not found');
+    if (!customerReward.reward.inventories.length) {
+      throw new BadRequestException('Reward is not available at this business');
+    }
+    return customerReward;
+  }
+
+  async approve(businessId: string, id: string) {
+    const customerReward = await this.verifyBusinessOwnership(id, businessId);
     if (customerReward.usedAt) throw new BadRequestException('Already redeemed');
     const meta = (customerReward.metadata as Record<string, unknown>) ?? {};
     if (meta.rejectedAt) throw new BadRequestException('Already rejected');
@@ -80,11 +88,7 @@ export class BusinessRedemptionsService {
   }
 
   async reject(businessId: string, id: string) {
-    const customerReward = await this.prisma.customerReward.findUnique({
-      where: { id },
-      include: { reward: { include: { inventories: { where: { businessId } } } } },
-    });
-    if (!customerReward) throw new NotFoundException('Redemption not found');
+    const customerReward = await this.verifyBusinessOwnership(id, businessId);
     if (customerReward.usedAt) throw new BadRequestException('Already redeemed');
     const meta = (customerReward.metadata as Record<string, unknown>) ?? {};
     if (meta.rejectedAt) throw new BadRequestException('Already rejected');

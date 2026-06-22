@@ -2,6 +2,8 @@
 
 import React, { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { getAccessToken } from '@/services/token-store';
+import { initAuth } from '@/services/api';
 
 export function AuthProxy({
   children,
@@ -14,50 +16,66 @@ export function AuthProxy({
   const [verified, setVerified] = useState(false);
 
   useEffect(() => {
-    const token = typeof window !== 'undefined' ? localStorage.getItem('accessToken') : null;
-    if (!token) {
-      router.replace('/auth');
-      return;
+    let cancelled = false;
+
+    async function verify() {
+      let token = typeof window !== 'undefined' ? getAccessToken() : null;
+
+      if (!token) {
+        const restored = await initAuth();
+        if (cancelled) return;
+        if (!restored) {
+          router.replace('/auth');
+          return;
+        }
+        token = getAccessToken();
+        if (!token) {
+          router.replace('/auth');
+          return;
+        }
+      }
+
+      try {
+        const parts = token.split('.');
+        if (parts.length !== 3) {
+          router.replace('/auth');
+          return;
+        }
+
+        const base64Url = parts[1];
+        const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+        const binary = window.atob(base64);
+        const bytes = new Uint8Array(binary.length);
+        for (let i = 0; i < binary.length; i++) {
+          bytes[i] = binary.charCodeAt(i);
+        }
+        const jsonPayload = new TextDecoder().decode(bytes);
+        const payload = JSON.parse(jsonPayload);
+
+        if (payload.exp && Date.now() >= payload.exp * 1000) {
+          router.replace('/auth');
+          return;
+        }
+
+        const userRoles = payload.roles || [];
+        const hasRole = allowedRoles.some((r) =>
+          userRoles.map((role: string) => role.toLowerCase()).includes(r.toLowerCase())
+        );
+
+        if (!hasRole) {
+          router.replace('/auth');
+          return;
+        }
+
+        if (!cancelled) setVerified(true);
+      } catch {
+        if (!cancelled) router.replace('/auth');
+      }
     }
 
-    try {
-      const parts = token.split('.');
-      if (parts.length !== 3) {
-        router.replace('/auth');
-        return;
-      }
+    verify();
 
-      // Base64 decode payload
-      const base64Url = parts[1];
-      const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
-      const jsonPayload = decodeURIComponent(
-        window.atob(base64)
-          .split('')
-          .map((c) => '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2))
-          .join('')
-      );
-      const payload = JSON.parse(jsonPayload);
-
-      // Check expiration
-      if (payload.exp && Date.now() >= payload.exp * 1000) {
-        router.replace('/auth');
-        return;
-      }
-
-      const userRoles = payload.roles || [];
-      const hasRole = allowedRoles.some((r) =>
-        userRoles.map((role: string) => role.toLowerCase()).includes(r.toLowerCase())
-      );
-
-      if (!hasRole) {
-        router.replace('/auth');
-        return;
-      }
-
-      setVerified(true);
-    } catch (err) {
-      router.replace('/auth');
-    }
+    return () => { cancelled = true; };
   }, [router, allowedRoles]);
 
   if (!verified) {

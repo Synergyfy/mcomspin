@@ -463,7 +463,7 @@ export class StorefrontService {
   }
 
   async claimBusiness(businessId: string, userId: string, dto: ClaimBusinessDto) {
-    const targetBusiness = await this.prisma.business.findUnique({ where: { id: dto.businessId } });
+    const targetBusiness = await this.prisma.business.findUnique({ where: { id: businessId } });
     if (!targetBusiness) throw new NotFoundException('Business not found');
 
     const user = await this.prisma.user.findUnique({ where: { id: userId } });
@@ -471,7 +471,7 @@ export class StorefrontService {
 
     return this.prisma.businessClaim.create({
       data: {
-        businessId: dto.businessId,
+        businessId,
         claimerId: userId,
         claimerName: `${user.firstName} ${user.lastName}`,
         claimerEmail: user.email,

@@ -272,6 +272,8 @@ const PlinkoBoardPreview = ({ config, theme }: { config: any, theme: any }) => {
 export const GamificationControl = () => {
   const [subTab, setSubTab] = useState('physics');
   const gamesQuery = useAdminGames();
+  const [deploying, setDeploying] = useState(false);
+  const [deployMsg, setDeployMsg] = useState('');
   const gameList: any[] = gamesQuery.data?.data ?? gamesQuery.data ?? [];
   const [plinkoConfig, setPlinkoConfig] = useState({
     gravity: 0.5,
@@ -606,7 +608,16 @@ export const GamificationControl = () => {
                 <span>SYSTEM STATUS</span>
                 <span className="text-emerald-500">ONLINE</span>
               </div>
-              <button className="w-full py-4 bg-gradient-to-r from-[#f97316] to-orange-600 text-white rounded-2xl text-xs font-black uppercase tracking-[0.1em] shadow-[0_10px_20px_rgba(249,115,22,0.3)] hover:scale-[1.02] active:scale-[0.98] transition-all">
+              {deployMsg && (
+                <p className={`text-[11px] font-bold text-center ${deployMsg.includes('successfully') ? 'text-emerald-500' : 'text-red-500'}`}>{deployMsg}</p>
+              )}
+              <button
+                onClick={() => {
+                  setDeployMsg('Not yet connected to the backend — this is a UI mockup.');
+                  setTimeout(() => setDeployMsg(''), 3000);
+                }}
+                className="w-full py-4 bg-gradient-to-r from-[#f97316] to-orange-600 text-white rounded-2xl text-xs font-black uppercase tracking-[0.1em] shadow-[0_10px_20px_rgba(249,115,22,0.3)] hover:scale-[1.02] active:scale-[0.98] transition-all"
+              >
                 DEPLOY CONFIGURATION
               </button>
               <button className="w-full py-3 bg-white/5 text-white/60 rounded-2xl text-[10px] font-black uppercase tracking-[0.1em] border border-white/10 hover:bg-white/10 transition-all">

@@ -40,14 +40,23 @@ export default function ProfilePage() {
   const [phone, setPhone] = useState(profile.phone || '');
   const [interests, setInterests] = useState<string[]>(profile.interests || profile.metadata?.interests || []);
   const [saved, setSaved] = useState(false);
+  const [formError, setFormError] = useState('');
 
   const handleSave = () => {
+    setFormError('');
+    if (phone && !/^[+\d\s()-]{7,20}$/.test(phone)) {
+      setFormError('Please enter a valid phone number');
+      return;
+    }
     updateProfile.mutate(
       { firstName, lastName, phone, interests },
       {
         onSuccess: () => {
           setSaved(true);
           setTimeout(() => setSaved(false), 3000);
+        },
+        onError: (err: any) => {
+          setFormError(err?.response?.data?.message ?? 'Failed to save profile');
         },
       }
     );
@@ -197,6 +206,7 @@ export default function ProfilePage() {
 
           {/* Save Button */}
           <div className="flex items-center justify-end gap-4">
+            {formError && <p className="text-[13px] text-red-500 font-medium mr-auto">{formError}</p>}
             {saved && (
               <motion.span
                 initial={{ opacity: 0, x: 10 }}

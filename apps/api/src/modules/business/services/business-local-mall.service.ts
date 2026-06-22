@@ -427,13 +427,17 @@ export class BusinessLocalMallService {
       },
     });
 
-    return {
-      clusters: clusters.map((c) => ({
-        ...c,
-        businessCount: c._count.locations,
-        _count: undefined,
-      })),
-    };
+    const clustersWithCount = await Promise.all(
+      clusters.map(async (c) => {
+        const businessCount = await this.prisma.storefrontCluster.count({
+          where: { id: c.id, locations: { some: { businessId: { not: null } } } },
+        });
+        const { _count, ...rest } = c;
+        return { ...rest, businessCount };
+      }),
+    );
+
+    return { clusters: clustersWithCount };
   }
 
   async joinCluster(businessId: string, dto: JoinClusterDto) {

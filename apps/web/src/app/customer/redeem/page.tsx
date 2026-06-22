@@ -239,9 +239,12 @@ function RedemptionPageContent() {
                       type="text" 
                       placeholder="Enter merchant validation code"
                       value={manualCode}
-                      onChange={(e) => setManualCode(e.target.value)}
+                      onChange={(e) => setManualCode(e.target.value.toUpperCase())}
                       className="w-full bg-stone-50 border border-stone-100 px-6 py-5 rounded-2xl text-center font-mono font-bold text-lg focus:outline-none focus:border-orange-500 focus:ring-4 focus:ring-orange-500/5 transition-all"
                     />
+                    {manualCode && manualCode.length > 0 && manualCode.length < 4 && (
+                      <p className="text-[11px] text-red-500 font-medium">Code must be at least 4 characters</p>
+                    )}
                     <p className="text-stone-400 text-[9px] font-black uppercase tracking-widest">Manual merchant override only</p>
                   </div>
                 </div>

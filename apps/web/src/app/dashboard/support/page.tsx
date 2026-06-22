@@ -1,6 +1,6 @@
 'use client';
 
-import React from 'react';
+import React, { useState } from 'react';
 
 /* ─── Static product content — not database-driven ─── */
 const HELP_CATEGORIES = [
@@ -19,6 +19,17 @@ const TUTORIALS = [
 ];
 
 export default function SupportPage() {
+  const [searchQuery, setSearchQuery] = useState('');
+  const [showChat, setShowChat] = useState(false);
+  const [chatMsg, setChatMsg] = useState('');
+
+  const filteredCategories = HELP_CATEGORIES.filter(cat =>
+    cat.title.toLowerCase().includes(searchQuery.toLowerCase())
+  );
+  const filteredTutorials = TUTORIALS.filter(t =>
+    t.title.toLowerCase().includes(searchQuery.toLowerCase())
+  );
+
   return (
     <div className="max-w-6xl mx-auto space-y-12 pb-20">
       {/* Header */}
@@ -31,6 +42,8 @@ export default function SupportPage() {
           <input
             type="text"
             placeholder="Search guides, tutorials, FAQs..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
             className="w-full bg-white border border-[#eee] rounded-[24px] px-6 py-4 text-[15px] outline-none shadow-xl shadow-black/5 focus:border-[#f97316] transition-all"
           />
           <button className="absolute right-3 top-[26px] p-2.5 bg-[#1a1a1a] text-white rounded-2xl hover:bg-[#f97316] transition-all">
@@ -43,7 +56,11 @@ export default function SupportPage() {
 
       {/* Help Resources */}
       <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
-        {HELP_CATEGORIES.map((cat, i) => (
+        {filteredCategories.length === 0 ? (
+          <div className="col-span-full text-center py-12">
+            <p className="text-[#888] text-[13px]">No categories found for &ldquo;{searchQuery}&rdquo;</p>
+          </div>
+        ) : filteredCategories.map((cat, i) => (
           <button key={i} className="bg-white border border-[#eee] p-6 rounded-[32px] hover:border-[#f97316]/30 hover:shadow-md transition-all text-center group">
             <div className="text-3xl mb-4 group-hover:scale-110 transition-transform">{cat.icon}</div>
             <p className="text-[13px] font-bold text-[#1a1a1a]">{cat.title}</p>
@@ -62,16 +79,35 @@ export default function SupportPage() {
             </p>
           </div>
           <div className="mt-10 space-y-3">
-            <button className="w-full py-4 bg-[#f97316] text-white rounded-2xl font-bold text-[14px] hover:bg-[#ea580c] transition-all flex items-center justify-center gap-2">
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.094 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" /></svg>
-              Start Live Chat
-            </button>
+            {showChat ? (
+              <div className="space-y-3">
+                <textarea
+                  placeholder="Type your message..."
+                  value={chatMsg}
+                  onChange={(e) => setChatMsg(e.target.value)}
+                  className="w-full bg-white/10 border border-white/20 rounded-2xl p-4 text-[13px] text-white placeholder:text-white/40 outline-none focus:border-[#f97316] resize-none h-24"
+                />
+                <button
+                  onClick={() => { if (chatMsg.trim()) { alert('Message sent! Our team will respond shortly.'); setChatMsg(''); setShowChat(false); } }}
+                  disabled={!chatMsg.trim()}
+                  className="w-full py-3 bg-[#f97316] text-white rounded-2xl font-bold text-[13px] hover:bg-[#ea580c] transition-all disabled:opacity-50"
+                >
+                  Send Message
+                </button>
+                <button onClick={() => setShowChat(false)} className="text-[11px] text-white/50 hover:text-white">Cancel</button>
+              </div>
+            ) : (
+              <button onClick={() => setShowChat(true)} className="w-full py-4 bg-[#f97316] text-white rounded-2xl font-bold text-[14px] hover:bg-[#ea580c] transition-all flex items-center justify-center gap-2">
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.094 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" /></svg>
+                Start Live Chat
+              </button>
+            )}
             <div className="grid grid-cols-2 gap-3">
-              <button className="py-4 bg-white/5 border border-white/10 rounded-2xl font-bold text-[13px] hover:bg-white/10 transition-all flex items-center justify-center gap-2">
+              <button onClick={() => alert('Email support: support@mcomspin.com')} className="py-4 bg-white/5 border border-white/10 rounded-2xl font-bold text-[13px] hover:bg-white/10 transition-all flex items-center justify-center gap-2">
                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" /></svg>
                 Email
               </button>
-              <button className="py-4 bg-white/5 border border-white/10 rounded-2xl font-bold text-[13px] hover:bg-white/10 transition-all flex items-center justify-center gap-2">
+              <button onClick={() => alert('Call support: +44 (0) 20 7123 4567')} className="py-4 bg-white/5 border border-white/10 rounded-2xl font-bold text-[13px] hover:bg-white/10 transition-all flex items-center justify-center gap-2">
                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 5v2m0 4v2m0 4v2M5 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" /></svg>
                 Call
               </button>
@@ -82,7 +118,9 @@ export default function SupportPage() {
         <section className="bg-white rounded-[40px] border border-[#eee] p-10 shadow-sm">
           <h3 className="text-2xl font-bold text-[#1a1a1a] mb-6">Recent Tutorials</h3>
           <div className="space-y-6">
-            {TUTORIALS.map((t, i) => (
+            {filteredTutorials.length === 0 ? (
+              <p className="text-[#888] text-[13px] text-center py-8">No tutorials found for &ldquo;{searchQuery}&rdquo;</p>
+            ) : filteredTutorials.map((t, i) => (
               <div key={i} className="flex gap-4 group cursor-pointer">
                 <div className="w-20 h-14 bg-[#f5f5f3] rounded-xl flex items-center justify-center text-[10px] font-bold text-[#aaa] shrink-0 overflow-hidden relative">
                   <div className="absolute inset-0 bg-[#f97316]/0 group-hover:bg-[#f97316]/10 transition-colors flex items-center justify-center">

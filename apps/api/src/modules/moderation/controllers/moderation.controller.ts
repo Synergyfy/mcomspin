@@ -2,6 +2,8 @@ import { Controller, Get, Post, Put, Body, Param, Query, UseGuards, Req } from '
 import { ApiTags, ApiOperation, ApiBearerAuth } from '@nestjs/swagger';
 import { JwtAuthGuard } from '../../../common/guards/jwt-auth.guard';
 import { ModerationService } from '../services/moderation.service';
+import { CreateRuleDto } from '../dto/create-rule.dto';
+import { UpdateRuleDto } from '../dto/update-rule.dto';
 
 @ApiTags('Moderation')
 @ApiBearerAuth()
@@ -60,13 +62,13 @@ export class ModerationController {
 
   @Post('rules')
   @ApiOperation({ summary: 'Create moderation rule' })
-  createRule(@Body() dto: any) {
+  createRule(@Body() dto: CreateRuleDto) {
     return this.moderationService.createRule(dto);
   }
 
   @Put('rules/:id')
   @ApiOperation({ summary: 'Update moderation rule' })
-  updateRule(@Param('id') id: string, @Body() dto: any) {
+  updateRule(@Param('id') id: string, @Body() dto: UpdateRuleDto) {
     return this.moderationService.updateRule(id, dto);
   }
 }

@@ -33,8 +33,9 @@ export default function FavoritesPage() {
   );
 
   const removeFavorite = (id: string) => {
-    followMutation.mutate(id);
-    setMenuOpenId(null);
+    followMutation.mutate(id, {
+      onSettled: () => setMenuOpenId(null),
+    });
   };
 
   // Close MoreVertical menu on outside click
@@ -118,7 +119,8 @@ export default function FavoritesPage() {
 
                   <button 
                     onClick={() => removeFavorite(biz.id)}
-                    className="absolute top-4 right-4 p-2 bg-white/20 backdrop-blur-md rounded-full text-white hover:bg-white hover:text-red-500 transition-all"
+                    disabled={followMutation.isPending}
+                    className="absolute top-4 right-4 p-2 bg-white/20 backdrop-blur-md rounded-full text-white hover:bg-white hover:text-red-500 transition-all disabled:opacity-50"
                   >
                     <Heart className="w-4 h-4 fill-current" />
                   </button>
@@ -208,7 +210,8 @@ export default function FavoritesPage() {
                         >
                           <button
                             onClick={() => removeFavorite(biz.id)}
-                            className="w-full flex items-center gap-3 px-4 py-3 text-[11px] font-bold text-red-500 hover:bg-red-50 transition-colors"
+                            disabled={followMutation.isPending}
+                            className="w-full flex items-center gap-3 px-4 py-3 text-[11px] font-bold text-red-500 hover:bg-red-50 transition-colors disabled:opacity-50"
                           >
                             <Heart className="w-4 h-4" />
                             Unfollow

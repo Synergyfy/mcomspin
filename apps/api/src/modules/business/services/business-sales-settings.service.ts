@@ -190,11 +190,17 @@ export class BusinessSalesSettingsService {
   private getPeriodStart(period: string): Date {
     const now = new Date();
     switch (period) {
-      case 'day': return new Date(now.setHours(0, 0, 0, 0));
-      case 'week': return new Date(now.setDate(now.getDate() - 7));
-      case 'month': return new Date(now.setMonth(now.getMonth() - 1));
-      case 'year': return new Date(now.setFullYear(now.getFullYear() - 1));
-      default: return new Date(now.setDate(now.getDate() - 7));
+      case 'day':
+        now.setHours(0, 0, 0, 0);
+        return now;
+      case 'week':
+        return new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+      case 'month':
+        return new Date(now.getFullYear(), now.getMonth() - 1, 1);
+      case 'year':
+        return new Date(now.getFullYear() - 1, now.getMonth(), 1);
+      default:
+        return new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
     }
   }
 

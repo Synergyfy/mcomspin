@@ -21,8 +21,6 @@ export class AuthService {
     private configService: ConfigService,
   ) {}
 
-  private otpStore = new Map<string, { code: string; expiresAt: Date; email?: string; phone?: string }>();
-
   async register(dto: RegisterDto) {
     const existing = await this.prisma.user.findUnique({ where: { email: dto.email } });
     if (existing) throw new ConflictException('Email already registered');
@@ -126,25 +124,32 @@ export class AuthService {
     if (!dto.email && !dto.phone) throw new BadRequestException('Email or phone required');
 
     const code = Math.floor(100000 + Math.random() * 900000).toString();
-    const sessionId = crypto.randomUUID();
 
-    this.otpStore.set(sessionId, {
-      code,
-      expiresAt: new Date(Date.now() + 10 * 60 * 1000),
-      email: dto.email,
-      phone: dto.phone,
+    const otp = await this.prisma.otpVerification.create({
+      data: {
+        code,
+        email: dto.email,
+        phone: dto.phone,
+        expiresAt: new Date(Date.now() + 10 * 60 * 1000),
+      },
     });
 
-    return { sessionId, message: 'OTP sent successfully' };
+    return { sessionId: otp.id, message: 'OTP sent successfully' };
   }
 
   async verifyOtp(dto: VerifyOtpDto) {
-    const stored = this.otpStore.get(dto.sessionId);
+    const stored = await this.prisma.otpVerification.findUnique({
+      where: { id: dto.sessionId },
+    });
     if (!stored) throw new BadRequestException('Invalid session');
+    if (stored.usedAt) throw new BadRequestException('OTP already used');
     if (new Date() > stored.expiresAt) throw new BadRequestException('OTP expired');
     if (stored.code !== dto.code) throw new BadRequestException('Invalid OTP');
 
-    this.otpStore.delete(dto.sessionId);
+    await this.prisma.otpVerification.update({
+      where: { id: dto.sessionId },
+      data: { usedAt: new Date() },
+    });
 
     let user = stored.email
       ? await this.prisma.user.findUnique({ where: { email: stored.email } })
@@ -165,12 +170,14 @@ export class AuthService {
     if (email) {
       let user = await this.prisma.user.findUnique({ where: { email } });
       if (!user) {
+        const randomPassword = crypto.randomBytes(32).toString('hex');
+        const passwordHash = await bcrypt.hash(randomPassword, 12);
         user = await this.prisma.user.create({
           data: {
             email,
             firstName: dto.firstName || 'User',
             lastName: dto.lastName || '',
-            passwordHash: '',
+            passwordHash,
             isEmailVerified: true,
             roles: { create: { role: { connectOrCreate: { where: { name: Role.Customer }, create: { name: Role.Customer, isSystem: true } } } } },
           },
@@ -192,7 +199,7 @@ export class AuthService {
     if (!user) return { message: 'If the email exists, a reset link has been sent' };
 
     const resetToken = crypto.randomBytes(32).toString('hex');
-    const resetTokenHash = await bcrypt.hash(resetToken, 6);
+    const resetTokenHash = await bcrypt.hash(resetToken, 10);
 
     await this.prisma.user.update({
       where: { id: user.id },
@@ -203,7 +210,7 @@ export class AuthService {
   }
 
   async resetPassword(dto: ResetPasswordDto) {
-    const users = await this.prisma.user.findMany({ take: 100 });
+    const users = await this.prisma.user.findMany();
 
     for (const user of users) {
       const meta = user.metadata as any;

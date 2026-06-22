@@ -2,6 +2,7 @@ import { Injectable, ConflictException, UnauthorizedException, NotFoundException
 import { JwtService } from '@nestjs/jwt';
 import { ConfigService } from '@nestjs/config';
 import * as bcrypt from 'bcryptjs';
+import * as crypto from 'crypto';
 import { PrismaService } from '../../../prisma/prisma.service';
 import { CustomerRegisterDto } from '../dto/customer-register.dto';
 import { CustomerLoginDto } from '../dto/customer-login.dto';

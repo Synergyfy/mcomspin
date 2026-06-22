@@ -37,12 +37,23 @@ export default function CampaignDetailsPage() {
   const r = rewards as any;
   const rd = redemptions as any;
 
+  const stat = (label: string) => {
+    if (!a?.campaignStats) return '—';
+    const found = a.campaignStats.find((s: any) => s.label === label);
+    return found?.value ?? '—';
+  };
+
   const updateCampaign = useUpdateBusinessCampaign();
   const [activeTab, setActiveTab] = useState('Overview');
+  const [statusError, setStatusError] = useState('');
   const status = c?.status ?? 'Draft';
 
   const changeStatus = (newStatus: string) => {
-    updateCampaign.mutate({ id, status: newStatus });
+    setStatusError('');
+    updateCampaign.mutate(
+      { id, status: newStatus },
+      { onError: (err: any) => setStatusError(err?.response?.data?.message ?? `Failed to change status to ${newStatus}`) },
+    );
   };
 
   if (isLoading) {
@@ -107,6 +118,7 @@ export default function CampaignDetailsPage() {
               )}
             </div>
           </div>
+          {statusError && <div className="p-3 rounded-xl bg-red-50 border border-red-200 text-red-600 text-[13px] font-medium mb-4">{statusError}</div>}
         </div>
 
         {/* Tab Navigation */}
@@ -137,23 +149,23 @@ export default function CampaignDetailsPage() {
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
               <div className="bg-surface-container-lowest p-4 rounded-xl border border-outline-variant/30 shadow-sm">
                 <span className="text-on-surface-variant text-xs font-bold uppercase tracking-widest block mb-2 flex items-center gap-1"><Gamepad2 className="w-3 h-3"/> Total Plays</span>
-                <span className="text-3xl font-display font-black text-primary">{a?.totalPlays ?? '—'}</span>
+                <span className="text-3xl font-display font-black text-primary">{stat('Total Plays')}</span>
                 <span className="text-green-500 text-xs font-bold block mt-1">{a?.playsChange ?? '—'}</span>
               </div>
               <div className="bg-surface-container-lowest p-4 rounded-xl border border-outline-variant/30 shadow-sm">
                 <span className="text-on-surface-variant text-xs font-bold uppercase tracking-widest block mb-2 flex items-center gap-1"><Users className="w-3 h-3"/> Unique Users</span>
-                <span className="text-3xl font-display font-black text-on-surface">{a?.uniqueUsers ?? '—'}</span>
-                <span className="text-on-surface-variant text-xs font-medium block mt-1">{a?.returningRate ?? '—'}</span>
+                <span className="text-3xl font-display font-black text-on-surface">{a?.totalCustomers ?? '—'}</span>
+                <span className="text-on-surface-variant text-xs font-medium block mt-1">{a?.customerMetrics?.[1]?.percentage ?? '—'}% returning</span>
               </div>
               <div className="bg-surface-container-lowest p-4 rounded-xl border border-outline-variant/30 shadow-sm">
                 <span className="text-on-surface-variant text-xs font-bold uppercase tracking-widest block mb-2 flex items-center gap-1"><Gift className="w-3 h-3"/> Rewards Won</span>
-                <span className="text-3xl font-display font-black text-tertiary">{a?.rewardsWon ?? '—'}</span>
-                <span className="text-on-surface-variant text-xs font-medium block mt-1">{a?.winRate ?? '—'}</span>
+                <span className="text-3xl font-display font-black text-tertiary">{stat('Total Wins')}</span>
+                <span className="text-on-surface-variant text-xs font-medium block mt-1">{stat('Redemption Rate')}</span>
               </div>
               <div className="bg-surface-container-lowest p-4 rounded-xl border border-outline-variant/30 shadow-sm">
                 <span className="text-on-surface-variant text-xs font-bold uppercase tracking-widest block mb-2 flex items-center gap-1"><Clock className="w-3 h-3"/> Avg. Time</span>
-                <span className="text-3xl font-display font-black text-on-surface">{a?.avgTime ?? '—'}</span>
-                <span className="text-green-500 text-xs font-bold block mt-1">{a?.engagementChange ?? '—'}</span>
+                <span className="text-3xl font-display font-black text-on-surface">{stat('Total Plays')}</span>
+                <span className="text-green-500 text-xs font-bold block mt-1">{a?.customerMetrics?.[0]?.percentage ?? '—'}% new</span>
               </div>
             </div>
 
@@ -272,9 +284,9 @@ export default function CampaignDetailsPage() {
                 {/* Funnel Visualization */}
                 <div className="flex items-end justify-between h-48 px-4 gap-4">
                   {(() => {
-                    const impressions = a?.impressions ?? 0;
-                    const plays = a?.totalPlays ?? 0;
-                    const conversions = a?.conversions ?? 0;
+                    const impressions = Number(stat('Total Plays')) || 0;
+                    const plays = Number(stat('Total Wins')) || 0;
+                    const conversions = Number(stat('Redemptions')) || 0;
                     const maxVal = Math.max(impressions, plays, conversions) || 1;
                     const stages = [
                       { label: 'Impressions', val: impressions, pct: (impressions / maxVal) * 100, color: 'bg-stone-200' },
@@ -292,16 +304,16 @@ export default function CampaignDetailsPage() {
 
                 <div className="grid grid-cols-3 divide-x divide-stone-100 text-center border-t border-stone-100 pt-6">
                   <div>
-                    <span className="block text-2xl font-bold text-stone-900">{a?.impressions ?? '—'}</span>
-                    <span className="text-[9px] uppercase font-bold text-stone-400 tracking-widest">Impressions</span>
+                    <span className="block text-2xl font-bold text-stone-900">{stat('Total Plays')}</span>
+                    <span className="text-[9px] uppercase font-bold text-stone-400 tracking-widest">Total Plays</span>
                   </div>
                   <div>
-                    <span className="block text-2xl font-bold text-orange-500">{a?.totalPlays ?? '—'}</span>
-                    <span className="text-[9px] uppercase font-bold text-stone-400 tracking-widest">Plays</span>
+                    <span className="block text-2xl font-bold text-orange-500">{stat('Total Wins')}</span>
+                    <span className="text-[9px] uppercase font-bold text-stone-400 tracking-widest">Wins</span>
                   </div>
                   <div>
-                    <span className="block text-2xl font-bold text-stone-900">{a?.conversionRate ?? a?.conversion ?? '—'}</span>
-                    <span className="text-[9px] uppercase font-bold text-stone-400 tracking-widest">Conversion</span>
+                    <span className="block text-2xl font-bold text-stone-900">{stat('Redemption Rate')}</span>
+                    <span className="text-[9px] uppercase font-bold text-stone-400 tracking-widest">Redemption Rate</span>
                   </div>
                 </div>
               </div>

@@ -172,6 +172,11 @@ export function useBusinessCustomers() {
     queryKey: businessKeys.customers.all,
     queryFn: () =>
       api.get('/business/customers').then((r) => r.data.data ?? r.data),
+    select: (data: any) => {
+      if (data?.data) return data.data;
+      if (Array.isArray(data)) return data;
+      return data ?? [];
+    },
   });
 }
 

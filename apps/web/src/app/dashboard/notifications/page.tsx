@@ -6,6 +6,7 @@ import { useSendBusinessNotification } from '@/services/business';
 export default function NotificationsPage() {
   const sendNotification = useSendBusinessNotification();
   const [message, setMessage] = useState('');
+  const [sendError, setSendError] = useState('');
   const [channels, setChannels] = useState({
     email: true,
     sms: false,
@@ -13,6 +14,18 @@ export default function NotificationsPage() {
   });
 
   const alerts: any[] = [];
+
+  const handleSend = () => {
+    if (!message.trim()) {
+      setSendError('Message cannot be empty');
+      return;
+    }
+    setSendError('');
+    sendNotification.mutate(
+      { message, channels } as any,
+      { onError: (err: any) => setSendError(err?.response?.data?.message ?? 'Failed to send notification') },
+    );
+  };
 
   return (
     <div className="max-w-4xl mx-auto space-y-12 pb-20">
@@ -73,12 +86,13 @@ export default function NotificationsPage() {
           <textarea 
             placeholder="Write a message to all active customers..." 
             value={message}
-            onChange={(e) => setMessage(e.target.value)}
+            onChange={(e) => { setMessage(e.target.value); setSendError(''); }}
             className="w-full bg-[#f5f5f3] rounded-3xl p-6 text-[14px] outline-none border border-transparent focus:border-[#f97316] transition-all resize-none h-32"
           />
+          {sendError && <p className="text-[13px] text-red-500 font-medium">{sendError}</p>}
           <div className="flex justify-end">
-            <button onClick={() => { if (message) sendNotification.mutate({ message, channels } as any); }} className="px-8 py-3 bg-[#f97316] text-white rounded-2xl font-bold text-[13px] hover:bg-[#ea580c] transition-all shadow-lg shadow-[#f97316]/20">
-              Send {sendNotification.isPending ? '...' : `to ${Intl.NumberFormat().format(1295)} Customers`}
+            <button onClick={handleSend} disabled={sendNotification.isPending} className="px-8 py-3 bg-[#f97316] text-white rounded-2xl font-bold text-[13px] hover:bg-[#ea580c] transition-all shadow-lg shadow-[#f97316]/20 disabled:opacity-50">
+              {sendNotification.isPending ? 'Sending...' : `Send to ${Intl.NumberFormat().format(1295)} Customers`}
             </button>
           </div>
         </div>

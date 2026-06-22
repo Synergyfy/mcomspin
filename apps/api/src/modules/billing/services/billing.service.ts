@@ -81,10 +81,12 @@ export class BillingService {
     if (!invoice) throw new NotFoundException('Invoice not found');
     if (invoice.status === 'Paid') throw new BadRequestException('Invoice already paid');
 
-    await this.prisma.transaction.create({
-      data: { businessId, invoiceId, amount: invoice.totalAmount, currency: invoice.currency, status: 'Completed', type: 'Payment' },
+    return this.prisma.$transaction(async (tx) => {
+      await tx.transaction.create({
+        data: { businessId, invoiceId, amount: invoice.totalAmount, currency: invoice.currency, status: 'Completed', type: 'Payment' },
+      });
+      return tx.invoice.update({ where: { id: invoiceId }, data: { status: 'Paid', paidAt: new Date() } });
     });
-    return this.prisma.invoice.update({ where: { id: invoiceId }, data: { status: 'Paid', paidAt: new Date() } });
   }
 
   async getTransactions(businessId: string, page: number = 1, limit: number = 20) {

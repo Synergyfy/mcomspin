@@ -1,4 +1,5 @@
 import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
+import * as crypto from 'crypto';
 import { PrismaService } from '../../../prisma/prisma.service';
 
 @Injectable()
@@ -105,21 +106,57 @@ export class BusinessCustomersService {
   }
 
   async sendMessage(businessId: string, senderId: string, dto: { customerIds: string[]; subject?: string; content: string }) {
-    const results = [];
-    for (const customerId of dto.customerIds) {
-      const thread = await this.prisma.messageThread.create({
-        data: {
-          subject: dto.subject || 'Message from business',
-          participants: { connect: [{ id: senderId }, { id: customerId }] },
-          messages: {
-            create: { senderId, content: dto.content },
-          },
-        },
-        include: { messages: true },
-      });
-      results.push(thread);
+    const subject = dto.subject || 'Message from business';
+    const { customerIds, content } = dto;
+
+    const batchKey = crypto.randomUUID();
+
+    await this.prisma.messageThread.createMany({
+      data: customerIds.map(() => ({
+        subject: `__batch_${batchKey}__${subject}`,
+      })),
+    });
+
+    const threads = await this.prisma.messageThread.findMany({
+      where: { subject: { startsWith: `__batch_${batchKey}__` } },
+      orderBy: { createdAt: 'asc' },
+    });
+
+    const placeholders: string[] = [];
+    const values: any[] = [];
+    for (let i = 0; i < threads.length; i++) {
+      placeholders.push(`($${values.length + 1}::uuid, $${values.length + 2}::uuid)`);
+      values.push(threads[i].id, senderId);
+      placeholders.push(`($${values.length + 1}::uuid, $${values.length + 2}::uuid)`);
+      values.push(threads[i].id, customerIds[i]);
     }
-    return { message: `Sent message to ${dto.customerIds.length} customers`, threads: results };
+
+    await Promise.all([
+      this.prisma.$executeRawUnsafe(
+        `INSERT INTO "_MessageThreadParticipants" ("A", "B") VALUES ${placeholders.join(', ')}`,
+        ...values,
+      ),
+      this.prisma.message.createMany({
+        data: threads.map((t) => ({
+          threadId: t.id,
+          senderId,
+          content,
+        })),
+      }),
+    ]);
+
+    // Clean up subject prefix in DB and fetch final result
+    await this.prisma.messageThread.updateMany({
+      where: { id: { in: threads.map((t) => t.id) } },
+      data: { subject },
+    });
+
+    const result = await this.prisma.messageThread.findMany({
+      where: { id: { in: threads.map((t) => t.id) } },
+      include: { messages: true },
+    });
+
+    return { message: `Sent message to ${customerIds.length} customers`, threads: result };
   }
 
   async getReviews(businessId: string, query: { page?: number; limit?: number }) {
