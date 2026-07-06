@@ -3,19 +3,31 @@
 import React from 'react';
 import { motion } from 'framer-motion';
 import { useCustomerDashboard, useCustomerRewards, useCustomerActivity } from '@/services/customer';
+import { useLogout } from '@/services/auth';
+import { useRouter } from 'next/navigation';
 import { 
   Zap, 
   Flame, 
   Gift, 
   Sparkles,
-  Ticket
+  Ticket,
+  LogOut
 } from 'lucide-react';
 import Link from 'next/link';
 
 export default function CustomerDashboard() {
+  const router = useRouter();
+  const logoutMutation = useLogout();
   const { data: dashboard, isLoading: dashboardLoading } = useCustomerDashboard();
   const { data: rewards } = useCustomerRewards();
   const { data: activity } = useCustomerActivity();
+  const wallet = React.useMemo(() => {
+    if (!rewards || typeof rewards !== 'object') return [];
+    const available = (rewards as any).available || [];
+    const redeemed = (rewards as any).redeemed || [];
+    const expired = (rewards as any).expired || [];
+    return [...available, ...redeemed, ...expired];
+  }, [rewards]);
 
   if (dashboardLoading) {
     return (
@@ -26,13 +38,6 @@ export default function CustomerDashboard() {
   }
 
   const profile = dashboard?.profile ?? dashboard ?? {};
-  const wallet = React.useMemo(() => {
-    if (!rewards || typeof rewards !== 'object') return [];
-    const available = (rewards as any).available || [];
-    const redeemed = (rewards as any).redeemed || [];
-    const expired = (rewards as any).expired || [];
-    return [...available, ...redeemed, ...expired];
-  }, [rewards]);
   const activityList = activity ?? [];
   const activeRewards = (rewards as any)?.available?.length ?? 0;
 
@@ -61,13 +66,20 @@ export default function CustomerDashboard() {
             <p className="text-xl font-display font-extrabold text-[#1a1a1a] mt-0.5">{activeRewards}</p>
           </div>
           <div className="h-6 w-px bg-[#eee]" />
-          <div className="text-center">
+          <div className="flex gap-3 items-center">
             <Link
               href="/customer/active-games"
               className="bg-[#1a1a1a] hover:bg-[#f97316] text-white text-[10px] font-extrabold uppercase tracking-[0.1em] px-4.5 py-2.5 rounded-xl transition-all shadow-md active:scale-95 flex items-center gap-2"
             >
               Play Now
             </Link>
+            <button
+              onClick={() => logoutMutation.mutate(undefined, { onSuccess: () => router.push('/login') })}
+              className="p-2.5 rounded-xl text-[#888] hover:text-[#f97316] hover:bg-orange-50 transition-all active:scale-95 border border-transparent hover:border-orange-100"
+              title="Logout"
+            >
+              <LogOut className="w-5 h-5" />
+            </button>
           </div>
         </div>
       </div>
