@@ -115,12 +115,30 @@ export default function CampaignsHome() {
                 <h4 className="font-bold text-stone-900 uppercase tracking-tight text-lg">{campaign.name}</h4>
                 <p className="text-stone-400 text-[10px] font-semibold uppercase tracking-widest">{campaign.status} • {campaign._count?.rewards ?? 0} Rewards</p>
               </div>
-              <button 
-                onClick={() => router.push(`/dashboard/campaign/${campaign.id}`)}
-                className="px-6 py-3 bg-stone-900 hover:bg-orange-500 text-white rounded-xl text-[10px] font-bold uppercase tracking-widest transition-all"
-              >
-                View Stats
-              </button>
+              <div className="flex items-center gap-2">
+                <button 
+                  onClick={() => router.push(`/dashboard/campaign/create?edit=${campaign.id}`)}
+                  className="px-4 py-3 bg-stone-100 hover:bg-stone-200 text-stone-600 rounded-xl text-[10px] font-bold uppercase tracking-widest transition-all"
+                >
+                  Edit
+                </button>
+                <button 
+                  onClick={() => {
+                    if (confirm('Are you sure you want to delete this campaign?')) {
+                      deleteCampaign.mutate(campaign.id);
+                    }
+                  }}
+                  className="px-4 py-3 bg-red-50 hover:bg-red-100 text-red-600 rounded-xl text-[10px] font-bold uppercase tracking-widest transition-all"
+                >
+                  Delete
+                </button>
+                <button 
+                  onClick={() => router.push(`/dashboard/campaign/${campaign.id}`)}
+                  className="px-6 py-3 bg-stone-900 hover:bg-orange-500 text-white rounded-xl text-[10px] font-bold uppercase tracking-widest transition-all"
+                >
+                  Stats
+                </button>
+              </div>
             </div>
             ))
           )}

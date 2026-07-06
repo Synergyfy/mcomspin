@@ -47,6 +47,7 @@ type Prize = {
 
 type Campaign = {
   id: string;
+  name?: string;
   businessName: string;
   businessCategory: string;
   theme?: 'fashion' | 'tech' | 'food' | 'barber' | 'beauty' | 'event' | 'mall';
@@ -56,6 +57,11 @@ type Campaign = {
   logo?: any;
   gameId?: string;
   gameName?: string;
+  imageUrl?: string;
+  metadata?: {
+    thumbnailUrl?: string;
+    [key: string]: any;
+  };
 };
 
 const THEMES = {
@@ -109,7 +115,7 @@ const ArcadePlinkoBoard = ({
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const prizeImagesRef = useRef<Record<number, HTMLImageElement>>({});
-  
+
   const [gameState, setGameState] = useState<'sweeping' | 'dropping' | 'landed'>('sweeping');
 
   useEffect(() => {
@@ -136,13 +142,13 @@ const ArcadePlinkoBoard = ({
       setGameState('dropping');
     }
   }, [dropTrigger]);
-  
+
   const physics = useRef({
     width: 0,
     height: 0,
     ball: { x: 0, y: 30, vx: 0, vy: 0, radius: 10, isDropping: false },
-    pegs: [] as {x: number, y: number, radius: number, flash: number}[],
-    bins: [] as {x: number, width: number, prizeIndex: number}[],
+    pegs: [] as { x: number, y: number, radius: number, flash: number }[],
+    bins: [] as { x: number, width: number, prizeIndex: number }[],
     sweepDirection: 1,
     sweepSpeed: 6,
     settleTimer: 0
@@ -151,7 +157,7 @@ const ArcadePlinkoBoard = ({
   useEffect(() => {
     const p = physics.current;
     if (!containerRef.current || !canvasRef.current) return;
-    
+
     const w = containerRef.current.clientWidth;
     const h = containerRef.current.clientHeight;
     canvasRef.current.width = w;
@@ -167,7 +173,7 @@ const ArcadePlinkoBoard = ({
     const endY = h - 120;
     const spacingX = w / cols;
     const spacingY = (endY - startY) / rows;
-    
+
     for (let r = 0; r < rows; r++) {
       const isOffset = r % 2 !== 0;
       const cCount = isOffset ? cols - 1 : cols;
@@ -176,7 +182,7 @@ const ArcadePlinkoBoard = ({
         // Add random jitter to make the board unpredictable
         const jitterX = (Math.random() - 0.5) * (spacingX * 0.45);
         const jitterY = (Math.random() - 0.5) * (spacingY * 0.45);
-        
+
         p.pegs.push({
           x: c * spacingX + offset + jitterX,
           y: startY + r * spacingY + jitterY,
@@ -208,8 +214,8 @@ const ArcadePlinkoBoard = ({
     if (!ctx) return;
     const p = physics.current;
 
-    const trail: {x: number, y: number, life: number}[] = [];
-    const sparkles: {x: number, y: number, vx: number, vy: number, life: number, color: string}[] = [];
+    const trail: { x: number, y: number, life: number }[] = [];
+    const sparkles: { x: number, y: number, vx: number, vy: number, life: number, color: string }[] = [];
     let frameCount = 0;
 
     const draw = () => {
@@ -294,6 +300,44 @@ const ArcadePlinkoBoard = ({
         if (p.ball.x < p.ball.radius) { p.ball.x = p.ball.radius; p.ball.vx *= -0.7; }
         if (p.ball.x > p.width - p.ball.radius) { p.ball.x = p.width - p.ball.radius; p.ball.vx *= -0.7; }
 
+        // ── Bin Divider Wall Collisions ──
+        // Physical walls between bins so ball can't sit on the edge
+        const wallZoneTop = p.height - 120;
+        if (p.ball.y > wallZoneTop) {
+          for (let i = 1; i < p.bins.length; i++) {
+            const wallX = p.bins[i].x;
+            const distToWall = p.ball.x - wallX;
+            if (Math.abs(distToWall) < p.ball.radius + 2) {
+              // Push ball away from divider wall
+              if (distToWall < 0) {
+                p.ball.x = wallX - p.ball.radius - 2;
+              } else {
+                p.ball.x = wallX + p.ball.radius + 2;
+              }
+              p.ball.vx *= -0.5;
+            }
+          }
+        }
+
+        // ── Magnetic Snap-to-Center in Landing Zone ──
+        // Gently pulls ball toward the nearest bin center as it approaches the bottom
+        const snapZoneTop = p.height - 80;
+        if (p.ball.y > snapZoneTop) {
+          let nearestBinCenter = p.ball.x;
+          let minDist2 = Infinity;
+          for (const bin of p.bins) {
+            const center = bin.x + bin.width / 2;
+            const d = Math.abs(p.ball.x - center);
+            if (d < minDist2) {
+              minDist2 = d;
+              nearestBinCenter = center;
+            }
+          }
+          // Stronger pull the closer to the bottom
+          const pullStrength = Math.min(0.15, (p.ball.y - snapZoneTop) / (p.height - snapZoneTop) * 0.15);
+          p.ball.vx += (nearestBinCenter - p.ball.x) * pullStrength;
+        }
+
         // Bins / Settling
         if (p.ball.y > p.height - 20) {
           p.ball.y = p.height - 20;
@@ -303,10 +347,14 @@ const ArcadePlinkoBoard = ({
           if (Math.abs(p.ball.vy) < 1.0 && Math.abs(p.ball.vx) < 1.0) {
             p.settleTimer++;
             if (p.settleTimer > 30 && gameState !== 'landed') {
+              // Snap ball to the center of nearest bin before resolving
+              let landedBin = p.bins.find(b => p.ball.x >= b.x && p.ball.x < b.x + b.width);
+              if (landedBin) {
+                p.ball.x = landedBin.x + landedBin.width / 2;
+              }
               p.ball.isDropping = false;
               setGameState('landed');
-              const bin = p.bins.find(b => p.ball.x >= b.x && p.ball.x < b.x + b.width);
-              if (bin) onWin(bin.prizeIndex);
+              if (landedBin) onWin(landedBin.prizeIndex);
             }
           }
         }
@@ -420,12 +468,34 @@ const ArcadePlinkoBoard = ({
       // ── Draw Bins / Guides ──
       ctx.lineWidth = 1;
       p.bins.forEach((bin, i) => {
+        // Draw solid physical divider walls between bins
         if (i > 0) {
+          const wallX = bin.x;
+          const wallTop = p.height - 115;
+          const wallBottom = p.height;
+          const wallWidth = 4;
+
+          // Wall shadow
+          ctx.fillStyle = 'rgba(0, 0, 0, 0.15)';
+          ctx.fillRect(wallX - wallWidth / 2 + 1, wallTop + 2, wallWidth, wallBottom - wallTop);
+
+          // Wall body gradient
+          const wallGrad = ctx.createLinearGradient(wallX - wallWidth / 2, 0, wallX + wallWidth / 2, 0);
+          wallGrad.addColorStop(0, '#c2410c');
+          wallGrad.addColorStop(0.5, '#f97316');
+          wallGrad.addColorStop(1, '#ea580c');
+          ctx.fillStyle = wallGrad;
+          ctx.fillRect(wallX - wallWidth / 2, wallTop, wallWidth, wallBottom - wallTop);
+
+          // Wall highlight edge
+          ctx.fillStyle = 'rgba(255, 255, 255, 0.4)';
+          ctx.fillRect(wallX - wallWidth / 2, wallTop, 1, wallBottom - wallTop);
+
+          // Top cap
           ctx.beginPath();
-          ctx.moveTo(bin.x, p.height - 110);
-          ctx.lineTo(bin.x, p.height);
-          ctx.strokeStyle = 'rgba(249, 115, 22, 0.15)'; // faint orange
-          ctx.stroke();
+          ctx.arc(wallX, wallTop, wallWidth, 0, Math.PI * 2);
+          ctx.fillStyle = '#fb923c';
+          ctx.fill();
         }
 
         // 3D Gift Box
@@ -573,17 +643,19 @@ const ArcadePlinkoBoard = ({
 
       <div ref={containerRef} className="relative w-full flex-1 min-h-[550px] rounded-2xl overflow-hidden shadow-2xl bg-orange-50/50 border border-orange-100">
         {/* SECTOR BACKGROUND IMAGE */}
-        <div 
-          className="absolute inset-0 z-0 bg-cover bg-center opacity-30 mix-blend-overlay"
-          style={{ backgroundImage: `url(${THEMES[(activeGame.theme || (
-            activeGame.businessCategory?.toLowerCase().includes('tech') ? 'tech' :
-            activeGame.businessCategory?.toLowerCase().includes('food') ? 'food' :
-            activeGame.businessCategory?.toLowerCase().includes('fashion') ? 'fashion' :
-            activeGame.businessCategory?.toLowerCase().includes('barber') ? 'barber' :
-            activeGame.businessCategory?.toLowerCase().includes('beauty') ? 'beauty' :
-            activeGame.businessCategory?.toLowerCase().includes('event') ? 'event' :
-            'mall'
-          )) as keyof typeof THEMES]?.bgImage})` }}
+        <div
+          className="absolute inset-0 z-0 bg-cover bg-center opacity-90 mix-blend-soft-light"
+          style={{
+            backgroundImage: `url(${activeGame.imageUrl || THEMES[(activeGame.theme || (
+              activeGame.businessCategory?.toLowerCase().includes('tech') ? 'tech' :
+                activeGame.businessCategory?.toLowerCase().includes('food') ? 'food' :
+                  activeGame.businessCategory?.toLowerCase().includes('fashion') ? 'fashion' :
+                    activeGame.businessCategory?.toLowerCase().includes('barber') ? 'barber' :
+                      activeGame.businessCategory?.toLowerCase().includes('beauty') ? 'beauty' :
+                        activeGame.businessCategory?.toLowerCase().includes('event') ? 'event' :
+                          'mall'
+            )) as keyof typeof THEMES]?.bgImage})`
+          }}
         />
         <canvas ref={canvasRef} className="absolute inset-0 w-full h-full touch-none z-10" />
       </div>
@@ -593,6 +665,98 @@ const ArcadePlinkoBoard = ({
 };
 
 
+/* ─── GAME ONBOARDING WIZARD ─── */
+const GameOnboardingWizard = ({ game, onConfirm, onCancel }: { game: Campaign, onConfirm: () => void, onCancel: () => void }) => {
+  const [step, setStep] = useState(0);
+
+  useEffect(() => {
+    if (step === 0) {
+      const timer = setTimeout(() => setStep(1), 3500);
+      return () => clearTimeout(timer);
+    } else if (step === 1) {
+      const timer = setTimeout(() => setStep(2), 4500);
+      return () => clearTimeout(timer);
+    } else if (step === 2) {
+      const timer = setTimeout(() => setStep(3), 3000);
+      return () => clearTimeout(timer);
+    }
+  }, [step]);
+
+  return (
+    <motion.div
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      className="fixed inset-0 z-[100] flex items-center justify-center bg-stone-900/90 backdrop-blur-md overflow-hidden"
+    >
+      <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,_var(--tw-gradient-stops))] from-orange-500/20 via-transparent to-transparent pointer-events-none" />
+
+      <AnimatePresence mode="wait">
+        {step === 0 && (
+          <motion.div key="instructions" initial={{ scale: 0.8, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 1.2, opacity: 0 }} className="text-center px-4">
+            <Gamepad2 className="w-24 h-24 text-orange-500 mx-auto mb-6 animate-bounce" />
+            <h2 className="text-4xl md:text-5xl font-black text-white mb-4 tracking-wider uppercase">How to Play</h2>
+            <p className="text-xl text-stone-300 max-w-md mx-auto leading-relaxed">Drop the coin, navigate the pegs, and let physics decide your fate! Are you feeling lucky?</p>
+          </motion.div>
+        )}
+
+        {step === 1 && (
+          <motion.div key="rewards" initial={{ opacity: 0, y: 50 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, scale: 0.8 }} className="text-center w-full max-w-4xl px-4">
+            <h2 className="text-3xl md:text-4xl font-black text-white mb-8 tracking-wider uppercase">Epic Rewards Await</h2>
+            <div className="flex flex-wrap justify-center gap-4">
+              {game.prizes.slice(0, 6).map((prize, i) => (
+                <motion.div
+                  key={i}
+                  initial={{ opacity: 0, scale: 0 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  transition={{ delay: i * 0.15 }}
+                  className="bg-white/10 border border-white/20 p-4 rounded-2xl backdrop-blur-md flex flex-col items-center justify-center gap-2 w-36 h-36"
+                >
+                  <Gift className="w-10 h-10 text-orange-400" />
+                  <span className="text-white font-bold text-sm line-clamp-2 text-center">{prize.title}</span>
+                  <span className="text-orange-300 text-xs font-black tracking-widest uppercase">{prize.value}</span>
+                </motion.div>
+              ))}
+              {game.prizes.length > 6 && (
+                <div className="bg-white/5 border border-white/10 p-4 rounded-2xl flex items-center justify-center w-36 h-36">
+                  <span className="text-white/50 font-bold tracking-widest uppercase">+ More!</span>
+                </div>
+              )}
+            </div>
+          </motion.div>
+        )}
+
+        {step === 2 && (
+          <motion.div key="shuffle" initial={{ opacity: 0, scale: 2 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.5 }} className="text-center">
+            <div className="relative">
+              <Gift className="w-40 h-40 text-orange-500 mx-auto animate-[spin_0.5s_ease-in-out_infinite]" />
+              <div className="absolute inset-0 bg-orange-500 blur-3xl opacity-50 rounded-full animate-pulse" />
+            </div>
+            <h2 className="text-3xl font-black text-white mt-8 tracking-wider uppercase">Shuffling Rewards...</h2>
+            <p className="text-orange-300 mt-2 font-bold text-lg animate-pulse">Packing the mystery boxes!</p>
+          </motion.div>
+        )}
+
+        {step === 3 && (
+          <motion.div key="ready" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="text-center bg-white/10 backdrop-blur-xl p-8 md:p-12 rounded-3xl border border-white/20 max-w-lg w-full mx-4 shadow-[0_0_50px_rgba(249,115,22,0.3)]">
+            <Trophy className="w-20 h-20 text-orange-500 mx-auto mb-6 drop-shadow-[0_0_15px_rgba(249,115,22,0.8)]" />
+            <h2 className="text-4xl font-black text-white mb-2 tracking-wider uppercase">Ready to Play?</h2>
+            <p className="text-stone-300 mb-8 text-lg">The boxes are shuffled and the board is set. Time to test your luck!</p>
+            <div className="flex flex-col gap-4">
+              <button onClick={onConfirm} className="w-full py-4 bg-gradient-to-r from-orange-500 to-red-500 hover:from-orange-400 hover:to-red-400 text-white rounded-2xl font-black text-lg tracking-widest uppercase shadow-[0_0_20px_rgba(249,115,22,0.5)] hover:scale-105 active:scale-95 transition-all">
+                Yes, Let's Go!
+              </button>
+              <button onClick={onCancel} className="w-full py-4 bg-white/5 hover:bg-white/10 text-stone-300 rounded-2xl font-bold tracking-wider uppercase transition-colors">
+                No, Back to Games
+              </button>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </motion.div>
+  );
+};
+
 /* ─── MAIN ARCADE PAGE ─── */
 
 function ArcadeGamesPageContent() {
@@ -600,7 +764,7 @@ function ArcadeGamesPageContent() {
   const campaignId = searchParams.get('campaignId');
   const sessionId = searchParams.get('sessionId');
   const router = useRouter();
-  
+
   const { data: profileData } = useCustomerDashboard();
   const { data: campaignsData } = useCustomerCampaigns();
   const { data: activityData } = useCustomerActivity();
@@ -613,6 +777,7 @@ function ArcadeGamesPageContent() {
   const MOCK_LIVE_ACTIVITIES = activityData ?? [];
 
   const [activeGame, setActiveGame] = useState<Campaign | null>(null);
+  const [selectedIntroGame, setSelectedIntroGame] = useState<Campaign | null>(null);
   const [currentSessionId, setCurrentSessionId] = useState<string | null>(null);
   const [wonPrize, setWonPrize] = useState<Prize | null>(null);
   const [showVictoryModal, setShowVictoryModal] = useState(false);
@@ -622,7 +787,7 @@ function ArcadeGamesPageContent() {
   const [soundEnabled, setSoundEnabled] = useState(true);
   const [activityFeed, setActivityFeed] = useState<any[]>([]);
   const [showRewards, setShowRewards] = useState(false);
-  
+
   const [plinkoState, setPlinkoState] = useState<'sweeping' | 'dropping' | 'landed'>('sweeping');
   const [dropTrigger, setDropTrigger] = useState(0);
 
@@ -642,7 +807,7 @@ function ArcadeGamesPageContent() {
     setActiveGame(game);
     setEligibilityError(null);
     setCurrentSessionId(null);
-    
+
     playGame.mutate(
       { gameId: game.gameId, campaignId: game.id },
       {
@@ -771,6 +936,22 @@ function ArcadeGamesPageContent() {
     }
   };
 
+  useEffect(() => {
+    let audio: HTMLAudioElement | null = null;
+    if (activeGame && soundEnabled) {
+      audio = new Audio('/Gravity_Play.mp3');
+      audio.loop = true;
+      audio.volume = 0.5;
+      audio.play().catch(e => console.log('Audio autoplay prevented:', e));
+    }
+    return () => {
+      if (audio) {
+        audio.pause();
+        audio.src = '';
+      }
+    };
+  }, [activeGame, soundEnabled]);
+
   const exitGame = () => {
     setActiveGame(null);
     setEligibilityError(null);
@@ -781,76 +962,95 @@ function ArcadeGamesPageContent() {
 
   if (!activeGame) {
     return (
-      <div className="space-y-8">
-        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-5 bg-white border border-[#eee] rounded-3xl p-6 shadow-sm text-left">
-          <div className="space-y-1">
-            <h1 className="text-2xl font-display font-bold text-[#1a1a1a]">Active Games</h1>
-            <p className="text-[#888] text-sm">Discover and play reward campaigns from your favorite businesses.</p>
-          </div>
-          <div className="flex items-center gap-4">
-            <div className="relative">
-              <input 
-                type="text" 
-                placeholder="Search campaigns..." 
-                className="pl-10 pr-4 py-2.5 bg-[#fafaf9] border border-[#eee] rounded-xl text-sm w-full md:w-64 focus:outline-none focus:border-[#f97316] transition-colors"
-              />
-              <svg className="w-4 h-4 text-[#888] absolute left-4 top-1/2 -translate-y-1/2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-              </svg>
+      <>
+        <AnimatePresence>
+          {selectedIntroGame && (
+            <GameOnboardingWizard
+              game={selectedIntroGame}
+              onConfirm={() => {
+                handleSelectGame(selectedIntroGame);
+                setSelectedIntroGame(null);
+              }}
+              onCancel={() => setSelectedIntroGame(null)}
+            />
+          )}
+        </AnimatePresence>
+        <div className="space-y-8">
+          <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-5 bg-white border border-[#eee] rounded-3xl p-6 shadow-sm text-left">
+            <div className="space-y-1">
+              <h1 className="text-2xl font-display font-bold text-[#1a1a1a]">Active Games</h1>
+              <p className="text-[#888] text-sm">Discover and play reward campaigns from your favorite businesses.</p>
             </div>
-          </div>
-        </div>
-        <div className="space-y-8 text-left">
-          <section>
-            <div className="flex items-center gap-2 mb-4">
-              <Zap className="w-5 h-5 text-[#f97316]" />
-              <h2 className="text-lg font-display font-bold text-[#1a1a1a]">Available Reward Games</h2>
-            </div>
-            {ACTIVE_CAMPAIGNS.length === 0 ? (
-              <div className="flex flex-col items-center justify-center p-12 bg-white rounded-3xl border border-dashed border-[#eee] text-center">
-                <Gamepad2 className="w-12 h-12 text-[#ccc] mb-3" />
-                <h3 className="text-lg font-bold text-[#888] mb-1">No active campaigns</h3>
-                <p className="text-sm text-[#aaa]">There are no reward campaigns available to play right now. Check back later!</p>
+            <div className="flex items-center gap-4">
+              <div className="relative">
+                <input
+                  type="text"
+                  placeholder="Search campaigns..."
+                  className="pl-10 pr-4 py-2.5 bg-[#fafaf9] border border-[#eee] rounded-xl text-sm w-full md:w-64 focus:outline-none focus:border-[#f97316] transition-colors"
+                />
+                <svg className="w-4 h-4 text-[#888] absolute left-4 top-1/2 -translate-y-1/2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                </svg>
               </div>
-            ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {ACTIVE_CAMPAIGNS.map(game => {
-                const Icon = THEMES[game.theme as keyof typeof THEMES]?.icon || Store;
-                return (
-                  <div 
-                    key={game.id} 
-                    onClick={() => handleSelectGame(game)} 
-                    className="bg-white rounded-3xl border border-[#eee] p-6 shadow-sm hover:border-[#f97316] hover:shadow-md transition-all cursor-pointer group flex flex-col h-full"
-                  >
-                    <div className="flex items-start justify-between mb-4">
-                      <div className="w-12 h-12 bg-orange-50 rounded-xl flex items-center justify-center group-hover:bg-[#f97316] transition-colors">
-                        <Icon className="w-6 h-6 text-[#f97316] group-hover:text-white transition-colors" />
-                      </div>
-                      <span className="bg-stone-100 text-[#888] text-[10px] font-bold px-3 py-1 rounded-full uppercase tracking-wider">
-                        {game.businessCategory}
-                      </span>
-                    </div>
-                    <h3 className="text-xl font-display font-bold text-[#1a1a1a] mb-2">{game.businessName}</h3>
-                    <p className="text-sm text-[#888] mb-6 flex-grow">{game.description}</p>
-                    
-                    <div className="flex items-center justify-between pt-4 border-t border-[#eee]">
-                      <div className="flex items-center gap-2">
-                        <Gift className="w-4 h-4 text-[#f97316]" />
-                        <span className="text-xs font-bold text-[#f97316] uppercase tracking-widest">{game.boxCount} Boxes</span>
-                      </div>
-                      <div className="flex items-center gap-1 text-[#888] group-hover:text-[#f97316] transition-colors">
-                        <span className="text-xs font-bold uppercase tracking-wider">Play Now</span>
-                        <ArrowRight className="w-4 h-4" />
-                      </div>
-                    </div>
-                  </div>
-                );
-              })}
             </div>
-            )}
-          </section>
+          </div>
+          <div className="space-y-8 text-left">
+            <section>
+              <div className="flex items-center gap-2 mb-4">
+                <Zap className="w-5 h-5 text-[#f97316]" />
+                <h2 className="text-lg font-display font-bold text-[#1a1a1a]">Available Reward Games</h2>
+              </div>
+              {ACTIVE_CAMPAIGNS.length === 0 ? (
+                <div className="flex flex-col items-center justify-center p-12 bg-white rounded-3xl border border-dashed border-[#eee] text-center">
+                  <Gamepad2 className="w-12 h-12 text-[#ccc] mb-3" />
+                  <h3 className="text-lg font-bold text-[#888] mb-1">No active campaigns</h3>
+                  <p className="text-sm text-[#aaa]">There are no reward campaigns available to play right now. Check back later!</p>
+                </div>
+              ) : (
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                  {ACTIVE_CAMPAIGNS.map(game => {
+                    const Icon = THEMES[game.theme as keyof typeof THEMES]?.icon || Store;
+                    return (
+                      <div
+                        key={game.id}
+                        onClick={() => setSelectedIntroGame(game)}
+                        className="bg-white rounded-3xl border border-[#eee] p-6 shadow-sm hover:border-[#f97316] hover:shadow-md transition-all cursor-pointer group flex flex-col h-full"
+                      >
+                        <div className="flex items-start justify-between mb-4">
+                          <div className="w-12 h-12 bg-orange-50 rounded-xl flex items-center justify-center group-hover:bg-[#f97316] transition-colors overflow-hidden">
+                            {(game.metadata?.thumbnailUrl || game.imageUrl || game.logo) ? (
+                              <img src={game.metadata?.thumbnailUrl || game.imageUrl || game.logo} alt={game.businessName} className="w-full h-full object-cover" />
+                            ) : (
+                              <Icon className="w-6 h-6 text-[#f97316] group-hover:text-white transition-colors" />
+                            )}
+                          </div>
+                          <span className="bg-stone-100 text-[#888] text-[10px] font-bold px-3 py-1 rounded-full uppercase tracking-wider">
+                            {game.businessCategory}
+                          </span>
+                        </div>
+                        <h3 className="text-xl font-display font-bold text-[#1a1a1a] mb-1 truncate">{game.name || game.businessName}</h3>
+                        <p className="text-[10px] font-bold text-[#f97316] uppercase tracking-wider mb-2 truncate">{game.businessName}</p>
+                        <p className="text-sm text-[#888] mb-6 flex-grow line-clamp-2">{game.description}</p>
+
+                        <div className="flex items-center justify-between pt-4 border-t border-[#eee]">
+                          <div className="flex items-center gap-2">
+                            <Gift className="w-4 h-4 text-[#f97316]" />
+                            <span className="text-xs font-bold text-[#f97316] uppercase tracking-widest">{game.boxCount} Boxes</span>
+                          </div>
+                          <div className="flex items-center gap-1 text-[#888] group-hover:text-[#f97316] transition-colors">
+                            <span className="text-xs font-bold uppercase tracking-wider">Play Now</span>
+                            <ArrowRight className="w-4 h-4" />
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </section>
+          </div>
         </div>
-      </div>
+      </>
     );
   }
 
@@ -860,9 +1060,9 @@ function ArcadeGamesPageContent() {
     <div className="min-h-screen text-stone-900 flex flex-col font-sans overflow-hidden relative selection:bg-orange-300/30">
       {/* ── IMMERSIVE VIBRANT BACKGROUND ── */}
       <div className="absolute inset-0 z-0 bg-gradient-to-br from-orange-50 via-white to-orange-100" />
-      <div 
-        className="absolute inset-0 z-0 bg-cover bg-center mix-blend-soft-light opacity-30 transition-opacity duration-1000"
-        style={{ backgroundImage: `url(${currentTheme?.bgImage})` }}
+      <div
+        className="absolute inset-0 z-0 bg-cover bg-center mix-blend-soft-light opacity-60 transition-opacity duration-1000"
+        style={{ backgroundImage: `url(${activeGame.imageUrl || currentTheme?.bgImage})` }}
       />
       <div className="absolute inset-0 z-0 bg-gradient-to-t from-white via-white/80 to-white/40 pointer-events-none" />
       <div className="absolute inset-0 z-0 pointer-events-none opacity-[0.03]" style={{ backgroundImage: 'url("data:image/svg+xml,%3Csvg width=\'60\' height=\'60\' viewBox=\'0 0 60 60\' xmlns=\'http://www.w3.org/2000/svg\'%3E%3Cg fill=\'none\' fill-rule=\'evenodd\'%3E%3Cg fill=\'%23f97316\' fill-opacity=\'1\'%3E%3Cpath d=\'M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z\'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")' }} />
@@ -877,15 +1077,21 @@ function ArcadeGamesPageContent() {
             <ChevronLeft size={20} />
           </button>
           <div className="flex items-center gap-2.5">
-            <div className="w-9 h-9 md:w-11 md:h-11 rounded-full bg-gradient-to-br from-orange-400 to-red-500 flex items-center justify-center shadow-lg shadow-orange-500/20 flex-shrink-0 border border-white">
-              {currentTheme?.icon ? React.createElement(currentTheme.icon, { className: "text-white", size: 18 }) : <Store className="text-white" size={18} />}
+            <div className="w-9 h-9 md:w-11 md:h-11 rounded-full bg-gradient-to-br from-orange-400 to-red-500 flex items-center justify-center shadow-lg shadow-orange-500/20 flex-shrink-0 border border-white overflow-hidden">
+              {(activeGame.metadata?.thumbnailUrl || activeGame.imageUrl || activeGame.logo) ? (
+                <img src={activeGame.metadata?.thumbnailUrl || activeGame.imageUrl || activeGame.logo} alt={activeGame.businessName} className="w-full h-full object-cover" />
+              ) : currentTheme?.icon ? (
+                React.createElement(currentTheme.icon, { className: "text-white", size: 18 })
+              ) : (
+                <Store className="text-white" size={18} />
+              )}
             </div>
             <div>
               <h1 className="text-sm md:text-lg font-black tracking-wider text-stone-900 uppercase leading-tight">
                 {activeGame.businessName}
               </h1>
               <div className="flex items-center gap-0.5 mt-0.5">
-                {[1,2,3,4,5].map(i => <Star key={i} size={10} className="fill-orange-400 text-orange-400" />)}
+                {[1, 2, 3, 4, 5].map(i => <Star key={i} size={10} className="fill-orange-400 text-orange-400" />)}
                 <span className="text-[10px] text-stone-500 ml-1.5 font-medium hidden sm:inline">{activeGame.description}</span>
               </div>
             </div>
@@ -904,11 +1110,10 @@ function ArcadeGamesPageContent() {
         <button
           onClick={() => setDropTrigger(d => d + 1)}
           disabled={plinkoState !== 'sweeping' || !currentSessionId || playGame.isPending || !!eligibilityError}
-          className={`relative group px-5 md:px-8 py-2 md:py-2.5 rounded-full font-black text-sm md:text-base tracking-wider transition-all duration-300 ${
-            plinkoState === 'sweeping' && currentSessionId && !playGame.isPending && !eligibilityError
+          className={`relative group px-5 md:px-8 py-2 md:py-2.5 rounded-full font-black text-sm md:text-base tracking-wider transition-all duration-300 ${plinkoState === 'sweeping' && currentSessionId && !playGame.isPending && !eligibilityError
               ? 'bg-gradient-to-r from-orange-500 via-red-500 to-orange-500 text-white shadow-[0_4px_20px_rgba(249,115,22,0.4)] cursor-pointer hover:scale-105 active:scale-95 hover:shadow-[0_6px_25px_rgba(249,115,22,0.5)]'
               : 'bg-stone-200 text-stone-400 shadow-none cursor-not-allowed'
-          }`}
+            }`}
           style={{ textShadow: plinkoState === 'sweeping' ? '0 1px 2px rgba(0,0,0,0.2)' : 'none' }}
         >
           {plinkoState === 'sweeping' && (
@@ -1051,34 +1256,33 @@ function ArcadeGamesPageContent() {
               {/* Left Side: Visual Celebration (Orange Gradient) */}
               <div className="md:w-5/12 relative min-h-[160px] md:min-h-[200px] bg-gradient-to-br from-orange-400 to-orange-600 flex items-center justify-center p-6 md:p-8">
                 <div className="absolute inset-0 opacity-20 bg-[radial-gradient(circle_at_center,white_0%,transparent_70%)]" />
-                
+
                 {/* Reward Image with Glow */}
-                <motion.div 
+                <motion.div
                   initial={{ rotate: -15, scale: 0 }}
                   animate={{ rotate: 0, scale: 1 }}
                   transition={{ delay: 0.3, type: "spring" }}
                   className="relative z-10 w-32 md:w-full aspect-square rounded-2xl md:rounded-3xl overflow-hidden shadow-xl border-4 border-white/40"
                 >
-                  <img 
-                    src={wonPrize.image || PRIZE_IMAGES.exclusive} 
-                    alt={wonPrize.title} 
+                  <img
+                    src={wonPrize.image || PRIZE_IMAGES.exclusive}
+                    alt={wonPrize.title}
                     className="w-full h-full object-cover"
                   />
                   <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent" />
                   <div className="absolute bottom-2 md:bottom-4 left-2 md:left-4 right-2 md:right-4 text-left">
-                    <span className={`px-2 md:px-3 py-0.5 md:py-1 rounded-full text-[8px] md:text-[10px] font-black uppercase tracking-widest ${
-                      wonPrize.rarity === 'legendary' ? 'bg-white text-orange-600' :
-                      wonPrize.rarity === 'epic' ? 'bg-stone-900 text-white' :
-                      'bg-orange-100 text-orange-700'
-                    }`}>
+                    <span className={`px-2 md:px-3 py-0.5 md:py-1 rounded-full text-[8px] md:text-[10px] font-black uppercase tracking-widest ${wonPrize.rarity === 'legendary' ? 'bg-white text-orange-600' :
+                        wonPrize.rarity === 'epic' ? 'bg-stone-900 text-white' :
+                          'bg-orange-100 text-orange-700'
+                      }`}>
                       {wonPrize.rarity}
                     </span>
                   </div>
                 </motion.div>
 
                 {/* Animated Light Orbs */}
-                <motion.div 
-                  animate={{ 
+                <motion.div
+                  animate={{
                     scale: [1, 1.2, 1],
                     opacity: [0.1, 0.3, 0.1],
                   }}
@@ -1107,7 +1311,7 @@ function ArcadeGamesPageContent() {
                     <span className="text-[8px] md:text-[10px] font-black text-stone-300 uppercase tracking-widest">What you won</span>
                     <p className="text-stone-600 text-xs md:text-sm font-medium leading-relaxed">{wonPrize.details}</p>
                   </div>
-                  
+
                   <div className="grid grid-cols-2 gap-4 pt-3 border-t border-stone-100">
                     <div className="space-y-1">
                       <span className="text-[8px] md:text-[10px] font-black text-stone-300 uppercase tracking-widest">Valid Until</span>
@@ -1126,7 +1330,7 @@ function ArcadeGamesPageContent() {
                 {/* Buttons Grid */}
                 <div className="grid grid-cols-2 gap-2 md:gap-3 mt-auto">
                   {/* Primary Action */}
-                  <button 
+                  <button
                     onClick={() => {
                       const targetSessionId = currentSessionId || sessionId || 'simulated-' + Date.now();
                       claimMutation.mutate(
@@ -1141,7 +1345,7 @@ function ArcadeGamesPageContent() {
                   </button>
 
                   {/* Secondary Actions */}
-                  <button 
+                  <button
                     onClick={() => {
                       if (!currentSessionId && !sessionId) return;
                       const targetSessionId = (currentSessionId || sessionId)!;
@@ -1165,7 +1369,7 @@ function ArcadeGamesPageContent() {
                     <Star size={12} className="fill-orange-400 text-orange-400" />
                     {claimMutation.isPending ? 'Saving...' : 'Save'}
                   </button>
-                  <button 
+                  <button
                     onClick={() => {
                       alert('Sharing link copied!');
                     }}
@@ -1175,7 +1379,7 @@ function ArcadeGamesPageContent() {
                     Share
                   </button>
 
-                  <button 
+                  <button
                     onClick={resetGame}
                     className="col-span-2 mt-1 md:mt-2 text-[9px] md:text-[10px] font-black text-stone-400 uppercase tracking-[0.2em] hover:text-orange-500 transition-colors py-2"
                   >
@@ -1185,8 +1389,8 @@ function ArcadeGamesPageContent() {
               </div>
 
               {/* Close Button */}
-              <button 
-                onClick={resetGame} 
+              <button
+                onClick={resetGame}
                 className="absolute top-4 right-4 md:top-6 md:right-6 w-8 h-8 md:w-10 md:h-10 rounded-full bg-stone-100 border border-stone-200 flex items-center justify-center text-stone-500 hover:bg-orange-500 hover:text-white transition-all z-[3010]"
               >
                 <X size={16} />
@@ -1207,7 +1411,7 @@ function ArcadeGamesPageContent() {
               <div className="w-20 h-20 bg-gradient-to-br from-amber-400 to-orange-500 rounded-full flex items-center justify-center mx-auto mb-6 shadow-lg shadow-orange-500/25">
                 <RotateCcw size={36} className="text-white" />
               </div>
-              
+
               <span className="text-orange-500 text-[10px] font-black uppercase tracking-[0.3em] block mb-2">Unlucky Drop!</span>
               <h2 className="text-2xl md:text-3xl font-black text-stone-900 leading-tight mb-3 uppercase italic tracking-tighter">
                 {lossLabel}
@@ -1217,13 +1421,13 @@ function ArcadeGamesPageContent() {
               </p>
 
               <div className="space-y-3">
-                <button 
+                <button
                   onClick={resetGame}
                   className="w-full py-4 bg-gradient-to-r from-orange-500 to-red-500 hover:from-orange-600 hover:to-red-600 text-white rounded-2xl font-black text-sm uppercase tracking-widest shadow-lg shadow-orange-500/25 active:scale-[0.98] transition-all"
                 >
                   Try Again
                 </button>
-                <button 
+                <button
                   onClick={exitGame}
                   className="w-full py-4 bg-stone-50 border border-stone-200 text-stone-600 rounded-2xl font-black text-xs uppercase tracking-widest hover:bg-stone-100 transition-all"
                 >
@@ -1232,8 +1436,8 @@ function ArcadeGamesPageContent() {
               </div>
 
               {/* Close Button */}
-              <button 
-                onClick={exitGame} 
+              <button
+                onClick={exitGame}
                 className="absolute top-4 right-4 w-8 h-8 rounded-full bg-stone-100 border border-stone-200 flex items-center justify-center text-stone-500 hover:bg-orange-500 hover:text-white transition-all z-[3010]"
               >
                 <X size={16} />

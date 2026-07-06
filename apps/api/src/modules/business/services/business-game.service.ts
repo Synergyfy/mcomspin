@@ -30,8 +30,17 @@ export class BusinessGameService {
       where: { businessId },
     });
 
-    const game = await this.prisma.game.findFirst({ where: { type: 'BallDrop' } });
-    if (!game) throw new NotFoundException('No BallDrop game found');
+    let game = await this.prisma.game.findFirst({ where: { type: 'BallDrop' } });
+    if (!game) {
+      game = await this.prisma.game.create({
+        data: {
+          name: 'Ball Drop',
+          slug: 'ball-drop',
+          type: 'BallDrop',
+          description: 'Interactive Ball Drop Game'
+        }
+      });
+    }
 
     if (!config) {
       config = await this.prisma.gameConfig.create({

@@ -21,10 +21,20 @@ export default function LandingPage() {
   /* ─── Interactive States ─── */
   const [probValue, setProbValue] = useState(65);
   const [activePartnerIndex, setActivePartnerIndex] = useState(0);
-  const [simulationEvents, setSimulationEvents] = useState<PlinkoEvent[]>([
-    { id: '1', time: '10:24:15', message: 'Lead routed to Meridian Apparel CRM', bin: 'LEADS', type: 'leads' },
-    { id: '2', time: '10:24:18', message: 'Stock cleared for Vantage Electronics', bin: 'STOCK', type: 'stock' }
-  ]);
+  /* ─── Slideshow State ─── */
+  const [currentSlide, setCurrentSlide] = useState(0);
+  const slides = [
+    "https://images.unsplash.com/photo-1556742049-0cfed4f6a45d?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80",
+    "https://images.unsplash.com/photo-1556740738-b6a63e27c4df?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80",
+    "https://images.unsplash.com/photo-1441986300917-64674bd600d8?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80"
+  ];
+
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setCurrentSlide((prev) => (prev + 1) % slides.length);
+    }, 4000);
+    return () => clearInterval(timer);
+  }, []);
 
   /* ─── Partners Data ─── */
   const [hasToken, setHasToken] = useState(false);
@@ -80,274 +90,7 @@ export default function LandingPage() {
       ? 'opacity-100 translate-y-0 transition-all duration-[800ms] ease-out'
       : 'opacity-0 translate-y-6 transition-all duration-[800ms] ease-out';
 
-  /* ─── Self-Running Plinko Simulation Engine ─── */
-  const canvasRef = useRef<HTMLCanvasElement>(null);
-  const containerRef = useRef<HTMLDivElement>(null);
-  
-  // Ref to hold simulation values for access in loop
-  const simulationRef = useRef({
-    probValue: 65,
-    ball: null as any,
-    pegs: [] as { x: number; y: number; radius: number; flash: number }[],
-    bins: [] as { x: number; width: number; label: string; icon: string; flash: number }[],
-    activeLogs: [] as PlinkoEvent[]
-  });
-
-  // Keep ref up to date
-  useEffect(() => {
-    simulationRef.current.probValue = probValue;
-  }, [probValue]);
-
-  // Set up bins list
-  const plinkoBins = [
-    { label: 'LEADS', icon: 'users', color: '#f97316' },
-    { label: 'STOCK', icon: 'box', color: '#1a1a1a' },
-    { label: 'SLOTS', icon: 'clock', color: '#f97316' },
-    { label: 'TRAFFIC', icon: 'route', color: '#1a1a1a' },
-    { label: 'REVENUE', icon: 'pound', color: '#f97316' },
-    { label: 'VOUCHER', icon: 'ticket', color: '#1a1a1a' },
-  ];
-
-  const triggerEventLog = (binLabel: string) => {
-    const outcomes: { [key: string]: string[] } = {
-      LEADS: ['Lead captured & routed to Meridian Apparel CRM', 'New customer prospect added to queue'],
-      STOCK: ['Inventory clearance triggered at Vantage Tech', 'Excess product voucher issued successfully'],
-      SLOTS: ['High-value booking slot reserved at Elara Wellness', 'Timetable optimization path verified'],
-      TRAFFIC: ['Ecommerce storefront redirection completed', 'Customer routed to Soleil Dining campaign'],
-      REVENUE: ['B2B ecosystem revenue logged (+£120.00)', 'Ecosystem partner fee cleared'],
-      VOUCHER: ['Digital partner reward allocated in wallet', 'Reward verification token distributed']
-    };
-    const messages = outcomes[binLabel] || ['Telemetry event recorded'];
-    const randomMsg = messages[Math.floor(Math.random() * messages.length)];
-    const timeString = new Date().toTimeString().split(' ')[0];
-    
-    setSimulationEvents((prev) => [
-      {
-        id: Math.random().toString(),
-        time: timeString,
-        message: randomMsg,
-        bin: binLabel,
-        type: binLabel.toLowerCase()
-      },
-      ...prev
-    ].slice(0, 5));
-  };
-
-  useEffect(() => {
-    const canvas = canvasRef.current;
-    if (!canvas || !containerRef.current) return;
-
-    const ctx = canvas.getContext('2d');
-    if (!ctx) return;
-
-    let animId: number;
-    let spawnTimer = 0;
-
-    const initPhysics = () => {
-      const w = containerRef.current?.clientWidth || 340;
-      const h = 380;
-      canvas.width = w;
-      canvas.height = h;
-
-      // Peg grid setup
-      const pegs: { x: number; y: number; radius: number; flash: number }[] = [];
-      const rows = 8;
-      const startY = 60;
-      const endY = h - 60;
-      const spacingY = (endY - startY) / rows;
-
-      for (let r = 0; r < rows; r++) {
-        const isOffset = r % 2 !== 0;
-        const cols = isOffset ? 6 : 7;
-        const spacingX = w / (cols + 1);
-
-        for (let c = 0; c < cols; c++) {
-          const x = spacingX * (c + 1) + (isOffset ? spacingX / 2 : 0);
-          pegs.push({
-            x,
-            y: startY + r * spacingY,
-            radius: 4.5,
-            flash: 0
-          });
-        }
-      }
-
-      // Bins setup
-      const binWidth = w / 6;
-      const bins = plinkoBins.map((bin, i) => ({
-        x: i * binWidth,
-        width: binWidth,
-        label: bin.label,
-        icon: bin.icon,
-        flash: 0
-      }));
-
-      simulationRef.current.pegs = pegs;
-      simulationRef.current.bins = bins;
-    };
-
-    initPhysics();
-
-    const resizeObserver = new ResizeObserver(() => {
-      initPhysics();
-    });
-    if (containerRef.current) resizeObserver.observe(containerRef.current);
-
-    const draw = () => {
-      const w = canvas.width;
-      const h = canvas.height;
-      ctx.clearRect(0, 0, w, h);
-
-      // Draw background board detail
-      ctx.fillStyle = '#fafaf9';
-      ctx.fillRect(0, 0, w, h);
-
-      // Draw vertical bin dividers
-      ctx.strokeStyle = '#e8e8e5';
-      ctx.lineWidth = 1;
-      const binWidth = w / 6;
-      for (let i = 1; i < 6; i++) {
-        ctx.beginPath();
-        ctx.moveTo(i * binWidth, h - 50);
-        ctx.lineTo(i * binWidth, h);
-        ctx.stroke();
-      }
-
-      // Draw top launch point container details
-      ctx.strokeStyle = '#e8e8e5';
-      ctx.strokeRect(w / 2 - 20, 10, 40, 20);
-
-      // Draw pegs
-      const pegs = simulationRef.current.pegs;
-      pegs.forEach((peg) => {
-        // Fade flashes
-        if (peg.flash > 0) peg.flash -= 0.08;
-        
-        ctx.beginPath();
-        ctx.arc(peg.x, peg.y, peg.radius, 0, Math.PI * 2);
-        ctx.fillStyle = peg.flash > 0 
-          ? `rgba(249, 115, 22, ${0.4 + peg.flash * 0.6})` 
-          : '#1a1a1a';
-        ctx.shadowBlur = peg.flash > 0 ? peg.flash * 10 : 0;
-        ctx.shadowColor = '#f97316';
-        ctx.fill();
-        ctx.shadowBlur = 0; // reset
-      });
-
-      // Draw Bins base fills
-      const bins = simulationRef.current.bins;
-      bins.forEach((bin) => {
-        if (bin.flash > 0) {
-          bin.flash -= 0.05;
-          ctx.fillStyle = `rgba(249, 115, 22, ${bin.flash * 0.08})`;
-          ctx.fillRect(bin.x, h - 50, bin.width, 50);
-        }
-      });
-
-      // Physics logic & draw ball
-      let ball = simulationRef.current.ball;
-      if (ball) {
-        // Gravity & speed limits
-        ball.vy += 0.28; 
-        ball.vy = Math.min(ball.vy, 6.5);
-        ball.vx = Math.min(Math.max(ball.vx, -3.5), 3.5);
-
-        // Apply config slider priority: nudge ball left or right depending on priority weight
-        const curProb = simulationRef.current.probValue;
-        if (curProb > 60 && ball.y < h / 2) {
-          // Nudge towards first and third bins (LEADS / SLOTS)
-          const targetX = w * 0.25;
-          ball.vx += (targetX - ball.x) * 0.0015;
-        } else if (curProb < 40 && ball.y < h / 2) {
-          // Nudge towards right side
-          const targetX = w * 0.75;
-          ball.vx += (targetX - ball.x) * 0.0015;
-        }
-
-        // Apply velocity
-        ball.x += ball.vx;
-        ball.y += ball.vy;
-
-        // Wall collisions
-        if (ball.x - ball.radius < 0) {
-          ball.x = ball.radius;
-          ball.vx *= -0.5;
-        } else if (ball.x + ball.radius > w) {
-          ball.x = w - ball.radius;
-          ball.vx *= -0.5;
-        }
-
-        // Peg collisions
-        pegs.forEach((peg) => {
-          const dx = ball.x - peg.x;
-          const dy = ball.y - peg.y;
-          const dist = Math.sqrt(dx * dx + dy * dy);
-          const minDist = ball.radius + peg.radius;
-
-          if (dist < minDist) {
-            // Push ball out
-            const angle = Math.atan2(dy, dx);
-            ball.x = peg.x + Math.cos(angle) * minDist;
-            ball.y = peg.y + Math.sin(angle) * minDist;
-
-            // Bounce mechanics
-            const speed = Math.sqrt(ball.vx * ball.vx + ball.vy * ball.vy);
-            const bounceStrength = 0.55;
-            ball.vx = Math.cos(angle) * speed * bounceStrength + (Math.random() - 0.5) * 1.5;
-            ball.vy = Math.sin(angle) * speed * bounceStrength + 0.5; // push down
-
-            // Flash peg
-            peg.flash = 1.0;
-          }
-        });
-
-        // Bin landing
-        if (ball.y + ball.radius >= h - 25) {
-          const binIdx = Math.min(5, Math.max(0, Math.floor(ball.x / binWidth)));
-          const landedBin = bins[binIdx];
-          
-          if (landedBin) {
-            landedBin.flash = 1.0;
-            triggerEventLog(landedBin.label);
-          }
-
-          simulationRef.current.ball = null;
-        } else {
-          // Draw the ball
-          ctx.beginPath();
-          ctx.arc(ball.x, ball.y, ball.radius, 0, Math.PI * 2);
-          ctx.fillStyle = '#f97316';
-          ctx.shadowBlur = 12;
-          ctx.shadowColor = '#f97316';
-          ctx.fill();
-          ctx.shadowBlur = 0;
-        }
-      } else {
-        // Spawn interval
-        spawnTimer++;
-        if (spawnTimer > 100) {
-          const startX = w / 2 + (Math.random() - 0.5) * 12;
-          simulationRef.current.ball = {
-            x: startX,
-            y: 20,
-            vx: (Math.random() - 0.5) * 1.5,
-            vy: 1.0,
-            radius: 8.5
-          };
-          spawnTimer = 0;
-        }
-      }
-
-      animId = requestAnimationFrame(draw);
-    };
-
-    draw();
-
-    return () => {
-      cancelAnimationFrame(animId);
-      resizeObserver.disconnect();
-    };
-  }, []);
+  /* ─── Removed Plinko Engine ─── */
 
   return (
     <div className="min-h-screen bg-white text-[#1a1a1a] selection:bg-[#f97316] selection:text-white relative overflow-hidden font-body luxury-gradient">
@@ -366,24 +109,18 @@ export default function LandingPage() {
           </Link>
 
           <nav className="hidden lg:flex items-center gap-9 text-[11px] font-bold uppercase tracking-[0.18em] text-[#888]">
-            <a href="#how-it-works" className="hover:text-[#f97316] transition-colors">How It Works</a>
-            <a href="#engine" className="hover:text-[#f97316] transition-colors">Engine</a>
-            <a href="#partners" className="hover:text-[#f97316] transition-colors">Partners</a>
-            <a href="#embed" className="hover:text-[#f97316] transition-colors">Embed</a>
-            <a href="#analytics" className="hover:text-[#f97316] transition-colors">Analytics</a>
-            <Link href="/customer" className="text-[#f97316] hover:text-orange-600 transition-colors flex items-center gap-1.5 font-extrabold">
-              Customer Hub
-              <span className="text-[8px] bg-orange-100 text-[#f97316] px-1.5 py-0.5 rounded-sm font-extrabold tracking-normal">NEW</span>
-            </Link>
+            {/* Nav removed per request - all links were just on-page anchors */}
           </nav>
 
           <div className="flex items-center gap-3">
-            <Link href="/auth" className="hidden sm:inline-flex text-[11px] font-bold tracking-[0.15em] uppercase text-[#1a1a1a] hover:text-[#f97316] transition-colors px-4 py-2">
-              Sign In
-            </Link>
-            <Link href="/acquire" className="text-[11px] font-bold tracking-[0.15em] bg-[#1a1a1a] text-white px-6 py-3 rounded-xl hover:bg-[#f97316] hover:shadow-lg hover:shadow-black/10 transition-all duration-300 uppercase">
-              Get Started
-            </Link>
+            <div className="hidden lg:flex items-center gap-3">
+              <Link href="/auth" className="text-[11px] font-bold tracking-[0.15em] uppercase text-[#1a1a1a] hover:text-[#f97316] transition-colors px-4 py-2">
+                Sign In
+              </Link>
+              <Link href="/acquire" className="text-[11px] font-bold tracking-[0.15em] bg-[#1a1a1a] text-white px-6 py-3 rounded-xl hover:bg-[#f97316] hover:shadow-lg hover:shadow-black/10 transition-all duration-300 uppercase">
+                Get Started
+              </Link>
+            </div>
 
             {/* Mobile Hamburger */}
             <button
@@ -398,15 +135,15 @@ export default function LandingPage() {
 
         {/* Mobile Dropdown Panel */}
         {mobileMenuOpen && (
-          <div className="lg:hidden border-t border-[#e8e8e5] bg-white/95 backdrop-blur-md px-6 py-6 space-y-4 animate-fade-in-up">
-            <a href="#how-it-works" onClick={() => setMobileMenuOpen(false)} className="block text-sm font-semibold tracking-wide text-[#555] hover:text-[#f97316]">How It Works</a>
-            <a href="#engine" onClick={() => setMobileMenuOpen(false)} className="block text-sm font-semibold tracking-wide text-[#555] hover:text-[#f97316]">Engine</a>
-            <a href="#partners" onClick={() => setMobileMenuOpen(false)} className="block text-sm font-semibold tracking-wide text-[#555] hover:text-[#f97316]">Partners</a>
-            <a href="#embed" onClick={() => setMobileMenuOpen(false)} className="block text-sm font-semibold tracking-wide text-[#555] hover:text-[#f97316]">Embed</a>
-            <a href="#analytics" onClick={() => setMobileMenuOpen(false)} className="block text-sm font-semibold tracking-wide text-[#555] hover:text-[#f97316]">Analytics</a>
-            <Link href="/customer" onClick={() => setMobileMenuOpen(false)} className="flex items-center gap-1.5 text-sm font-bold text-[#f97316] hover:text-orange-600">
-              Customer Hub <Zap className="w-3.5 h-3.5 fill-[#f97316]" />
-            </Link>
+          <div className="lg:hidden border-t border-[#e8e8e5] bg-white/95 backdrop-blur-md px-6 py-6 animate-fade-in-up">
+            <div className="flex flex-col gap-3">
+              <Link href="/auth" onClick={() => setMobileMenuOpen(false)} className="text-center text-[11px] font-bold tracking-[0.15em] uppercase text-[#1a1a1a] hover:text-[#f97316] transition-colors py-2">
+                Sign In
+              </Link>
+              <Link href="/acquire" onClick={() => setMobileMenuOpen(false)} className="text-center text-[11px] font-bold tracking-[0.15em] bg-[#1a1a1a] text-white px-6 py-3 rounded-xl hover:bg-[#f97316] hover:shadow-lg hover:shadow-black/10 transition-all duration-300 uppercase">
+                Get Started
+              </Link>
+            </div>
           </div>
         )}
       </header>
@@ -460,8 +197,8 @@ export default function LandingPage() {
           </div>
         </div>
 
-        {/* Right - Live Plinko Demo Dashboard */}
-        <div className="flex flex-col items-center justify-center relative w-full">
+        {/* Right - Image Slideshow */}
+        <div className="flex flex-col items-center justify-center relative w-full h-full min-h-[400px]">
           {/* Floating cards */}
           <div className="absolute -top-6 -left-6 z-20 bg-white/90 border border-[#eee] shadow-lg shadow-black/[0.03] px-4 py-3 rounded-xl flex items-center gap-3 pointer-events-none animate-luxury-float">
             <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
@@ -479,44 +216,37 @@ export default function LandingPage() {
             </div>
           </div>
 
-          {/* Plinko Board Wrapper */}
-          <div className="w-full max-w-[400px] rounded-2xl border border-[#e8e8e5] bg-white shadow-xl shadow-black/[0.04] p-5 relative overflow-hidden">
-            <div className="absolute top-0 left-0 w-8 h-8 border-t border-l border-[#f97316]/30 rounded-tl-2xl pointer-events-none" />
-            <div className="absolute bottom-0 right-0 w-8 h-8 border-b border-r border-[#f97316]/30 rounded-br-2xl pointer-events-none" />
-
-            <div className="text-center mb-4">
-              <span className="text-[9px] font-extrabold tracking-[0.2em] text-[#aaa] uppercase">Ecosystem Demo</span>
-              <h3 className="text-sm font-display font-extrabold mt-0.5 text-[#1a1a1a]">Real-Time Plinko Simulation</h3>
-            </div>
-
-            {/* Board Container */}
-            <div ref={containerRef} className="relative w-full h-[380px] rounded-xl overflow-hidden border border-[#eee]">
-              <canvas ref={canvasRef} className="w-full h-full block" />
+          {/* Slideshow Wrapper */}
+          <div className="w-full max-w-[500px] aspect-[4/5] sm:aspect-square rounded-2xl border border-[#e8e8e5] bg-white shadow-xl shadow-black/[0.04] p-2 relative overflow-hidden group">
+            <div className="absolute top-0 left-0 w-8 h-8 border-t border-l border-[#f97316]/30 rounded-tl-2xl pointer-events-none z-10" />
+            <div className="absolute bottom-0 right-0 w-8 h-8 border-b border-r border-[#f97316]/30 rounded-br-2xl pointer-events-none z-10" />
+            
+            <div className="w-full h-full relative rounded-xl overflow-hidden bg-stone-100">
+              {slides.map((src, index) => (
+                <img
+                  key={index}
+                  src={src}
+                  alt={`Showcase ${index + 1}`}
+                  className={`absolute inset-0 w-full h-full object-cover transition-opacity duration-1000 ease-in-out ${
+                    index === currentSlide ? 'opacity-100' : 'opacity-0'
+                  }`}
+                />
+              ))}
               
-              {/* Bins labels overlays */}
-              <div className="absolute bottom-0 inset-x-0 h-10 flex border-t border-[#e8e8e5]/60 pointer-events-none select-none bg-white">
-                {plinkoBins.map((bin, i) => (
-                  <div key={i} className="flex-1 flex flex-col items-center justify-center border-r border-[#e8e8e5]/40 last:border-r-0">
-                    <span className="text-[7px] font-black tracking-wider text-[#1a1a1a]">{bin.label}</span>
-                    <span className="text-[6px] font-extrabold tracking-widest text-[#f97316] uppercase mt-0.5">{i % 2 === 0 ? 'Tier 1' : 'Tier 2'}</span>
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            {/* Telemetry Logger */}
-            <div className="mt-4 bg-[#1a1a1a] rounded-xl p-3.5 space-y-2">
-              <div className="flex items-center justify-between border-b border-white/5 pb-2">
-                <span className="text-[8px] font-bold text-[#f97316] tracking-[0.15em] uppercase">Ecosystem Logs</span>
-                <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
-              </div>
-              <div className="font-mono text-[9px] space-y-1.5 max-h-[72px] overflow-y-hidden text-zinc-300">
-                {simulationEvents.map((evt) => (
-                  <div key={evt.id} className="flex items-start justify-between gap-1 opacity-90 animate-fade-in-up">
-                    <span className="text-stone-400 text-[8px] flex-shrink-0">{evt.time}</span>
-                    <span className="flex-1 truncate pl-1">{evt.message}</span>
-                    <span className="text-[#f97316] text-[8px] flex-shrink-0 font-bold uppercase">{evt.bin}</span>
-                  </div>
+              {/* Overlay Gradient */}
+              <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent opacity-60 pointer-events-none" />
+              
+              {/* Slide Indicators */}
+              <div className="absolute bottom-4 left-0 right-0 flex justify-center gap-2 z-20">
+                {slides.map((_, index) => (
+                  <button
+                    key={index}
+                    onClick={() => setCurrentSlide(index)}
+                    className={`w-2 h-2 rounded-full transition-all duration-300 ${
+                      index === currentSlide ? 'bg-[#f97316] w-6' : 'bg-white/50 hover:bg-white/80'
+                    }`}
+                    aria-label={`Go to slide ${index + 1}`}
+                  />
                 ))}
               </div>
             </div>

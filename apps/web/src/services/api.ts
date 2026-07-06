@@ -74,7 +74,10 @@ api.interceptors.response.use(
         processQueue(refreshError, null);
         clearTokens();
         if (typeof window !== 'undefined') {
-          window.location.href = '/auth';
+          const publicPaths = ['/', '/auth', '/acquire', '/play'];
+          if (!publicPaths.includes(window.location.pathname)) {
+            window.location.href = '/auth';
+          }
         }
         return Promise.reject(refreshError);
       } finally {

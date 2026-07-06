@@ -1,8 +1,9 @@
 'use client';
 
 import React, { useState } from 'react';
-import { useRouter } from 'next/navigation';
-import { useCreateBusinessCampaign, useUpdateBusinessGame } from '@/services/business';
+import { useSearchParams, useRouter } from 'next/navigation';
+import { useCreateBusinessCampaign, useUpdateBusinessGame, useUpdateBusinessCampaign, useBusinessCampaigns, useBusinessGame } from '@/services/business';
+import { uploadToCloudinary } from '@/services/cloudinary';
 import { 
   ArrowLeft, 
   ArrowRight, 
@@ -30,7 +31,13 @@ type RewardSlot = {
 
 export default function CreateCampaignWizard() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const editId = searchParams.get('edit');
+  
   const createCampaign = useCreateBusinessCampaign();
+  const updateCampaign = useUpdateBusinessCampaign();
+  const { data: campaignsData } = useBusinessCampaigns();
+  const { data: gameData } = useBusinessGame();
   const updateGame = useUpdateBusinessGame();
   const [step, setStep] = useState(1);
   const totalSteps = 4;
@@ -45,6 +52,63 @@ export default function CreateCampaignWizard() {
   const [startDate, setStartDate] = useState('');
   const [endDate, setEndDate] = useState('');
   const [slots, setSlots] = useState<RewardSlot[]>([]);
+  
+  // Image Upload State
+  const [bannerFile, setBannerFile] = useState<File | null>(null);
+  const [bannerPreview, setBannerPreview] = useState<string>('');
+  const [thumbnailFile, setThumbnailFile] = useState<File | null>(null);
+  const [thumbnailPreview, setThumbnailPreview] = useState<string>('');
+  
+  const bannerInputRef = React.useRef<HTMLInputElement>(null);
+  const thumbnailInputRef = React.useRef<HTMLInputElement>(null);
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>, type: 'banner' | 'thumbnail') => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    
+    if (type === 'banner') {
+      setBannerFile(file);
+      setBannerPreview(URL.createObjectURL(file));
+    } else {
+      setThumbnailFile(file);
+      setThumbnailPreview(URL.createObjectURL(file));
+    }
+  };
+
+  React.useEffect(() => {
+    if (editId && campaignsData) {
+      const campaigns = (campaignsData as any[]) ?? [];
+      const campaign = campaigns.find(c => c.id === editId);
+      if (campaign) {
+        setCampaignName(campaign.name || '');
+        setCampaignDesc(campaign.description || '');
+        if (campaign.startDate) setStartDate(campaign.startDate.split('T')[0]);
+        if (campaign.endDate) setEndDate(campaign.endDate.split('T')[0]);
+        if (campaign.imageUrl && !bannerFile) setBannerPreview(campaign.imageUrl);
+        if (campaign.metadata?.thumbnailUrl && !thumbnailFile) setThumbnailPreview(campaign.metadata.thumbnailUrl);
+      }
+    }
+  }, [editId, campaignsData, bannerFile, thumbnailFile]);
+
+  React.useEffect(() => {
+    if (editId && gameData) {
+      const config = (gameData as any)?.config;
+      if (config) {
+        if (config.winProbability) setWinProbability(config.winProbability);
+        if (config.dailyDropLimit) setDailyDropLimit(config.dailyDropLimit);
+        if (config.boxes && slots.length === 0) {
+          setSlots(config.boxes.map((b: any) => ({
+            id: crypto.randomUUID(),
+            label: b.label || '',
+            hasReward: b.hasReward || false,
+            rewardType: b.rewardType || 'Discount',
+            rewardValue: b.rewardValue || 0,
+            quantity: b.quantity || 1
+          })));
+        }
+      }
+    }
+  }, [editId, gameData]);
 
   const addSlot = () => setSlots([...slots, {
     id: crypto.randomUUID(),
@@ -81,15 +145,48 @@ export default function CreateCampaignWizard() {
     if (new Date(endDate) <= new Date(startDate)) { setError('End date must be after start date'); return; }
     setIsSubmitting(true);
     try {
-      const campaign = await createCampaign.mutateAsync({
-        name: campaignName,
-        description: campaignDesc,
-        type: 'HighStreet',
-        status: status,
-        startDate: new Date(startDate).toISOString(),
-        endDate: new Date(endDate).toISOString(),
-      });
-      const campaignId = campaign.id ?? campaign._id;
+      let bannerUrl = '';
+      let thumbnailUrl = '';
+      
+      if (bannerFile) {
+        bannerUrl = await uploadToCloudinary(bannerFile, 'campaigns');
+      }
+      if (thumbnailFile) {
+        thumbnailUrl = await uploadToCloudinary(thumbnailFile, 'campaigns');
+      }
+
+      const existingCampaign = editId ? (campaignsData as any[])?.find(c => c.id === editId) : null;
+      const mergedMetadata = {
+        ...(existingCampaign?.metadata || {}),
+        ...(thumbnailUrl ? { thumbnailUrl } : {})
+      };
+
+      let campaignId = editId;
+
+      if (editId) {
+        await updateCampaign.mutateAsync({
+          id: editId,
+          name: campaignName,
+          description: campaignDesc,
+          status: status,
+          startDate: new Date(startDate).toISOString(),
+          endDate: new Date(endDate).toISOString(),
+          ...(bannerUrl ? { imageUrl: bannerUrl } : {}),
+          metadata: mergedMetadata
+        });
+      } else {
+        const campaign = await createCampaign.mutateAsync({
+          name: campaignName,
+          description: campaignDesc,
+          type: 'HighStreet',
+          status: status,
+          startDate: new Date(startDate).toISOString(),
+          endDate: new Date(endDate).toISOString(),
+          ...(bannerUrl ? { imageUrl: bannerUrl } : {}),
+          metadata: mergedMetadata
+        });
+        campaignId = campaign.id ?? campaign._id;
+      }
 
       await updateGame.mutateAsync({
         config: {
@@ -109,7 +206,8 @@ export default function CreateCampaignWizard() {
 
       router.push(`/dashboard/campaign/${campaignId}`);
     } catch (err: any) {
-      setError(err?.response?.data?.message?.[0] ?? err?.response?.data?.message ?? 'Failed to create campaign. Please try again.');
+      console.error('Launch Error:', err);
+      setError(err?.response?.data?.message?.[0] ?? err?.response?.data?.message ?? err?.message ?? 'Failed to create campaign. Please try again.');
     } finally {
       setIsSubmitting(false);
     }
@@ -185,17 +283,37 @@ export default function CreateCampaignWizard() {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-gutter">
                 <div className="space-y-2">
                   <label className="font-label-md font-bold text-on-surface-variant block px-1">Campaign Banner</label>
-                  <div className="group relative flex flex-col items-center justify-center w-full aspect-video rounded-xl bg-surface-container-high border-2 border-dashed border-outline-variant hover:border-primary hover:bg-surface-container-highest transition-all cursor-pointer overflow-hidden">
-                    <ImageIcon className="w-8 h-8 text-primary mb-2 group-hover:scale-110 transition-transform" />
-                    <span className="font-label-sm font-semibold text-on-surface-variant">Upload Banner (16:9)</span>
+                  <input type="file" accept="image/*" className="hidden" ref={bannerInputRef} onChange={(e) => handleFileChange(e, 'banner')} />
+                  <div 
+                    onClick={() => bannerInputRef.current?.click()}
+                    className="group relative flex flex-col items-center justify-center w-full aspect-video rounded-xl bg-surface-container-high border-2 border-dashed border-outline-variant hover:border-primary hover:bg-surface-container-highest transition-all cursor-pointer overflow-hidden"
+                  >
+                    {bannerPreview ? (
+                      <img src={bannerPreview} alt="Banner Preview" className="w-full h-full object-cover" />
+                    ) : (
+                      <>
+                        <ImageIcon className="w-8 h-8 text-primary mb-2 group-hover:scale-110 transition-transform" />
+                        <span className="font-label-sm font-semibold text-on-surface-variant">Upload Banner (16:9)</span>
+                      </>
+                    )}
                   </div>
                 </div>
 
                 <div className="space-y-2">
                   <label className="font-label-md font-bold text-on-surface-variant block px-1">Thumbnail</label>
-                  <div className="group relative flex flex-col items-center justify-center w-full aspect-square md:aspect-video rounded-xl bg-surface-container-high border-2 border-dashed border-outline-variant hover:border-primary hover:bg-surface-container-highest transition-all cursor-pointer overflow-hidden">
-                    <Camera className="w-8 h-8 text-primary mb-2 group-hover:scale-110 transition-transform" />
-                    <span className="font-label-sm font-semibold text-on-surface-variant">Upload Square</span>
+                  <input type="file" accept="image/*" className="hidden" ref={thumbnailInputRef} onChange={(e) => handleFileChange(e, 'thumbnail')} />
+                  <div 
+                    onClick={() => thumbnailInputRef.current?.click()}
+                    className="group relative flex flex-col items-center justify-center w-full aspect-square md:aspect-video rounded-xl bg-surface-container-high border-2 border-dashed border-outline-variant hover:border-primary hover:bg-surface-container-highest transition-all cursor-pointer overflow-hidden"
+                  >
+                    {thumbnailPreview ? (
+                      <img src={thumbnailPreview} alt="Thumbnail Preview" className="w-full h-full object-cover" />
+                    ) : (
+                      <>
+                        <Camera className="w-8 h-8 text-primary mb-2 group-hover:scale-110 transition-transform" />
+                        <span className="font-label-sm font-semibold text-on-surface-variant">Upload Square</span>
+                      </>
+                    )}
                   </div>
                 </div>
               </div>
