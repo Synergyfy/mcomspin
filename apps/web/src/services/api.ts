@@ -1,11 +1,30 @@
 import axios, { AxiosError, InternalAxiosRequestConfig } from 'axios';
 import { getAccessToken, getRefreshToken, setTokens, clearTokens } from './token-store';
+import { isMockEnabled, handleMockRequest, getMockToken } from './mock-data';
+
+const MOCK = typeof window !== 'undefined' && isMockEnabled();
 
 const api = axios.create({
   baseURL: process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5005/api/v1',
   headers: { 'Content-Type': 'application/json' },
   withCredentials: true,
 });
+
+if (MOCK) {
+  api.defaults.adapter = async (config: InternalAxiosRequestConfig) => {
+    const url = config.url || '';
+    const method = (config.method || 'get').toUpperCase();
+    const mockResponse = handleMockRequest(method, url, config.data);
+
+    return {
+      data: mockResponse,
+      status: 200,
+      statusText: 'OK',
+      headers: { 'content-type': 'application/json' },
+      config,
+    };
+  };
+}
 
 api.interceptors.request.use((config: InternalAxiosRequestConfig) => {
   const token = getAccessToken();
@@ -90,6 +109,10 @@ api.interceptors.response.use(
 );
 
 export async function initAuth(): Promise<boolean> {
+  if (MOCK) {
+    setTokens(getMockToken(), 'mock-refresh-token');
+    return true;
+  }
   try {
     const { data } = await axios.post(
       `${api.defaults.baseURL}/auth/refresh`,
