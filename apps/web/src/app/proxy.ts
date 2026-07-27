@@ -2,8 +2,9 @@
 
 import React, { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { getAccessToken } from '@/services/token-store';
+import { getAccessToken, setTokens } from '@/services/token-store';
 import { initAuth } from '@/services/api';
+import { isMockEnabled, getMockToken } from '@/services/mock-data';
 
 export function AuthProxy({
   children,
@@ -19,6 +20,14 @@ export function AuthProxy({
     let cancelled = false;
 
     async function verify() {
+      const MOCK = isMockEnabled();
+
+      if (MOCK) {
+        setTokens(getMockToken());
+        if (!cancelled) setVerified(true);
+        return;
+      }
+
       let token = typeof window !== 'undefined' ? getAccessToken() : null;
 
       if (!token) {
