@@ -47,6 +47,26 @@ async function main() {
     update: {},
   });
 
+  // ── SuperAdmin User ──
+  const adminHash = await bcrypt.hash('admin123', 10);
+  const admin = await prisma.user.upsert({
+    where: { email: 'admin@mcomspin.com' },
+    create: {
+      email: 'admin@mcomspin.com',
+      firstName: 'MCom',
+      lastName: 'Admin',
+      passwordHash: adminHash,
+      isEmailVerified: true,
+      isActive: true,
+    },
+    update: {},
+  });
+  await prisma.userRole.upsert({
+    where: { userId_roleId: { userId: admin.id, roleId: roles.SuperAdmin } },
+    create: { userId: admin.id, roleId: roles.SuperAdmin },
+    update: {},
+  });
+
   // ── Customer User ──
   const customerHash = await bcrypt.hash('password123', 10);
   const customer = await prisma.user.upsert({
@@ -219,12 +239,136 @@ async function main() {
     ],
   });
 
+  // ── Subscription Plans ──
+  await seedPlans();
+
   console.log('✅ Seed complete!');
   console.log(`  👤 Owner:     owner@demo.com / password123`);
   console.log(`  👤 Customer:  customer@demo.com / password123`);
+  console.log(`  👤 Admin:     admin@mcomspin.com / admin123`);
   console.log(`  🎮 Game ID:   ${game.id}`);
   console.log(`  🏪 Businesses: ${createdBusinesses.length}`);
   console.log(`  📋 Campaigns:  ${campaignNames.length}`);
+}
+
+async function seedPlans() {
+  const plans = [
+    {
+      name: 'Spin Free',
+      description: 'Free tier to try the platform',
+      isFree: true,
+      monthlyPrice: 0,
+      sortOrder: 1,
+      isDefault: true,
+      quotas: {
+        maxActiveGames: 1,
+        maxActiveCampaigns: 1,
+        maxRewards: 5,
+        monthlyPlaysAllowance: 100,
+        maxGameSessions: 100,
+        maxTeamMembers: 1,
+      },
+      featureFlags: {},
+    },
+    {
+      name: 'Spin Starter',
+      description: 'For growing businesses',
+      isFree: false,
+      monthlyPrice: 29,
+      sortOrder: 2,
+      isDefault: false,
+      quotas: {
+        maxActiveGames: 3,
+        maxActiveCampaigns: 3,
+        maxRewards: 20,
+        monthlyPlaysAllowance: 1000,
+        maxGameSessions: 1000,
+        maxTeamMembers: 3,
+      },
+      featureFlags: {
+        canCreateRewardFromScratch: true,
+      },
+    },
+    {
+      name: 'Spin Growth',
+      description: 'For scaling operations',
+      isFree: false,
+      monthlyPrice: 79,
+      sortOrder: 3,
+      isDefault: false,
+      quotas: {
+        maxActiveGames: 10,
+        maxActiveCampaigns: 10,
+        maxRewards: 100,
+        monthlyPlaysAllowance: 5000,
+        maxGameSessions: 5000,
+        maxTeamMembers: 10,
+      },
+      featureFlags: {
+        canCreateRewardFromScratch: true,
+        canScheduleCampaigns: true,
+      },
+    },
+    {
+      name: 'Spin Enterprise',
+      description: 'For large organisations',
+      isFree: false,
+      monthlyPrice: 199,
+      sortOrder: 4,
+      isDefault: false,
+      quotas: {
+        maxActiveGames: -1,
+        maxActiveCampaigns: -1,
+        maxRewards: -1,
+        monthlyPlaysAllowance: -1,
+        maxGameSessions: -1,
+        maxTeamMembers: 50,
+      },
+      featureFlags: {
+        canCreateRewardFromScratch: true,
+        canScheduleCampaigns: true,
+        hasAdvancedAnalytics: true,
+      },
+    },
+  ];
+
+  for (const plan of plans) {
+    const features = {
+      quotas: plan.quotas,
+      featureFlags: plan.featureFlags,
+      isDefault: plan.isDefault,
+    };
+    await prisma.subscriptionPlan.upsert({
+      where: { name: plan.name },
+      create: {
+        name: plan.name,
+        description: plan.description,
+        isFree: plan.isFree,
+        price: plan.monthlyPrice,
+        currency: 'GBP',
+        interval: 'month',
+        features,
+        maxStaff: plan.quotas.maxTeamMembers,
+        maxLocations: 1,
+        maxProducts: 0,
+        maxCampaigns: plan.quotas.maxActiveCampaigns,
+        isActive: true,
+        sortOrder: plan.sortOrder,
+      },
+      update: {
+        description: plan.description,
+        isFree: plan.isFree,
+        price: plan.monthlyPrice,
+        features,
+        maxStaff: plan.quotas.maxTeamMembers,
+        maxCampaigns: plan.quotas.maxActiveCampaigns,
+        isActive: true,
+        sortOrder: plan.sortOrder,
+      },
+    });
+  }
+
+  console.log('  💳 Plans:     Spin Free / Starter / Growth / Enterprise');
 }
 
 main()

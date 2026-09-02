@@ -9,9 +9,11 @@ import { isMockEnabled, getMockToken } from '@/services/mock-data';
 export function AuthProxy({
   children,
   allowedRoles,
+  redirectTo = '/auth',
 }: {
   children: React.ReactNode;
   allowedRoles: string[];
+  redirectTo?: string;
 }) {
   const router = useRouter();
   const [verified, setVerified] = useState(false);
@@ -34,12 +36,12 @@ export function AuthProxy({
         const restored = await initAuth();
         if (cancelled) return;
         if (!restored) {
-          router.replace('/auth');
+          router.replace(redirectTo);
           return;
         }
         token = getAccessToken();
         if (!token) {
-          router.replace('/auth');
+          router.replace(redirectTo);
           return;
         }
       }
@@ -47,7 +49,7 @@ export function AuthProxy({
       try {
         const parts = token.split('.');
         if (parts.length !== 3) {
-          router.replace('/auth');
+          router.replace(redirectTo);
           return;
         }
 
@@ -62,7 +64,7 @@ export function AuthProxy({
         const payload = JSON.parse(jsonPayload);
 
         if (payload.exp && Date.now() >= payload.exp * 1000) {
-          router.replace('/auth');
+          router.replace(redirectTo);
           return;
         }
 
@@ -72,20 +74,20 @@ export function AuthProxy({
         );
 
         if (!hasRole) {
-          router.replace('/auth');
+          router.replace(redirectTo);
           return;
         }
 
         if (!cancelled) setVerified(true);
       } catch {
-        if (!cancelled) router.replace('/auth');
+        if (!cancelled) router.replace(redirectTo);
       }
     }
 
     verify();
 
     return () => { cancelled = true; };
-  }, [router, allowedRoles]);
+  }, [router, allowedRoles, redirectTo]);
 
   if (!verified) {
     return null;

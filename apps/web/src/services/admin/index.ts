@@ -26,4 +26,9 @@ export {
   useUpdateAdminPartner,
   useAdminSettings,
   useUpdateAdminSettings,
+  useAdminPlans,
+  useAdminPlan,
+  useCreateAdminPlan,
+  useUpdateAdminPlan,
+  useDeleteAdminPlan,
 } from './hook';

@@ -46,27 +46,8 @@ export default function AgentTrackerPage() {
     });
   }, [automations]);
 
-  const messages = useMemo(() => {
-    return [
-      {
-        id: 1,
-        sender: 'Sarah Jenkins',
-        text: 'Hi there! I am Sarah, your platform setup agent. I am going to help you get your business campaigns up and running.',
-        time: '9:30 AM',
-      },
-      {
-        id: 2,
-        sender: 'Sarah Jenkins',
-        text: 'I have analyzed your business profile and created a default set of automations for your rewards pool.',
-        time: '10:15 AM',
-      },
-      {
-        id: 3,
-        sender: 'Sarah Jenkins',
-        text: 'Please review the active automations on the left timeline. Let me know if you need to adjust the trigger schedules!',
-        time: '10:17 AM',
-      },
-    ];
+  const messages = useMemo<Array<{ id: number; sender: string; text: string; time: string }>>(() => {
+    return [];
   }, []);
 
   if (automationsLoading) {
@@ -113,16 +94,16 @@ export default function AgentTrackerPage() {
                     <User className="w-7 h-7" />
                   </div>
                   <div>
-                    <h2 className="text-lg font-display font-bold text-[#1a1a1a]">Sarah Jenkins</h2>
+                    <h2 className="text-lg font-display font-bold text-[#1a1a1a]">Your Setup Agent</h2>
                     <p className="text-[12px] text-[#f97316] font-semibold flex items-center gap-1.5">
                       <ShieldCheck className="w-3.5 h-3.5" />
-                      Senior Platform Agent
+                      Professional service
                     </p>
                   </div>
                </div>
                <div className="text-right">
                   <p className="text-[10px] text-[#aaa] uppercase font-bold tracking-widest">Est. Completion</p>
-                  <p className="text-[15px] font-display font-bold text-[#1a1a1a]">Today, 4:00 PM</p>
+                  <p className="text-[15px] font-display font-bold text-[#1a1a1a]">To be scheduled</p>
                </div>
             </div>
 
@@ -155,7 +136,7 @@ export default function AgentTrackerPage() {
                         </div>
                         {step.status === 'current' && (
                           <p className="text-[12px] text-[#888] mt-1 leading-relaxed">
-                            Sarah is currently optimizing your reward distribution logic for maximum customer retention.
+                            This step is in progress.
                           </p>
                         )}
                       </div>
@@ -195,7 +176,7 @@ export default function AgentTrackerPage() {
             </div>
 
             <div className="flex-1 overflow-y-auto p-6 space-y-4 bg-[#fafaf9]/30">
-               {messages.map((msg) => (
+               {messages.length > 0 ? messages.map((msg) => (
                  <div key={msg.id} className={`flex flex-col ${msg.sender === 'System' ? 'items-center' : 'items-start'}`}>
                     {msg.sender === 'System' ? (
                       <span className="text-[10px] font-bold text-[#bbb] uppercase tracking-widest bg-white px-3 py-1 rounded-full border border-[#eee]">
@@ -210,27 +191,28 @@ export default function AgentTrackerPage() {
                       </div>
                     )}
                  </div>
-               ))}
+               )) : (
+                 <div className="flex flex-col items-center justify-center h-full text-center text-[#bbb]">
+                   <MessageSquare className="w-8 h-8 mb-3 opacity-30" />
+                   <p className="text-[12px] font-medium">No agent messages yet</p>
+                   <p className="text-[11px] mt-1 max-w-[200px]">Messages from your setup agent will appear here once a session starts.</p>
+                 </div>
+               )}
             </div>
 
             <div className="p-4 border-t border-[#f5f5f3] bg-white">
               <div className="relative group">
                 <input 
                   type="text" 
-                  placeholder="Reply to Sarah..."
+                  placeholder="Messaging is not yet available"
                   value={replyText}
                   onChange={(e) => setReplyText(e.target.value)}
-                  onKeyDown={(e) => {
-                    if (e.key === 'Enter' && replyText.trim()) {
-                      alert('Message sent to Sarah Jenkins');
-                      setReplyText('');
-                    }
-                  }}
-                  className="w-full bg-[#f5f5f3] border-none rounded-2xl pl-4 pr-12 py-3.5 text-[13px] focus:outline-none focus:ring-2 focus:ring-[#f97316]/20 transition-all"
+                  disabled
+                  className="w-full bg-[#f5f5f3] border-none rounded-2xl pl-4 pr-12 py-3.5 text-[13px] focus:outline-none focus:ring-2 focus:ring-[#f97316]/20 transition-all disabled:opacity-60"
                 />
                 <button
-                  onClick={() => { if (replyText.trim()) { alert('Message sent to Sarah Jenkins'); setReplyText(''); } }}
-                  className="absolute right-2 top-1/2 -translate-y-1/2 w-8 h-8 bg-[#1a1a1a] text-white rounded-xl flex items-center justify-center hover:bg-[#f97316] transition-all"
+                  disabled
+                  className="absolute right-2 top-1/2 -translate-y-1/2 w-8 h-8 bg-[#1a1a1a] text-white rounded-xl flex items-center justify-center opacity-30"
                 >
                   <ArrowRight className="w-4 h-4" />
                 </button>

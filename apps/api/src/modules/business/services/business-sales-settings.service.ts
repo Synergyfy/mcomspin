@@ -245,60 +245,107 @@ export class BusinessSalesSettingsService {
 
   async getAiSuggestions(businessId: string, dto: AiSuggestDto) {
     const category = dto.category;
-    const suggestions = [];
 
-    const baseSuggestions = [
-      {
+    const [business, promotions, rewards, gameConfigs, aggregation] = await Promise.all([
+      this.prisma.business.findUnique({
+        where: { id: businessId },
+        select: { id: true, name: true, metadata: true },
+      }),
+      this.prisma.promotion.findMany({
+        where: { businessId },
+        select: { id: true, type: true, status: true },
+        take: 50,
+      }),
+      this.prisma.rewardInventory.findMany({
+        where: { businessId, isActive: true },
+        select: { reward: { select: { id: true, name: true, isActive: true } } },
+        take: 50,
+      }),
+      this.prisma.gameConfig.findFirst({
+        where: { businessId, isActive: true },
+        select: { id: true },
+      }),
+      this.prisma.analyticsAggregation.aggregate({
+        where: {
+          entityType: 'business',
+          entityId: businessId,
+          metric: { in: ['views', 'clicks', 'conversions', 'revenue'] },
+          period: 'week',
+        },
+        _sum: { value: true },
+        _count: true,
+      }),
+    ]);
+
+    const suggestions: any[] = [];
+    const businessType =
+      (business?.metadata as any)?.businessType ||
+      dto.context?.businessType ||
+      category ||
+      null;
+
+    if (promotions.length === 0) {
+      suggestions.push({
         type: 'Weekend Promo',
-        title: 'Weekend Flash Deal',
-        description: 'Drive foot traffic with a limited-time weekend discount',
+        title: 'Launch your first promotion',
+        description: 'You have no active promotions yet — create one to start driving foot traffic.',
         priority: 'high',
-      },
-      {
-        type: 'Lunch Deal',
-        title: 'Lunchtime Special',
-        description: 'Attract the lunch crowd with a time-bound offer',
-        priority: 'medium',
-      },
-      {
-        type: 'Reward Spin',
-        title: 'Spin the Wheel Campaign',
-        description: 'Engage customers with a gamified reward experience',
-        priority: 'medium',
-      },
-      {
-        type: 'Borough Event',
-        title: 'Borough-Wide Promotion',
-        description: 'Participate in borough campaigns to increase visibility',
-        priority: 'low',
-      },
-      {
+      });
+    } else {
+      suggestions.push({
         type: 'Flash Discount',
-        title: 'Flash Sale Alert',
-        description: 'Create urgency with a short-duration flash discount',
-        priority: 'high',
-      },
-    ];
-
-    if (category) {
-      const categorySuggestions: Record<string, any[]> = {
-        Restaurant: [
-          { type: 'Meal Deal', title: '2-for-1 Lunch', description: 'Popular among restaurants nearby', priority: 'high' },
-          { type: 'Happy Hour', title: 'Evening Happy Hour', description: 'Boost evening foot traffic', priority: 'medium' },
-        ],
-        Beauty: [
-          { type: 'Session Deal', title: 'New Client Discount', description: 'Attract first-time beauty clients', priority: 'high' },
-          { type: 'Package Offer', title: 'Treatment Bundle', description: 'Bundle services for higher value', priority: 'medium' },
-        ],
-        Fashion: [
-          { type: 'Seasonal', title: 'Seasonal Collection Drop', description: 'Highlight new arrivals', priority: 'high' },
-          { type: 'Clearance', title: 'End of Line Sale', description: 'Clear out old stock', priority: 'medium' },
-        ],
-      };
-      suggestions.push(...(categorySuggestions[category] || []));
+        title: 'Refresh a high-performing promotion',
+        description: `You have ${promotions.length} promotions configured. Rotate offers to keep engagement high.`,
+        priority: 'medium',
+      });
     }
 
-    const all = [...baseSuggestions, ...suggestions];
-    return { suggestions: all, generatedAt: new Date().toISOString() };
+    if (rewards.length === 0) {
+      suggestions.push({
+        type: 'Reward Spin',
+        title: 'Set up a reward catalogue',
+        description: 'Add rewards so customers can redeem points and stay engaged.',
+        priority: 'high',
+      });
+    } else if (!gameConfigs) {
+      suggestions.push({
+        type: 'Reward Spin',
+        title: 'Enable a gamified reward game',
+        description: `You have ${rewards.length} rewards. Attach them to a spin/plinko game to boost engagement.`,
+        priority: 'medium',
+      });
+    }
+
+    const totalEvents = aggregation._count ?? 0;
+    const totalValue = aggregation._sum?.value ?? 0;
+    if (totalEvents > 0 && Number(totalValue) === 0) {
+      suggestions.push({
+        type: 'Conversion',
+        title: 'Improve conversion',
+        description: 'You are generating traffic but no measurable conversions this week. Review your offers.',
+        priority: 'high',
+      });
+    }
+
+    const categorySuggestions: Record<string, any[]> = {
+      Restaurant: [
+        { type: 'Meal Deal', title: '2-for-1 Lunch', description: 'Popular among restaurants nearby', priority: 'high' },
+        { type: 'Happy Hour', title: 'Evening Happy Hour', description: 'Boost evening foot traffic', priority: 'medium' },
+      ],
+      Beauty: [
+        { type: 'Session Deal', title: 'New Client Discount', description: 'Attract first-time beauty clients', priority: 'high' },
+        { type: 'Package Offer', title: 'Treatment Bundle', description: 'Bundle services for higher value', priority: 'medium' },
+      ],
+      Fashion: [
+        { type: 'Seasonal', title: 'Seasonal Collection Drop', description: 'Highlight new arrivals', priority: 'high' },
+        { type: 'Clearance', title: 'End of Line Sale', description: 'Clear out old stock', priority: 'medium' },
+      ],
+    };
+
+    if (businessType) {
+      suggestions.push(...(categorySuggestions[businessType] || []));
+    }
+
+    return { suggestions, generatedAt: new Date().toISOString() };
   }
 }

@@ -150,11 +150,14 @@ export class PublicService {
   }
 
   async getPromotionsNearby(latitude: number, longitude: number, radius = 5) {
+    const dLat = radius / 111.32;
+    const dLon = radius / (111.32 * Math.max(Math.cos((latitude * Math.PI) / 180), 0.01));
+
     const locations = await this.prisma.businessLocation.findMany({
       where: {
         isActive: true,
-        latitude: { not: null },
-        longitude: { not: null },
+        latitude: { not: null, gte: latitude - dLat, lte: latitude + dLat },
+        longitude: { not: null, gte: longitude - dLon, lte: longitude + dLon },
         business: { isActive: true, deletedAt: null, promotions: { some: { status: 'Active' } } },
       },
       include: {

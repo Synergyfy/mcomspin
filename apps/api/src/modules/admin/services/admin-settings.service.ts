@@ -19,15 +19,15 @@ export class AdminSettingsService {
   }
 
   async updateSettings(dto: UpdateSettingsDto) {
-    for (const [key, value] of Object.entries(dto)) {
-      if (value !== undefined) {
-        await this.prisma.$executeRawUnsafe(
-          `INSERT INTO "PlatformSetting" (key, value) VALUES ($1, $2::jsonb)
-           ON CONFLICT (key) DO UPDATE SET value = $2::jsonb, "updatedAt" = NOW()`,
-          key,
-          JSON.stringify(value),
-        );
-      }
+    const entries = Object.entries(dto).filter(([, value]) => value !== undefined);
+    if (entries.length > 0) {
+      const placeholders = entries.map((_, i) => `($${i * 2 + 1}, $${i * 2 + 2}::jsonb)`).join(', ');
+      const values = entries.flatMap(([key, value]) => [key, JSON.stringify(value)]);
+      await this.prisma.$executeRawUnsafe(
+        `INSERT INTO "PlatformSetting" (key, value) VALUES ${placeholders}
+         ON CONFLICT (key) DO UPDATE SET value = EXCLUDED.value, "updatedAt" = NOW()`,
+        ...values,
+      );
     }
 
     return this.getSettings();

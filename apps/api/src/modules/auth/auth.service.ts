@@ -1,8 +1,9 @@
-import { Injectable, ConflictException, UnauthorizedException, BadRequestException } from '@nestjs/common';
+import { Injectable, ConflictException, UnauthorizedException, BadRequestException, ForbiddenException } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { ConfigService } from '@nestjs/config';
 import * as bcrypt from 'bcryptjs';
 import * as crypto from 'crypto';
+import { Prisma } from '@prisma/client';
 import { PrismaService } from '../../prisma/prisma.service';
 import { RegisterDto } from './dto/register.dto';
 import { LoginDto } from './dto/login.dto';
@@ -22,32 +23,9 @@ export class AuthService {
   ) {}
 
   async register(dto: RegisterDto) {
-    const existing = await this.prisma.user.findUnique({ where: { email: dto.email } });
-    if (existing) throw new ConflictException('Email already registered');
-
-    const passwordHash = await bcrypt.hash(dto.password, 12);
-
-    const user = await this.prisma.user.create({
-      data: {
-        email: dto.email,
-        passwordHash,
-        firstName: dto.firstName,
-        lastName: dto.lastName,
-        phone: dto.phone,
-        roles: {
-          create: {
-            role: {
-              connectOrCreate: {
-                where: { name: Role.Customer },
-                create: { name: Role.Customer, isSystem: true },
-              },
-            },
-          },
-        },
-      },
-    });
-
-    return this.generateTokens(user.id, user.email);
+    throw new ForbiddenException(
+      'Self-registration is disabled. Accounts are provisioned via MCOM Solutions (Central Hub).',
+    );
   }
 
   async login(dto: LoginDto) {
@@ -60,6 +38,14 @@ export class AuthService {
 
     const valid = await bcrypt.compare(dto.password, user.passwordHash);
     if (!valid) throw new UnauthorizedException('Invalid credentials');
+
+    const roleNames = user.roles.map((ur) => ur.role.name);
+    const isAdmin = roleNames.some((r) => r === Role.SuperAdmin || r === Role.BoroughAdmin);
+    if (!isAdmin) {
+      throw new ForbiddenException(
+        'Email/password sign-in is reserved for administrators. Please sign in via MCOM Solutions (Central Hub).',
+      );
+    }
 
     return this.generateTokens(user.id, user.email);
   }
@@ -108,16 +94,83 @@ export class AuthService {
       where: { id: userId },
       select: {
         id: true, email: true, phone: true, firstName: true, lastName: true,
-        avatarUrl: true, isEmailVerified: true, isPhoneVerified: true,
+        avatarUrl: true, isEmailVerified: true, isPhoneVerified: true, metadata: true,
         roles: { include: { role: { select: { name: true } } } },
         ownedBusinesses: { select: { id: true, name: true, slug: true } },
       },
     });
     if (!user) throw new UnauthorizedException('User not found');
+    const metadata = (user.metadata ?? {}) as Record<string, unknown>;
+    const permissions = (metadata.centralPermissions ?? {}) as Record<string, boolean>;
     return {
       ...user,
       roles: user.roles.map((r) => r.role.name),
+      permissions,
+      hasAccess:
+        permissions[`canAccess_${this.platformSlug}`] === true,
+      centralId: metadata.centralId ?? null,
     };
+  }
+
+  private get platformSlug(): string {
+    return this.configService.get<string>('MCOM_PLATFORM_SLUG', 'spin_local');
+  }
+
+  /**
+   * Just-in-time (JIT) user provisioning for McomSolution SSO logins.
+   * Creates the local user on first sign-in (or syncs profile fields) and
+   * attaches the role derived from the central account. Uses a random
+   * password so SSO-provisioned users cannot sign in with a password.
+   */
+  async findOrCreateUserFromCentral(centralUser: { email: string; role?: string; firstName?: string; lastName?: string; name?: string }) {
+    const email = centralUser.email?.toLowerCase();
+    if (!email) throw new BadRequestException('Central user is missing an email address');
+
+    const firstName = centralUser.firstName || centralUser.name?.split(' ')[0] || email.split('@')[0];
+    const lastName = centralUser.lastName || (centralUser.name?.split(' ').slice(1).join(' ') ?? '');
+
+    let user = await this.prisma.user.findUnique({ where: { email } });
+
+    if (!user) {
+      const randomPasswordHash = await bcrypt.hash(crypto.randomBytes(32).toString('hex'), 12);
+      user = await this.prisma.user.create({
+        data: {
+          email,
+          passwordHash: randomPasswordHash,
+          firstName,
+          lastName,
+          isEmailVerified: true,
+          roles: {
+            create: {
+              role: {
+                connectOrCreate: {
+                  where: { name: this.mapCentralRole(centralUser.role) },
+                  create: { name: this.mapCentralRole(centralUser.role), isSystem: true },
+                },
+              },
+            },
+          },
+        },
+      });
+    } else {
+      user = await this.prisma.user.update({
+        where: { id: user.id },
+        data: {
+          firstName: centralUser.firstName || user.firstName,
+          lastName: centralUser.lastName || user.lastName,
+          isEmailVerified: true,
+        },
+      });
+    }
+
+    return user;
+  }
+
+  private mapCentralRole(centralRole?: string): Role {
+    const normalized = (centralRole || '').toUpperCase();
+    if (normalized === 'BUSINESS') return Role.BusinessOwner;
+    if (normalized === 'CUSTOMER') return Role.Customer;
+    return Role.Customer;
   }
 
   async sendOtp(dto: SendOtpDto) {
@@ -210,12 +263,16 @@ export class AuthService {
   }
 
   async resetPassword(dto: ResetPasswordDto) {
-    const users = await this.prisma.user.findMany();
+    const users = await this.prisma.user.findMany({
+      where: {
+        metadata: { path: ['resetTokenHash'], not: Prisma.DbNull },
+      },
+      select: { id: true, metadata: true },
+    });
 
     for (const user of users) {
       const meta = user.metadata as any;
-      if (!meta?.resetTokenHash) continue;
-      if (new Date(meta.resetTokenExpiry) < new Date()) continue;
+      if (!meta?.resetTokenExpiry || new Date(meta.resetTokenExpiry) < new Date()) continue;
       if (await bcrypt.compare(dto.token, meta.resetTokenHash)) {
         const passwordHash = await bcrypt.hash(dto.newPassword, 12);
         const { resetTokenHash, resetTokenExpiry, ...rest } = meta;
@@ -230,7 +287,7 @@ export class AuthService {
     throw new BadRequestException('Invalid or expired reset token');
   }
 
-  private async generateTokens(userId: string, email: string) {
+  async generateTokens(userId: string, email: string) {
     const user = await this.prisma.user.findUnique({
       where: { id: userId },
       include: { roles: { include: { role: { include: { permissions: true } } } } },

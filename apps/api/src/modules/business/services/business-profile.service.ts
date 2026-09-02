@@ -56,18 +56,47 @@ export class BusinessProfileService {
   }
 
   async getBilling(businessId: string) {
-    const [subscription, invoices] = await Promise.all([
+    const [subscription, invoices, plans, paymentMethods] = await Promise.all([
       this.prisma.subscription.findFirst({
         where: { businessId },
         orderBy: { createdAt: 'desc' },
+        include: { plan: true },
       }),
       this.prisma.invoice.findMany({
         where: { businessId },
         orderBy: { createdAt: 'desc' },
       }),
+      this.prisma.subscriptionPlan.findMany({
+        where: { isActive: true },
+        orderBy: { sortOrder: 'asc' },
+      }),
+      this.prisma.paymentMethod.findMany({ where: { businessId } }),
     ]);
 
-    return { subscription, invoices };
+    const serializedPlans = plans.map((plan) => ({
+      id: plan.id,
+      name: plan.name,
+      description: plan.description,
+      isFree: plan.isFree,
+      monthlyPrice: Number(plan.price),
+      quarterlyPrice: ((plan.features as any)?.quarterlyPrice ?? undefined) as number | undefined,
+      annualPrice: ((plan.features as any)?.annualPrice ?? undefined) as number | undefined,
+      type: ((plan.features as any)?.type ?? (plan.isFree ? 'TRIAL' : 'STANDARD')) as string,
+      currency: plan.currency,
+      interval: plan.interval,
+      isDefault: ((plan.features as any)?.isDefault ?? false) as boolean,
+      configuration: {
+        quotas: ((plan.features as any)?.quotas ?? {}) as Record<string, number>,
+        featureFlags: ((plan.features as any)?.featureFlags ?? {}) as Record<string, boolean>,
+      },
+    }));
+
+    return {
+      subscription,
+      invoices,
+      plans: serializedPlans,
+      paymentMethod: paymentMethods.find((pm) => pm.isDefault) ?? paymentMethods[0] ?? null,
+    };
   }
 
   async updateEmail(businessId: string, email: string) {
@@ -128,14 +157,16 @@ export class BusinessProfileService {
     const business = await this.prisma.business.findUnique({ where: { id: businessId } });
     if (!business) throw new NotFoundException('Business not found');
 
-    if (dto.preferences && Array.isArray(dto.preferences)) {
-      for (const pref of dto.preferences) {
-        await this.prisma.notificationPreference.upsert({
-          where: { userId_channel_type: { userId: business.ownerId, channel: pref.channel, type: pref.type } },
-          update: { enabled: pref.enabled },
-          create: { userId: business.ownerId, channel: pref.channel, type: pref.type, enabled: pref.enabled },
-        });
-      }
+    if (dto.preferences && Array.isArray(dto.preferences) && dto.preferences.length > 0) {
+      await this.prisma.$transaction(
+        dto.preferences.map((pref: { channel: any; type: any; enabled: boolean }) =>
+          this.prisma.notificationPreference.upsert({
+            where: { userId_channel_type: { userId: business.ownerId, channel: pref.channel, type: pref.type } },
+            update: { enabled: pref.enabled },
+            create: { userId: business.ownerId, channel: pref.channel, type: pref.type, enabled: pref.enabled },
+          }),
+        ),
+      );
     }
     return { message: 'Notification preferences updated' };
   }

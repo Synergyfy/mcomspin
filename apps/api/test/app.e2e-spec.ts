@@ -59,33 +59,11 @@ describe('Auth Flow (e2e)', () => {
   });
 
   describe('POST /api/v1/auth/register', () => {
-    it('should register a new user', () => {
-      mockPrisma.user.findUnique.mockResolvedValue(null);
-      mockPrisma.user.create.mockResolvedValue({ id: 'new-id', email: 'new@test.com' });
-
+    it('should reject self-registration', () => {
       return request(app.getHttpServer())
         .post('/api/v1/auth/register')
         .send({ email: 'new@test.com', password: 'password123', firstName: 'New', lastName: 'User' })
-        .expect(201)
-        .expect((res) => {
-          expect(res.body.success).toBe(true);
-          expect(res.body.data).toHaveProperty('accessToken');
-          expect(res.body.data).toHaveProperty('refreshToken');
-          expect(res.body.data.user.email).toBe('new@test.com');
-        });
-    });
-
-    it('should return 409 if email exists', () => {
-      mockPrisma.user.findUnique.mockResolvedValue({ id: 'existing', email: 'existing@test.com' });
-
-      return request(app.getHttpServer())
-        .post('/api/v1/auth/register')
-        .send({ email: 'existing@test.com', password: 'password123', firstName: 'Ex', lastName: 'User' })
-        .expect(409)
-        .expect((res) => {
-          expect(res.body.success).toBe(false);
-          expect(res.body.error.code).toBe('CONFLICT');
-        });
+        .expect(403);
     });
 
     it('should return 400 for invalid payload', () => {
@@ -101,13 +79,13 @@ describe('Auth Flow (e2e)', () => {
   });
 
   describe('POST /api/v1/auth/login', () => {
-    it('should login with valid credentials', () => {
+    it('should login an admin user with valid credentials', () => {
       mockPrisma.user.findUnique.mockResolvedValue({
         id: 'user-1',
         email: 'test@test.com',
         passwordHash: 'hashed-password',
         isActive: true,
-        roles: [{ role: { name: 'Customer', permissions: [] } }],
+        roles: [{ role: { name: 'SuperAdmin', permissions: [] } }],
       });
       (bcrypt.compare as jest.Mock).mockResolvedValue(true);
 
@@ -120,6 +98,22 @@ describe('Auth Flow (e2e)', () => {
           expect(res.body.data).toHaveProperty('accessToken');
           expect(res.body.data.user.email).toBe('test@test.com');
         });
+    });
+
+    it('should return 403 for non-admin user', () => {
+      mockPrisma.user.findUnique.mockResolvedValue({
+        id: 'user-1',
+        email: 'test@test.com',
+        passwordHash: 'hashed-password',
+        isActive: true,
+        roles: [{ role: { name: 'Customer', permissions: [] } }],
+      });
+      (bcrypt.compare as jest.Mock).mockResolvedValue(true);
+
+      return request(app.getHttpServer())
+        .post('/api/v1/auth/login')
+        .send({ email: 'test@test.com', password: 'password123' })
+        .expect(403);
     });
 
     it('should return 401 for invalid credentials', () => {

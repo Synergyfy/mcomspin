@@ -35,6 +35,7 @@ export default function CustomersPage() {
     return arr.map((c: any) => {
       const sessionCount = Array.isArray(c.gameSessions) ? c.gameSessions.length : 0;
       const rewardsWon = Array.isArray(c.customerRewards) ? c.customerRewards.length : 0;
+      const rewardsRedeemed = Array.isArray(c.customerRewards) ? c.customerRewards.filter((r: any) => r.usedAt).length : 0;
       const lastSession = Array.isArray(c.gameSessions) && c.gameSessions.length > 0
         ? c.gameSessions.reduce((latest: any, s: any) =>
             !latest || new Date(s.createdAt) > new Date(latest.createdAt) ? s : latest
@@ -46,7 +47,7 @@ export default function CustomersPage() {
         phone: c.phone ?? '',
         email: c.email ?? '',
         rewardsWon,
-        rewardsRedeemed: 0,
+        rewardsRedeemed,
         lastVisit: lastSession
           ? new Date(lastSession.createdAt).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })
           : '—',
@@ -288,27 +289,8 @@ export default function CustomersPage() {
 
               <div className="space-y-4">
                 <h4 className="text-[12px] font-bold text-[#aaa] uppercase tracking-widest">Recent Activity</h4>
-                <div className="space-y-4">
-                  {[
-                    { action: 'Won Reward', detail: '20% Discount Voucher', time: '2h ago' },
-                    { action: 'Redeemed', detail: 'Free Coffee', time: 'Yesterday' },
-                    { action: 'Visit', detail: 'Downtown Store', time: 'Yesterday' },
-                  ].map((act: any, i: any) => (
-                    <div key={i} className="flex gap-3">
-                      <div className="w-1.5 h-1.5 bg-[#f97316] rounded-full mt-1.5 shrink-0" />
-                      <div>
-                        <p className="text-[13px] font-bold text-[#1a1a1a] leading-none">{act.action}</p>
-                        <p className="text-[12px] text-[#888] mt-1">{act.detail}</p>
-                        <p className="text-[10px] text-[#ccc] mt-1 uppercase font-medium">{act.time}</p>
-                      </div>
-                    </div>
-                  ))}
-                </div>
+                <p className="text-[12px] text-[#888]">No recent activity recorded for this customer yet.</p>
               </div>
-
-              <button className="w-full py-3 bg-[#f5f5f3] hover:bg-[#eee] text-[#1a1a1a] text-[13px] font-bold rounded-2xl transition-colors">
-                View Full History
-              </button>
             </div>
           ) : (
             <div className="h-full min-h-[400px] border-2 border-dashed border-[#eee] rounded-[32px] flex flex-col items-center justify-center p-8 text-center bg-white/50">

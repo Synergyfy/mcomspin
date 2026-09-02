@@ -13,8 +13,6 @@ export default function NotificationsPage() {
     push: true,
   });
 
-  const alerts: any[] = [];
-
   const handleSend = () => {
     if (!message.trim()) {
       setSendError('Message cannot be empty');
@@ -64,22 +62,11 @@ export default function NotificationsPage() {
         <section className="bg-[#1a1a1a] rounded-[40px] p-8 text-white space-y-6">
           <h3 className="text-lg font-bold">Automated Alerts</h3>
           <div className="space-y-6">
-            {alerts.map((alert: any, i: any) => (
-              <div key={i} className="flex gap-4">
-                <div className="pt-1">
-                  <input type="checkbox" defaultChecked={alert.enabled} className="w-5 h-5 rounded-lg border-white/20 bg-white/5 text-[#f97316] focus:ring-[#f97316]" />
-                </div>
-                <div>
-                  <p className="text-[14px] font-bold">{alert.type}</p>
-                  <p className="text-[12px] text-white/50 mt-1">{alert.desc}</p>
-                </div>
-              </div>
-            ))}
+            <p className="text-[12px] text-white/50">No automated alerts configured yet. Alerts will appear here once set up.</p>
           </div>
         </section>
       </div>
 
-      {/* Broadcast Mockup */}
       <section className="bg-white rounded-[40px] border border-[#eee] p-8 shadow-sm">
         <h3 className="text-lg font-bold text-[#1a1a1a] mb-6">Send Broadcast Message</h3>
         <div className="space-y-4">
@@ -92,7 +79,7 @@ export default function NotificationsPage() {
           {sendError && <p className="text-[13px] text-red-500 font-medium">{sendError}</p>}
           <div className="flex justify-end">
             <button onClick={handleSend} disabled={sendNotification.isPending} className="px-8 py-3 bg-[#f97316] text-white rounded-2xl font-bold text-[13px] hover:bg-[#ea580c] transition-all shadow-lg shadow-[#f97316]/20 disabled:opacity-50">
-              {sendNotification.isPending ? 'Sending...' : `Send to ${Intl.NumberFormat().format(1295)} Customers`}
+              {sendNotification.isPending ? 'Sending...' : 'Send Broadcast Message'}
             </button>
           </div>
         </div>

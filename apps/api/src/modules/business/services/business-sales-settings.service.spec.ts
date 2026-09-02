@@ -108,12 +108,28 @@ describe('BusinessSalesSettingsService', () => {
   });
 
   describe('getAiSuggestions', () => {
-    it('should return base suggestions', async () => {
+    it('should return data-driven suggestions based on business state', async () => {
+      mockPrisma.business.findUnique.mockResolvedValue({ id: 'biz-1', name: 'Test Biz', metadata: { businessType: 'Restaurant' } });
+      mockPrisma.promotion.findMany.mockResolvedValue([
+        { id: 'p-1', type: 'Discount', status: 'Active' },
+      ]);
+      mockPrisma.rewardInventory.findMany.mockResolvedValue([
+        { reward: { id: 'r-1', name: 'Free Coffee', isActive: true } },
+      ]);
+      mockPrisma.gameConfig.findFirst.mockResolvedValue({ id: 'gc-1' });
+      mockPrisma.analyticsAggregation.aggregate.mockResolvedValue({ _sum: { value: 100 }, _count: 5 });
+
       const result = await service.getAiSuggestions('biz-1', {});
-      expect(result.suggestions.length).toBeGreaterThanOrEqual(5);
+      expect(result.suggestions.length).toBeGreaterThanOrEqual(1);
     });
 
     it('should include category-specific suggestions', async () => {
+      mockPrisma.business.findUnique.mockResolvedValue({ id: 'biz-1', name: 'Test Biz', metadata: { businessType: 'Restaurant' } });
+      mockPrisma.promotion.findMany.mockResolvedValue([]);
+      mockPrisma.rewardInventory.findMany.mockResolvedValue([]);
+      mockPrisma.gameConfig.findFirst.mockResolvedValue(null);
+      mockPrisma.analyticsAggregation.aggregate.mockResolvedValue({ _sum: { value: 0 }, _count: 0 });
+
       const result = await service.getAiSuggestions('biz-1', { category: 'Restaurant' });
       const titles = result.suggestions.map((s: any) => s.title);
       expect(titles).toContain('2-for-1 Lunch');

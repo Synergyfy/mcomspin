@@ -34,12 +34,12 @@ export default function RewardWalletPage() {
     return [...available, ...redeemed, ...expired].map((item: any) => {
       const reward = item.reward || {};
       const business = reward.inventories?.[0]?.business || {};
-      const code = `MCS-${(reward.name || '').substring(0, 3).toUpperCase()}-${item.id.slice(0, 8)}`;
+      const code = item.code || '';
       return {
         id: item.id,
         title: reward.name || '',
-        provider: business.name || 'MCOM Partner',
-        providerLogo: business.logoUrl || 'MA',
+        provider: business.name || 'Platform',
+        providerLogo: business.logoUrl || '',
         type: reward.type?.toLowerCase() || 'voucher',
         value: reward.value || '',
         details: reward.description || '',

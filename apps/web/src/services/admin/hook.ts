@@ -26,6 +26,10 @@ export const adminKeys = {
   redemptions: ['admin', 'redemptions'] as const,
   partners: ['admin', 'partners'] as const,
   settings: ['admin', 'settings'] as const,
+  plans: {
+    all: ['admin', 'plans'] as const,
+    detail: (id: string) => ['admin', 'plans', id] as const,
+  },
 };
 
 /* ─── Dashboard ─── */
@@ -304,6 +308,58 @@ export function useUpdateAdminSettings() {
       api.put('/admin/settings', payload).then((r) => r.data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: adminKeys.settings });
+    },
+  });
+}
+
+/* ─── Plans / Packages ─── */
+
+export function useAdminPlans() {
+  return useQuery({
+    queryKey: adminKeys.plans.all,
+    queryFn: () =>
+      api.get('/admin/plans').then((r) => r.data.data ?? r.data),
+  });
+}
+
+export function useAdminPlan(id: string) {
+  return useQuery({
+    queryKey: adminKeys.plans.detail(id),
+    queryFn: () =>
+      api.get(`/admin/plans/${id}`).then((r) => r.data.data ?? r.data),
+    enabled: !!id,
+  });
+}
+
+export function useCreateAdminPlan() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (payload: Record<string, unknown>) =>
+      api.post('/admin/plans', payload).then((r) => r.data.data ?? r.data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: adminKeys.plans.all });
+    },
+  });
+}
+
+export function useUpdateAdminPlan() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, ...payload }: { id: string } & Record<string, unknown>) =>
+      api.patch(`/admin/plans/${id}`, payload).then((r) => r.data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: adminKeys.plans.all });
+    },
+  });
+}
+
+export function useDeleteAdminPlan() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (id: string) =>
+      api.delete(`/admin/plans/${id}`).then((r) => r.data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: adminKeys.plans.all });
     },
   });
 }

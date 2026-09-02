@@ -29,7 +29,7 @@ export class BusinessCustomersService {
           lastName: true,
           email: true,
           phone: true,
-          customerRewards: { where: { reward: { inventories: { some: { businessId } } } }, select: { id: true } },
+          customerRewards: { where: { reward: { inventories: { some: { businessId } } } }, select: { id: true, usedAt: true } },
           gameSessions: { where: { config: { businessId } }, select: { id: true } },
         },
         skip: (page - 1) * limit,

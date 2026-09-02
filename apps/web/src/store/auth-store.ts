@@ -7,6 +7,8 @@ export interface User {
   businessName?: string;
   avatar?: string;
   role: string;
+  permissions?: Record<string, boolean>;
+  hasAccess?: boolean;
 }
 
 interface AuthState {

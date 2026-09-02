@@ -312,6 +312,15 @@ const handlers: Record<string, Record<string, MockHandler>> = {
     '/business/rewards': () => r(mockRewards[0]),
     '/business/notifications/send': () => r({ sent: true, recipients: 150 }),
 
+    '/business/billing/purchase/initiate': (body?: { provider?: string }) =>
+      body?.provider === 'paypal'
+        ? r({ orderId: 'MOCK-PAYPAL-ORDER', approvalUrl: 'https://mock-paypal.com/checkout?token=MOCK-PAYPAL-ORDER' })
+        : r({ clientSecret: 'pi_mock_secret_xxxxxxxx', type: 'payment' }),
+    '/business/billing/purchase/confirm': () =>
+      r({ packageName: 'Spin Growth', status: 'active', subscription: mockBilling.subscription }),
+    '/business/billing/purchase/capture': () =>
+      r({ packageName: 'Spin Growth', status: 'active', subscription: mockBilling.subscription }),
+
     '/business/local-mall/partnerships/request': () => r({ id: 'part-new', status: 'Pending' }),
     '/business/local-mall/share-campaigns': () => r({ shared: true }),
     '/business/local-mall/visibility/boost': () => r({ boosted: true, until: new Date(Date.now() + 86400000 * 7).toISOString() }),
@@ -362,13 +371,13 @@ function matchPattern(path: string, method: string, body?: any): { success: true
   if (!methodHandlers) return null;
 
   const exactMatch = methodHandlers[path];
-  if (exactMatch) return exactMatch();
+  if (exactMatch) return exactMatch(body);
 
   for (const [pattern, handler] of Object.entries(methodHandlers)) {
     if (pattern.includes(':id')) {
       const regexStr = '^' + pattern.replace(/:id/g, '[^/]+') + '$';
       const regex = new RegExp(regexStr);
-      if (regex.test(path)) return handler();
+      if (regex.test(path)) return handler(body);
     }
   }
 

@@ -2011,6 +2011,8 @@ model Subscription {
   id             String               @id @default(uuid()) @db.Uuid
   businessId     String               @db.Uuid
   business       Business             @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  planId         String?              @db.Uuid
+  plan           SubscriptionPlan?    @relation(fields: [planId], references: [id], onDelete: SetNull)
   planType       SubscriptionPlanType @default(Free)
   status         String               @default("active") // active, past_due, cancelled, expired
   startedAt      DateTime             @default(now())
@@ -2023,6 +2025,7 @@ model Subscription {
   updatedAt      DateTime             @updatedAt
 
   @@index([businessId])
+  @@index([planId])
   @@index([planType])
   @@index([status])
   @@index([currentPeriodEnd])
@@ -2031,8 +2034,8 @@ model Subscription {
 model SubscriptionPlan {
   id            String               @id @default(uuid()) @db.Uuid
   name          String               @unique
-  planType      SubscriptionPlanType @unique
   description   String?
+  isFree        Boolean              @default(false)
   price         Decimal              @db.Decimal(10, 2)
   currency      String               @default("GBP")
   interval      String               @default("month") // month, year
@@ -2043,6 +2046,7 @@ model SubscriptionPlan {
   maxCampaigns  Int                  @default(0)
   isActive      Boolean              @default(true)
   sortOrder     Int                  @default(0)
+  subscriptions Subscription[]
   createdAt     DateTime             @default(now())
   updatedAt     DateTime             @updatedAt
 }

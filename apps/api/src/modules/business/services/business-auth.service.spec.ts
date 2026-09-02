@@ -65,9 +65,30 @@ describe('BusinessAuthService', () => {
   });
 
   describe('verify', () => {
-    it('should return verification message', async () => {
+    it('should verify the code and submit verification', async () => {
+      mockPrisma.otpVerification.findFirst.mockResolvedValue({
+        id: 'otp-1',
+        code: '123456',
+        email: 'biz@test.com',
+        phone: null,
+        expiresAt: new Date(Date.now() + 60000),
+        usedAt: null,
+      });
+      mockPrisma.otpVerification.update.mockResolvedValue({});
+      mockPrisma.user.updateMany.mockResolvedValue({ count: 1 });
+      mockPrisma.business.findFirst.mockResolvedValue({ id: 'biz-1', contactEmail: 'biz@test.com' });
+      mockPrisma.businessVerification.upsert.mockResolvedValue({ id: 'bv-1', status: 'Pending' });
+
       const result = await service.verify({ code: '123456' });
+
       expect(result).toHaveProperty('message');
+      expect(result.status).toBe('Pending');
+      expect(mockPrisma.otpVerification.findFirst).toHaveBeenCalled();
+    });
+
+    it('should throw BadRequestException for invalid code', async () => {
+      mockPrisma.otpVerification.findFirst.mockResolvedValue(null);
+      await expect(service.verify({ code: '000000' })).rejects.toThrow();
     });
   });
 });

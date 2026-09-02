@@ -22,9 +22,9 @@ import {
   Bell,
   Coins,
   BarChart3,
-  Sliders
+  Sliders,
+  LogOut
 } from 'lucide-react';
-import { useAdminStore } from '@/store/admin-store';
 import {
   useAdminDashboard,
   useAdminBusinesses,
@@ -38,9 +38,12 @@ import {
   useUpdateAdminBusiness,
   useUpdateAdminGame,
 } from '@/services/admin';
+import { useLogout } from '@/services/auth';
+import { useAuthStore } from '@/store/auth-store';
 
 import { GamificationControl } from './gamification-control';
 import { CampaignControl } from './campaign-control';
+import { PlanManagementControl } from './plan-management';
 
 /* ─── SHARED UI COMPONENTS ─── */
 const Card = ({ children, title, isProcessing }: { children: React.ReactNode, title?: string, isProcessing?: boolean }) => (
@@ -203,12 +206,12 @@ const BusinessManagement = () => {
                           <span className="text-[10px] text-stone-400">{biz.id}</span>
                         </div>
                       </td>
-                      <td className="py-4">1 active</td>
-                      <td className="py-4 text-stone-500">N/A</td>
+                      <td className="py-4">—</td>
+                      <td className="py-4 text-stone-500">—</td>
                       <td className="py-4">
-                        <Badge variant="green">High</Badge>
+                        <Badge variant="neutral">—</Badge>
                       </td>
-                      <td className="py-4 font-mono text-[11px]">85%</td>
+                      <td className="py-4 font-mono text-[11px]">—</td>
                       <td className="py-4 text-right">
                         <button onClick={() => handleAction(biz.id, 'Suspend')} disabled={updateBusinessMutation.isPending} className="text-[10px] font-bold text-red-600 hover:underline transition-all disabled:opacity-50">Suspend</button>
                       </td>
@@ -296,8 +299,6 @@ const BusinessManagement = () => {
                     <h4 className="text-[11px] font-bold text-orange-700 uppercase mb-2">Featured Spotlight</h4>
                     <select className="w-full bg-white border border-orange-200 rounded-lg px-3 py-2 text-xs mb-3">
                       <option>Select Business to Feature...</option>
-                      <option>MCOM Barber</option>
-                      <option>Tech Blitz</option>
                     </select>
                     <button onClick={() => handleAction('Selected Business', 'Spotlight Push')} className="w-full bg-orange-600 text-white text-[10px] font-bold py-2 rounded-lg hover:bg-orange-700 transition-colors">
                       PUSH TO FRONT PAGE
@@ -372,30 +373,10 @@ const AgentManagement = () => {
             <div className="grid grid-cols-3 gap-6">
               <div className="col-span-2">
                 <Card title="Live Assignment Matching Engine" isProcessing={isProcessing}>
-                  <div className="space-y-4">
-                    {[
-                      { biz: 'Glow Skin Clinic', status: 'Matching...', steps: ['Category: Wellness', 'Goals: Growth', 'Assets: Uploaded'], progress: 65 },
-                      { biz: 'Urban Threads', status: 'Processing...', steps: ['Category: Retail', 'Goals: Blitz', 'Assets: Pending'], progress: 30 },
-                    ].map((match, i) => (
-                      <div key={i} className="p-4 border border-stone-100 rounded-xl bg-stone-50 space-y-3">
-                        <div className="flex justify-between items-center">
-                          <span className="text-sm font-bold">{match.biz}</span>
-                          <span className="text-[10px] font-bold text-orange-600 animate-pulse">{match.status}</span>
-                        </div>
-                        <div className="flex gap-4">
-                          {match.steps.map((step, j) => (
-                            <span key={j} className="text-[10px] text-stone-500 bg-white px-2 py-1 rounded-md border border-stone-200">{step}</span>
-                          ))}
-                        </div>
-                        <div className="w-full bg-stone-200 rounded-full h-1">
-                          <motion.div initial={{ width: 0 }} animate={{ width: `${match.progress}%` }} className="bg-[#1a1a1a] h-1 rounded-full" />
-                        </div>
-                      </div>
-                    ))}
-                    <div className="p-4 border-2 border-dashed border-stone-200 rounded-xl flex flex-col items-center justify-center py-8 text-stone-400">
-                      <Route className="w-8 h-8 mb-2 opacity-20" />
-                      <span className="text-xs font-medium">Listening for New Business Onboarding...</span>
-                    </div>
+                  <div className="flex flex-col items-center justify-center py-10 text-stone-400">
+                    <Route className="w-8 h-8 mb-2 opacity-20" />
+                    <span className="text-xs font-medium">Listening for New Business Onboarding...</span>
+                    <p className="text-[10px] mt-1 text-stone-400 max-w-xs text-center">No assignment matches in progress. Agent assignment engine is not yet connected.</p>
                   </div>
                 </Card>
               </div>
@@ -444,15 +425,12 @@ const AgentManagement = () => {
                     <div className="grid grid-cols-2 gap-3">
                       <select className="bg-white border border-stone-200 rounded-lg px-3 py-2 text-xs">
                         <option>Select Business...</option>
-                        <option>Glow Skin Clinic</option>
                       </select>
                       <select className="bg-white border border-stone-200 rounded-lg px-3 py-2 text-xs">
                         <option>Assign to Agent...</option>
-                        <option>Agent B (Sarah)</option>
-                        <option>Agent A (Marcus)</option>
                       </select>
                     </div>
-                    <button onClick={() => handleAgentAction('Sarah', 'Reassignment')} className="w-full bg-[#1a1a1a] text-white text-[10px] font-bold py-2 rounded-lg">EXECUTE OVERRIDE</button>
+                    <button onClick={() => handleAgentAction('', 'Reassignment')} className="w-full bg-[#1a1a1a] text-white text-[10px] font-bold py-2 rounded-lg">EXECUTE OVERRIDE</button>
                   </div>
                   <div className="p-4 bg-red-50 border border-red-100 rounded-xl">
                     <h4 className="text-[11px] font-bold text-red-700 uppercase mb-2">Emergency Halt</h4>
@@ -462,22 +440,8 @@ const AgentManagement = () => {
                 </div>
               </Card>
               <Card title="Agent Quality Monitoring">
-                <div className="space-y-4">
-                  {[
-                    { label: 'Setup Time Compliance', val: '98%', status: 'green' },
-                    { label: 'Branding Fidelity Score', val: '95%', status: 'green' },
-                    { label: 'Reward Logic Accuracy', val: '88%', status: 'yellow' },
-                    { label: 'Visual Design Rating', val: '99%', status: 'green' },
-                  ].map((metric, i) => (
-                    <div key={i} className="flex justify-between items-center p-3 border border-stone-100 rounded-lg">
-                      <span className="text-xs font-medium text-stone-600">{metric.label}</span>
-                      <div className="flex items-center gap-3">
-                        <span className="text-xs font-bold">{metric.val}</span>
-                        <div className={`w-2 h-2 rounded-full bg-${metric.status}-500`} />
-                      </div>
-                    </div>
-                  ))}
-                  <button className="w-full border border-stone-300 text-stone-700 text-[10px] font-bold py-2 rounded-lg mt-2">GENERATE PERFORMANCE REPORT</button>
+                <div className="flex flex-col items-center justify-center py-8 text-stone-400">
+                  <p className="text-[10px] font-mono text-stone-300">No agent quality metrics available yet</p>
                 </div>
               </Card>
             </div>
@@ -567,12 +531,10 @@ const ConsumerMonitoring = () => {
                     {customerList.length > 0 ? customerList.map((row: any, i: number) => (
                       <tr key={row.id || i} className="border-b border-stone-50 hover:bg-stone-50">
                         <td className="py-4 font-bold">{row.firstName || ''} {row.lastName || ''} ({row.email})</td>
-                        <td className="py-4">
-                          <Badge variant="green">High</Badge>
-                        </td>
-                        <td className="py-4 text-stone-500">MCOM Spin Game</td>
-                        <td className="py-4 font-bold text-stone-700">Loyalist</td>
-                        <td className="py-4">95%</td>
+                        <td className="py-4"><Badge variant="neutral">—</Badge></td>
+                        <td className="py-4 text-stone-500">—</td>
+                        <td className="py-4 font-bold text-stone-700">—</td>
+                        <td className="py-4">—</td>
                         <td className="py-4 text-right">
                           <button className="text-[10px] font-bold text-[#1a1a1a] hover:underline transition-all">View Profile</button>
                         </td>
@@ -638,17 +600,8 @@ const ConsumerMonitoring = () => {
                   </div>
                 </Card>
                 <Card title="Trust Index Global">
-                  <div className="flex items-center justify-center py-4">
-                    <div className="relative w-32 h-32">
-                      <svg className="w-full h-full" viewBox="0 0 36 36">
-                        <path className="text-stone-100" strokeDasharray="100, 100" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="currentColor" strokeWidth="2.5" />
-                        <path className="text-green-500" strokeDasharray="94, 100" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="currentColor" strokeWidth="2.5" />
-                      </svg>
-                      <div className="absolute inset-0 flex flex-col items-center justify-center">
-                        <span className="text-2xl font-bold">94</span>
-                        <span className="text-[8px] font-bold text-stone-400 uppercase tracking-widest">Healthy</span>
-                      </div>
-                    </div>
+                  <div className="flex flex-col items-center justify-center py-8 text-stone-400">
+                    <p className="text-[10px] font-mono text-stone-300">No trust score data available yet</p>
                   </div>
                 </Card>
               </div>
@@ -713,19 +666,8 @@ const AnalyticsReporting = () => {
               </div>
               
               <Card title="Revenue Distribution by Category">
-                <div className="h-[250px] w-full bg-stone-50 rounded-xl flex items-end p-6 gap-4">
-                  {[
-                    { cat: 'Retail', val: '85%' },
-                    { cat: 'Wellness', val: '62%' },
-                    { cat: 'Tech', val: '45%' },
-                    { cat: 'Food', val: '92%' },
-                    { cat: 'Youth', val: '58%' },
-                  ].map((bar, i) => (
-                    <div key={i} className="flex-1 flex flex-col items-center gap-3">
-                      <motion.div initial={{ height: '0%' }} animate={{ height: bar.val }} className="w-full bg-stone-800 rounded-lg shadow-sm" />
-                      <span className="text-[10px] font-bold text-stone-500 uppercase">{bar.cat}</span>
-                    </div>
-                  ))}
+                <div className="h-[250px] w-full bg-stone-50 rounded-xl flex items-center justify-center">
+                  <p className="text-[11px] text-stone-400">No revenue breakdown available yet — awaiting billing integration</p>
                 </div>
               </Card>
             </div>
@@ -745,19 +687,9 @@ const AnalyticsReporting = () => {
                     </tr>
                   </thead>
                   <tbody className="text-xs font-medium text-stone-800">
-                    {[
-                      { name: 'Summer Fresh', eng: 'High', conv: '12.4%', roi: '4.2x', trend: '+15%' },
-                      { name: 'Tech Blitz', eng: 'Extreme', conv: '18.9%', roi: '5.8x', trend: '+22%' },
-                      { name: 'Glow Reveal', eng: 'Med', conv: '8.2%', roi: '2.1x', trend: '-2%' },
-                    ].map((camp, i) => (
-                      <tr key={i} className="border-b border-stone-50 hover:bg-stone-50">
-                        <td className="py-4 font-bold">{camp.name}</td>
-                        <td className="py-4">{camp.eng}</td>
-                        <td className="py-4 font-mono">{camp.conv}</td>
-                        <td className="py-4 text-green-600 font-bold">{camp.roi}</td>
-                        <td className="py-4 text-right font-bold text-stone-400">{camp.trend}</td>
-                      </tr>
-                    ))}
+                    <tr>
+                      <td colSpan={5} className="text-center text-[#888] py-8 text-[13px]">No campaign performance data available yet</td>
+                    </tr>
                   </tbody>
                 </table>
               </Card>
@@ -767,28 +699,15 @@ const AnalyticsReporting = () => {
           {subTab === 'regional' && (
             <div className="grid grid-cols-2 gap-6">
               <Card title="Regional Engagement Heatmap">
-                <div className="space-y-4">
-                  {[
-                    { city: 'London Central', level: '94%', trend: 'up' },
-                    { city: 'Manchester North', level: '72%', trend: 'up' },
-                    { city: 'Birmingham Retail', level: '45%', trend: 'down' },
-                    { city: 'Leeds Global', level: '12%', trend: 'new' },
-                  ].map((loc, i) => (
-                    <div key={i} className="flex justify-between items-center p-3 border border-stone-100 rounded-xl">
-                      <span className="text-xs font-bold text-stone-700">{loc.city}</span>
-                      <div className="flex items-center gap-3">
-                        <span className="text-xs font-bold">{loc.level}</span>
-                        <div className={`w-2 h-2 rounded-full ${loc.trend === 'up' ? 'bg-green-500' : loc.trend === 'new' ? 'bg-blue-500' : 'bg-red-500'}`} />
-                      </div>
-                    </div>
-                  ))}
+                <div className="flex flex-col items-center justify-center py-10 text-stone-400">
+                  <p className="text-[10px] font-mono text-stone-300">No regional engagement data available yet</p>
                 </div>
               </Card>
               <Card title="Regional Distribution Stats">
                 <p className="text-[10px] text-stone-500 leading-relaxed italic">"Most active regional nodes are currently those with a high density of MCOM businesses and Youth-focused campaigns."</p>
                 <div className="mt-4 pt-4 border-t border-stone-100 flex items-center justify-between">
                   <span className="text-xs font-bold">Platform Saturation</span>
-                  <span className="text-xs font-black">68.2%</span>
+                  <span className="text-xs font-black">—</span>
                 </div>
               </Card>
             </div>
@@ -863,7 +782,7 @@ const SystemSettings = () => {
                     <input type="range" className="w-full accent-stone-800" />
                     <div className="flex justify-between text-[10px] text-stone-400 mt-1">
                       <span>1 Business</span>
-                      <span>Current: 8 Businesses</span>
+                      <span>Current: —</span>
                       <span>15 Businesses</span>
                     </div>
                   </div>
@@ -872,7 +791,7 @@ const SystemSettings = () => {
                     <input type="range" className="w-full accent-stone-800" />
                     <div className="flex justify-between text-[10px] text-stone-400 mt-1">
                       <span>Equal Dist.</span>
-                      <span>Current: Growth Priority</span>
+                      <span>Current: —</span>
                       <span>Extreme Blitz</span>
                     </div>
                   </div>
@@ -930,7 +849,7 @@ const SystemSettings = () => {
               </Card>
               <Card title="Ecosystem Endpoint Config">
                 <div className="space-y-3">
-                  <div className="p-3 bg-stone-50 border border-stone-100 rounded-lg text-[10px] font-mono text-stone-500 break-all">wss://gateway.mcomspin.network/v1/live</div>
+                  <div className="p-3 bg-stone-50 border border-stone-100 rounded-lg text-[10px] font-mono text-stone-500 break-all">Not configured</div>
                   <button className="w-full border border-stone-300 text-stone-700 text-[10px] font-bold py-2 rounded-lg">RE-SYNCHRONIZE ALL NODES</button>
                 </div>
               </Card>
@@ -943,21 +862,27 @@ const SystemSettings = () => {
 };
 
 /* ─── MAIN DASHBOARD COMPONENT ─── */
-export default function AdminDashboard() {
-  const {
-    businesses,
-    addTelemetryLog,
-    triggerSecurityAlert,
-    setInspector,
-  } = useAdminStore();
+function getInitials(name: string) {
+  return name
+    .split(' ')
+    .map((n) => n[0])
+    .join('')
+    .toUpperCase()
+    .slice(0, 2);
+}
 
+export default function AdminDashboard() {
   const dashboardQuery = useAdminDashboard();
   const dash = dashboardQuery.data?.data ?? dashboardQuery.data ?? {};
+  const logoutMutation = useLogout();
+  const { user } = useAuthStore();
 
   /* ─── DASHBOARD LOCAL STATE ─── */
   const [activeTab, setActiveTab] = useState('overview');
   const [searchQuery, setSearchQuery] = useState('');
   const [showAddBizModal, setShowAddBizModal] = useState(false);
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+  const [sidebarMobileOpen, setSidebarMobileOpen] = useState(false);
 
   if (dashboardQuery.isLoading) {
     return <div className="p-12 text-center"><div className="animate-spin w-8 h-8 border-2 border-[#f97316] border-t-transparent rounded-full mx-auto" /></div>;
@@ -971,59 +896,157 @@ export default function AdminDashboard() {
     { id: 'agents', label: 'Agent Management', icon: UserCheck },
     { id: 'consumers', label: 'Consumer Monitoring', icon: Users },
     { id: 'analytics', label: 'Analytics & Reporting', icon: TrendingUp },
+    { id: 'plans', label: 'Plan Management', icon: Coins },
     { id: 'system', label: 'System Settings', icon: Shield },
   ];
 
   return (
     <div className="min-h-screen bg-[#fafaf9] text-[#1a1a1a] flex font-sans h-screen overflow-hidden">
-      
+
+      {/* ─── Mobile overlay ─── */}
+      {sidebarMobileOpen && (
+        <div
+          className="fixed inset-0 bg-black/20 backdrop-blur-sm z-40 lg:hidden"
+          onClick={() => setSidebarMobileOpen(false)}
+        />
+      )}
+
       {/* ─── SIDEBAR ─── */}
-      <aside className="w-64 bg-white border-r border-[#eee] flex flex-col h-full shrink-0">
-        <div className="h-16 border-b border-[#eee] px-6 flex items-center gap-2.5">
-          <span className="w-3.5 h-3.5 bg-[#f97316] rounded-full shadow-[0_0_12px_rgba(249,115,22,0.5)]" />
-          <span className="font-display font-extrabold text-base tracking-tight text-[#1a1a1a]">MComSpin</span>
+      <aside
+        className={`
+          fixed lg:sticky top-0 left-0 z-50 h-screen bg-white border-r border-[#eee]
+          flex flex-col transition-all duration-300 ease-out shrink-0
+          ${sidebarCollapsed ? 'w-[72px]' : 'w-[260px]'}
+          ${sidebarMobileOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}
+        `}
+      >
+        {/* Brand */}
+        <div className={`flex items-center gap-3 px-5 h-16 border-b border-[#eee] shrink-0 ${sidebarCollapsed ? 'justify-center px-0' : ''}`}>
+          <span className="w-2.5 h-2.5 bg-[#f97316] rounded-full shadow-[0_0_10px_rgba(249,115,22,0.3)] shrink-0" />
+          {!sidebarCollapsed && (
+            <span className="font-display font-bold text-[15px] tracking-tight text-[#1a1a1a]">MComSpin</span>
+          )}
         </div>
-        
-        <nav className="p-3 space-y-0.5 flex-1 overflow-y-auto">
+
+        {/* Nav items */}
+        <nav className="flex-1 overflow-y-auto py-4 px-3 space-y-0.5">
           {menuItems.map((item) => {
             const Icon = item.icon;
+            const active = activeTab === item.id;
             return (
               <button
                 key={item.id}
-                onClick={() => { setActiveTab(item.id); setInspector(null, null); }}
-                className={`w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-[12px] font-bold tracking-wide transition-all ${
-                  activeTab === item.id
-                    ? 'bg-orange-50 text-[#f97316]'
-                    : 'text-[#666] hover:bg-stone-50 hover:text-[#1a1a1a]'
-                }`}
+                onClick={() => { setActiveTab(item.id); setSidebarMobileOpen(false); }}
+                title={sidebarCollapsed ? item.label : undefined}
+                className={`
+                  w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-[13px] font-medium transition-all duration-200 group relative
+                  ${active
+                    ? 'bg-[#f97316]/[0.08] text-[#f97316] font-semibold'
+                    : 'text-[#888] hover:text-[#1a1a1a] hover:bg-[#f5f5f3]'
+                  }
+                  ${sidebarCollapsed ? 'justify-center px-0' : ''}
+                `}
               >
-                <Icon className="w-4 h-4" />
-                {item.label}
+                {active && (
+                  <span className="absolute left-0 top-1/2 -translate-y-1/2 w-[3px] h-5 bg-[#f97316] rounded-r-full" />
+                )}
+                <span className={`shrink-0 ${active ? 'text-[#f97316]' : 'text-[#aaa] group-hover:text-[#666]'}`}>
+                  <Icon className="w-[18px] h-[18px]" strokeWidth={1.8} />
+                </span>
+                {!sidebarCollapsed && <span>{item.label}</span>}
               </button>
             );
           })}
         </nav>
+
+        {/* User panel */}
+        <div className={`border-t border-[#eee] px-3 py-4 shrink-0 ${sidebarCollapsed ? 'px-2' : ''}`}>
+          {user ? (
+            <div className={`flex items-center gap-3 ${sidebarCollapsed ? 'justify-center' : ''}`}>
+              <div className="w-8 h-8 rounded-full bg-[#f97316]/[0.1] text-[#f97316] flex items-center justify-center text-[11px] font-bold shrink-0">
+                {user.avatar || getInitials(user.name)}
+              </div>
+              {!sidebarCollapsed && (
+                <div className="flex-1 min-w-0">
+                  <p className="text-[12px] font-semibold text-[#1a1a1a] truncate">{user.name}</p>
+                  <p className="text-[10px] text-[#aaa] truncate">{user.role}</p>
+                </div>
+              )}
+            </div>
+          ) : (
+            <div className={`flex items-center gap-3 ${sidebarCollapsed ? 'justify-center' : ''}`}>
+              <div className="w-8 h-8 rounded-full bg-[#1a1a1a]/[0.06] text-[#1a1a1a] flex items-center justify-center text-[11px] font-bold shrink-0">
+                <Shield className="w-4 h-4" />
+              </div>
+              {!sidebarCollapsed && (
+                <p className="text-[12px] font-semibold text-[#1a1a1a] truncate">Administrator</p>
+              )}
+            </div>
+          )}
+        </div>
       </aside>
 
       {/* ─── MAIN CONTENT ─── */}
-      <div className="flex-1 flex flex-col h-full overflow-hidden">
-        <header className="h-16 bg-white border-b border-[#eee] px-8 flex items-center justify-between shrink-0">
-          <div className="relative w-96">
-            <span className="absolute inset-y-0 left-3 flex items-center"><Search className="w-3.5 h-3.5 text-stone-400" /></span>
-            <input
-              type="text"
-              placeholder="Search..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full bg-stone-50 border border-[#eee] rounded-full py-1.5 pl-9 pr-4 text-[12px] outline-none"
-            />
+      <div className="flex-1 flex flex-col h-full overflow-hidden min-w-0">
+        <header className="h-16 bg-white border-b border-[#eee] px-4 lg:px-8 flex items-center justify-between shrink-0">
+          <div className="flex items-center gap-2">
+            {/* Mobile menu button */}
+            <button
+              className="lg:hidden p-1.5 rounded-lg hover:bg-[#f5f5f3] text-[#888]"
+              onClick={() => setSidebarMobileOpen(true)}
+            >
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="1.8" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25h16.5" />
+              </svg>
+            </button>
+
+            {/* Collapse toggle (desktop) */}
+            <button
+              className="hidden lg:flex p-1.5 rounded-lg hover:bg-[#f5f5f3] text-[#aaa] hover:text-[#666] transition-colors"
+              onClick={() => setSidebarCollapsed((v) => !v)}
+              title={sidebarCollapsed ? 'Expand sidebar' : 'Collapse sidebar'}
+            >
+              <svg className={`w-5 h-5 transition-transform duration-300 ${sidebarCollapsed ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" strokeWidth="1.8" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M18.75 19.5l-7.5-7.5 7.5-7.5m-6 15L5.25 12l7.5-7.5" />
+              </svg>
+            </button>
+
+            <h1 className="text-[15px] font-semibold text-[#1a1a1a] hidden sm:block">
+              {menuItems.find((m) => m.id === activeTab)?.label || 'Overview'}
+            </h1>
           </div>
-          <button
-            onClick={() => setShowAddBizModal(true)}
-            className="bg-[#1a1a1a] hover:bg-[#f97316] text-white text-[11px] font-bold uppercase px-4 py-2 rounded-full transition-all"
-          >
-            + Business
-          </button>
+
+          <div className="flex items-center gap-3">
+            <div className="relative hidden md:block w-64">
+              <span className="absolute inset-y-0 left-3 flex items-center"><Search className="w-3.5 h-3.5 text-stone-400" /></span>
+              <input
+                type="text"
+                placeholder="Search..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="w-full bg-stone-50 border border-[#eee] rounded-full py-1.5 pl-9 pr-4 text-[12px] outline-none"
+              />
+            </div>
+            <button
+              onClick={() => setShowAddBizModal(true)}
+              className="bg-[#1a1a1a] hover:bg-[#f97316] text-white text-[11px] font-bold uppercase px-4 py-2 rounded-full transition-all"
+            >
+              + Business
+            </button>
+            <button
+              onClick={() => {
+                logoutMutation.mutate(undefined, {
+                  onSuccess: () => { window.location.href = '/admin/login'; },
+                  onError: () => { window.location.href = '/admin/login'; },
+                });
+              }}
+              className="flex items-center gap-1.5 text-stone-500 hover:text-red-500 text-[11px] font-bold uppercase px-3 py-2 rounded-full hover:bg-red-50 transition-all"
+              title="Sign out"
+            >
+              <LogOut className="w-4 h-4" />
+              <span className="hidden sm:inline">Sign Out</span>
+            </button>
+          </div>
         </header>
 
         <main className="flex-1 overflow-y-auto p-8">
@@ -1048,8 +1071,8 @@ export default function AdminDashboard() {
                       { label: 'Total Campaigns', value: dash.totalCampaigns ?? 0, icon: Target },
                       { label: 'Redemptions', value: dash.rewardsRedeemed ?? 0, icon: Coins },
                       { label: 'Redemption Rate', value: `${dash.redemptionRate ?? 0}%`, icon: TrendingUp },
-                      { label: 'Platform Saturation', value: '68.2%', icon: Star },
-                      { label: 'Live Engagement', value: 'High', icon: Zap },
+                      { label: 'Platform Saturation', value: dash.platformSaturation != null ? `${dash.platformSaturation}%` : '—', icon: Star },
+                      { label: 'Live Engagement', value: dash.liveEngagement || '—', icon: Zap },
                     ].map((card, i) => {
                       const Icon = card.icon;
                       return (
@@ -1087,6 +1110,7 @@ export default function AdminDashboard() {
               )}
               {activeTab === 'gamification' && <GamificationControl />}
               {activeTab === 'campaigns' && <CampaignControl />}
+              {activeTab === 'plans' && <PlanManagementControl />}
               {activeTab === 'business' && <BusinessManagement />}
               {activeTab === 'agents' && <AgentManagement />}
               {activeTab === 'consumers' && <ConsumerMonitoring />}

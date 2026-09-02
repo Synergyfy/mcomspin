@@ -46,7 +46,7 @@ export default function CustomerDashboard() {
       {/* Top Welcome Bar */}
       <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-5 bg-white border border-[#eee] rounded-3xl p-6 shadow-sm text-left">
         <div className="flex items-center gap-4">
-          <img src={profile.avatar || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=150&h=150&q=80'} alt="Avatar" className="w-14 h-14 rounded-2xl object-cover border border-[#eee]" />
+          <img src={profile.avatar || ''} alt="Avatar" className="w-14 h-14 rounded-2xl object-cover border border-[#eee]" />
           <div className="space-y-0.5">
             <p className="text-[#888] text-[12px] font-semibold">Welcome back,</p>
             <h1 className="text-xl font-display font-bold text-[#1a1a1a]">{profile.name || 'Ecosystem Explorer'}</h1>
@@ -118,18 +118,35 @@ export default function CustomerDashboard() {
             </div>
           </div>
 
-          {/* Featured Offer placeholder */}
-          <div className="bg-gradient-to-r from-[#1a1a1a] to-[#333] rounded-3xl p-8 text-white relative overflow-hidden">
-            <div className="relative z-10 space-y-4 max-w-md text-left">
-              <span className="text-[10px] font-bold bg-[#f97316] px-2 py-1 rounded-md uppercase tracking-wider">Sponsored</span>
-              <h2 className="text-2xl font-display font-bold">VIP Fashion Showcase</h2>
-              <p className="text-sm text-stone-400">Meridian Apparel is hosting an exclusive reveal. Collect 3 tickets to unlock the VIP pass.</p>
-              <button className="bg-white text-[#1a1a1a] px-6 py-2.5 rounded-xl text-[11px] font-bold uppercase tracking-wider hover:bg-[#f97316] hover:text-white transition-all">
-                Learn More
-              </button>
-            </div>
-            <Sparkles className="absolute right-8 top-1/2 -translate-y-1/2 w-32 h-32 text-white/5 pointer-events-none" />
-          </div>
+          {/* Featured Offer */}
+          {(() => {
+            const featured = dashboard?.featuredCampaigns?.[0] ?? dashboard?.trendingRewards?.[0] ?? null;
+            if (!featured) {
+              return (
+                <div className="bg-gradient-to-r from-[#1a1a1a] to-[#333] rounded-3xl p-8 text-white relative overflow-hidden">
+                  <div className="relative z-10 space-y-4 max-w-md text-left">
+                    <span className="text-[10px] font-bold bg-[#f97316] px-2 py-1 rounded-md uppercase tracking-wider">Sponsored</span>
+                    <h2 className="text-2xl font-display font-bold">No featured offers right now</h2>
+                    <p className="text-sm text-stone-400">Check back soon for new partner campaigns and rewards.</p>
+                  </div>
+                  <Sparkles className="absolute right-8 top-1/2 -translate-y-1/2 w-32 h-32 text-white/5 pointer-events-none" />
+                </div>
+              );
+            }
+            return (
+              <div className="bg-gradient-to-r from-[#1a1a1a] to-[#333] rounded-3xl p-8 text-white relative overflow-hidden">
+                <div className="relative z-10 space-y-4 max-w-md text-left">
+                  <span className="text-[10px] font-bold bg-[#f97316] px-2 py-1 rounded-md uppercase tracking-wider">Sponsored</span>
+                  <h2 className="text-2xl font-display font-bold">{featured.name || 'Featured Campaign'}</h2>
+                  <p className="text-sm text-stone-400">{featured.description || featured.businessName || ''}</p>
+                  <button className="bg-white text-[#1a1a1a] px-6 py-2.5 rounded-xl text-[11px] font-bold uppercase tracking-wider hover:bg-[#f97316] hover:text-white transition-all">
+                    Learn More
+                  </button>
+                </div>
+                <Sparkles className="absolute right-8 top-1/2 -translate-y-1/2 w-32 h-32 text-white/5 pointer-events-none" />
+              </div>
+            );
+          })()}
         </div>
 
         {/* Right Column: Streaks & Activity */}
@@ -144,9 +161,9 @@ export default function CustomerDashboard() {
               <div className="text-[11px] font-bold text-[#888] uppercase tracking-widest leading-tight">Days<br/>Active</div>
             </div>
             <div className="h-1.5 bg-stone-100 rounded-full overflow-hidden">
-              <div className="h-full bg-[#f97316] w-[70%]" />
+              <div className="h-full bg-[#f97316] rounded-full" style={{ width: `${Math.min(100, (profile.streakDays ?? 0) * 10)}%` }} />
             </div>
-            <p className="text-[11px] text-[#888] font-medium">Keep going! 3 more days to reach Gold Rank.</p>
+            <p className="text-[11px] text-[#888] font-medium">{profile.streakDays && profile.streakDays > 0 ? `${profile.streakDays} day streak — keep it going!` : 'Start your streak by visiting a partner today.'}</p>
           </div>
 
           {/* Activity History Mini */}

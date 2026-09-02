@@ -48,6 +48,7 @@ export class CustomerRewardsService {
         earnedAt: cr.earnedAt,
         expiresAt: cr.expiresAt,
         status: cr.usedAt ? 'redeemed' : (cr.expiresAt && cr.expiresAt < now ? 'expired' : 'active'),
+        code: `MCS-${cr.reward.name.substring(0, 3).toUpperCase()}-${cr.id.slice(0, 8)}`,
       };
       if (cr.usedAt) categorized.redeemed.push(item);
       else if (cr.expiresAt && cr.expiresAt < now) categorized.expired.push(item);
