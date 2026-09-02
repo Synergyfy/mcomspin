@@ -19,6 +19,20 @@ export class BillingController {
   }
 
   @UseGuards(JwtAuthGuard, BusinessOwnerGuard)
+  @Get('business/billing/plans')
+  @ApiOperation({ summary: 'List available subscription plans' })
+  getBusinessPlans() {
+    return this.billingService.getPlans();
+  }
+
+  @UseGuards(JwtAuthGuard, BusinessOwnerGuard)
+  @Post('business/billing/subscribe')
+  @ApiOperation({ summary: 'Subscribe the business to a plan' })
+  subscribe(@Req() req: any, @Body() dto: { planId: string; billingCycle?: 'month' | 'year' }) {
+    return this.billingService.subscribe(req.businessId, dto);
+  }
+
+  @UseGuards(JwtAuthGuard, BusinessOwnerGuard)
   @Post('business/billing/subscription/change')
   @ApiOperation({ summary: 'Change subscription plan' })
   changePlan(@Req() req: any, @Body() dto: { planType: any }) {

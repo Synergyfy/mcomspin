@@ -27,18 +27,14 @@ describe('AuthController', () => {
   });
 
   describe('register', () => {
-    it('should register and set cookies', async () => {
-      const result = { accessToken: 'at', refreshToken: 'rt', user: { id: '1', email: 'a@b.com', roles: [] } };
-      jest.spyOn(authService, 'register').mockResolvedValue(result);
+    it('should delegate to the service (which blocks self-registration)', async () => {
+      jest.spyOn(authService, 'register').mockRejectedValue(new Error('blocked'));
 
-      const res = { cookie: jest.fn(), clearCookie: jest.fn() } as any;
-      const output = await controller.register(
-        { email: 'a@b.com', password: 'pass123', firstName: 'A', lastName: 'B' },
-        res,
-      );
-
-      expect(output).toEqual(result);
-      expect(res.cookie).toHaveBeenCalledTimes(2);
+      await expect(
+        controller.register(
+          { email: 'a@b.com', password: 'pass123', firstName: 'A', lastName: 'B' },
+        ),
+      ).rejects.toThrow('blocked');
     });
   });
 
@@ -60,8 +56,9 @@ describe('AuthController', () => {
       const result = { accessToken: 'at2', refreshToken: 'rt2', user: { id: '1', email: 'a@b.com', roles: [] } };
       jest.spyOn(authService, 'refresh').mockResolvedValue(result);
 
+      const req = { cookies: { refreshToken: 'old-rt' } } as any;
       const res = { cookie: jest.fn() } as any;
-      const output = await controller.refresh({ refreshToken: 'old-rt' }, res);
+      const output = await controller.refresh({ refreshToken: 'old-rt' }, req, res);
 
       expect(output).toEqual(result);
     });

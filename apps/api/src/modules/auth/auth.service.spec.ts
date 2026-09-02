@@ -1,5 +1,5 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { ConflictException, UnauthorizedException } from '@nestjs/common';
+import { UnauthorizedException, ForbiddenException } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { ConfigService } from '@nestjs/config';
 import * as bcrypt from 'bcryptjs';
@@ -31,34 +31,19 @@ describe('AuthService', () => {
   describe('register', () => {
     const dto = { email: 'new@test.com', password: 'password123', firstName: 'New', lastName: 'User' };
 
-    it('should register a new user and return tokens', async () => {
-      mockPrisma.user.findUnique.mockResolvedValue(null);
-      (bcrypt.hash as jest.Mock).mockResolvedValue('hashed-password');
-      mockPrisma.user.create.mockResolvedValue({ id: 'new-id', email: dto.email });
-      mockPrisma.user.findUnique.mockResolvedValueOnce(null).mockResolvedValueOnce(mockUser);
-
-      const result = await service.register(dto);
-
-      expect(result).toHaveProperty('accessToken');
-      expect(result).toHaveProperty('refreshToken');
-      expect(mockPrisma.user.create).toHaveBeenCalledWith(
-        expect.objectContaining({
-          data: expect.objectContaining({ email: dto.email }),
-        }),
-      );
-    });
-
-    it('should throw ConflictException if email exists', async () => {
-      mockPrisma.user.findUnique.mockResolvedValue(mockUser);
-      await expect(service.register(dto)).rejects.toThrow(ConflictException);
+    it('should reject self-registration', async () => {
+      await expect(service.register(dto)).rejects.toThrow(ForbiddenException);
     });
   });
 
   describe('login', () => {
     const dto = { email: 'test@test.com', password: 'password123' };
 
-    it('should login and return tokens', async () => {
-      mockPrisma.user.findUnique.mockResolvedValue(mockUser);
+    it('should login an admin user and return tokens', async () => {
+      mockPrisma.user.findUnique.mockResolvedValue({
+        ...mockUser,
+        roles: [{ role: { name: 'SuperAdmin', permissions: [] } }],
+      });
       (bcrypt.compare as jest.Mock).mockResolvedValue(true);
 
       const result = await service.login(dto);
@@ -67,8 +52,18 @@ describe('AuthService', () => {
       expect(result).toHaveProperty('refreshToken');
     });
 
-    it('should throw UnauthorizedException for wrong password', async () => {
+    it('should throw ForbiddenException for non-admin user', async () => {
       mockPrisma.user.findUnique.mockResolvedValue(mockUser);
+      (bcrypt.compare as jest.Mock).mockResolvedValue(true);
+
+      await expect(service.login(dto)).rejects.toThrow(ForbiddenException);
+    });
+
+    it('should throw UnauthorizedException for wrong password', async () => {
+      mockPrisma.user.findUnique.mockResolvedValue({
+        ...mockUser,
+        roles: [{ role: { name: 'SuperAdmin', permissions: [] } }],
+      });
       (bcrypt.compare as jest.Mock).mockResolvedValue(false);
 
       await expect(service.login(dto)).rejects.toThrow(UnauthorizedException);

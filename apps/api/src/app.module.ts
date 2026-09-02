@@ -16,6 +16,9 @@ import { ModerationModule } from './modules/moderation/moderation.module';
 import { WebhooksModule } from './modules/webhooks/webhooks.module';
 import { WebsocketModule } from './modules/websocket/websocket.module';
 import { PublicModule } from './modules/public/public.module';
+import { SsoModule } from './modules/sso/sso.module';
+import { SystemModule } from './modules/system/system.module';
+import { McomPaymentModule } from './modules/mcom-payment/mcom-payment.module';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { APP_GUARD } from '@nestjs/core';
@@ -47,6 +50,9 @@ import { WebhookHmacMiddleware } from './common/middleware/webhook-hmac.middlewa
     WebhooksModule,
     WebsocketModule,
     PublicModule,
+    SsoModule,
+    SystemModule,
+    McomPaymentModule,
   ],
   controllers: [AppController],
   providers: [

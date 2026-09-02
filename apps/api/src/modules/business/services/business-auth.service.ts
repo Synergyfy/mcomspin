@@ -1,4 +1,4 @@
-import { Injectable, ConflictException, UnauthorizedException } from '@nestjs/common';
+import { Injectable, ConflictException, UnauthorizedException, BadRequestException, NotFoundException } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import * as bcrypt from 'bcryptjs';
 import * as crypto from 'crypto';
@@ -57,7 +57,73 @@ export class BusinessAuthService {
   }
 
   async verify(dto: BusinessVerifyDto) {
-    return { message: 'Verification submitted', code: dto.code };
+    const stored = await this.prisma.otpVerification.findFirst({
+      where: {
+        code: dto.code,
+        usedAt: null,
+        expiresAt: { gt: new Date() },
+      },
+      orderBy: { createdAt: 'desc' },
+    });
+
+    if (!stored) throw new BadRequestException('Invalid or expired verification code');
+
+    await this.prisma.otpVerification.update({
+      where: { id: stored.id },
+      data: { usedAt: new Date() },
+    });
+
+    if (stored.email) {
+      await this.prisma.user.updateMany({
+        where: { email: stored.email },
+        data: { isEmailVerified: true },
+      });
+    }
+    if (stored.phone) {
+      await this.prisma.user.updateMany({
+        where: { phone: stored.phone },
+        data: { isPhoneVerified: true },
+      });
+    }
+
+    let business = stored.email
+      ? await this.prisma.business.findFirst({
+          where: { contactEmail: stored.email },
+        })
+      : null;
+
+    if (!business) {
+      throw new NotFoundException(
+        'No business found for the verified contact. Please register the business first.',
+      );
+    }
+
+    const verification = await this.prisma.businessVerification.upsert({
+      where: { businessId: business.id },
+      create: {
+        businessId: business.id,
+        status: 'Pending',
+        documents: {
+          registrationNumber: dto.registrationNumber,
+          website: dto.website,
+          socialMedia: dto.socialMedia,
+        },
+      },
+      update: {
+        status: 'Pending',
+        documents: {
+          registrationNumber: dto.registrationNumber,
+          website: dto.website,
+          socialMedia: dto.socialMedia,
+        },
+      },
+    });
+
+    return {
+      message: 'Verification submitted',
+      verificationId: verification.id,
+      status: verification.status,
+    };
   }
 
   private async generateTokens(userId: string, email: string) {

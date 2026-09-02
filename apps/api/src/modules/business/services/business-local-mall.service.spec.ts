@@ -1,4 +1,5 @@
 import { Test, TestingModule } from '@nestjs/testing';
+import { ConfigService } from '@nestjs/config';
 import { BusinessLocalMallService } from './business-local-mall.service';
 import { PrismaService } from '../../../prisma/prisma.service';
 import { mockPrisma } from '../../../../test/mocks';
@@ -12,6 +13,7 @@ describe('BusinessLocalMallService', () => {
       providers: [
         BusinessLocalMallService,
         { provide: PrismaService, useValue: mockPrisma },
+        { provide: ConfigService, useValue: { get: jest.fn((key: string, def?: string) => def) } },
       ],
     }).compile();
 

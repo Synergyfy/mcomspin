@@ -208,19 +208,9 @@ export default function SettingsPage() {
                   <button className="px-8 py-3 bg-[#1a1a1a] text-white rounded-2xl font-bold text-[13px] hover:bg-[#f97316] transition-all">Update Password</button>
                 </div>
 
-                <div className="pt-8 border-t border-[#f5f5f3]">
+<div className="pt-8 border-t border-[#f5f5f3]">
                   <h4 className="text-[12px] font-bold text-[#aaa] uppercase tracking-widest mb-4">Login History</h4>
-                  <div className="space-y-3">
-{([] as any[]).map((session: any, i: any) => (
-                      <div key={i} className="flex justify-between items-center text-[13px]">
-                        <div className="flex items-center gap-2">
-                          <span className="text-[#1a1a1a] font-medium">{session.device}</span>
-                          {session.active && <span className="px-2 py-0.5 bg-green-100 text-green-600 text-[9px] font-bold rounded-md">ACTIVE</span>}
-                        </div>
-                        <span className="text-[#aaa]">{session.time}</span>
-                      </div>
-                    ))}
-                  </div>
+                  <p className="text-[13px] text-[#888]">No login history available yet.</p>
                 </div>
               </div>
             </section>

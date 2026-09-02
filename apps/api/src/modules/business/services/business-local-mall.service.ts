@@ -1,4 +1,5 @@
 import { Injectable, NotFoundException, ConflictException, BadRequestException } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import { CampaignType, PartnershipStatus } from '@prisma/client';
 import { PrismaService } from '../../../prisma/prisma.service';
 import { CreatePartnershipRequestDto } from '../dto/create-partnership-request.dto';
@@ -12,7 +13,10 @@ import { CreateExpoBoothDto } from '../dto/create-expo-booth.dto';
 
 @Injectable()
 export class BusinessLocalMallService {
-  constructor(private prisma: PrismaService) {}
+  constructor(
+    private prisma: PrismaService,
+    private configService: ConfigService,
+  ) {}
 
   async getHighStreet(businessId: string) {
     const business = await this.prisma.business.findFirst({
@@ -427,17 +431,12 @@ export class BusinessLocalMallService {
       },
     });
 
-    const clustersWithCount = await Promise.all(
-      clusters.map(async (c) => {
-        const businessCount = await this.prisma.storefrontCluster.count({
-          where: { id: c.id, locations: { some: { businessId: { not: null } } } },
-        });
-        const { _count, ...rest } = c;
-        return { ...rest, businessCount };
-      }),
-    );
-
-    return { clusters: clustersWithCount };
+    return {
+      clusters: clusters.map(({ _count, ...rest }) => ({
+        ...rest,
+        businessCount: _count.locations,
+      })),
+    };
   }
 
   async joinCluster(businessId: string, dto: JoinClusterDto) {
@@ -554,8 +553,14 @@ export class BusinessLocalMallService {
         : null,
       communityGroups,
       supportContacts: [
-        { role: 'Community Manager', contact: 'community@mcom.com' },
-        { role: 'Support', contact: 'support@mcom.com' },
+        {
+          role: 'Community Manager',
+          contact: this.configService.get('SUPPORT_COMMUNITY_EMAIL', 'community@mcom.com'),
+        },
+        {
+          role: 'Support',
+          contact: this.configService.get('SUPPORT_EMAIL', 'support@mcom.com'),
+        },
       ],
     };
   }

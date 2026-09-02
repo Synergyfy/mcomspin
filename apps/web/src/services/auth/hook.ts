@@ -182,6 +182,8 @@ export function useCurrentUser() {
         role: data.role || data.roles?.[0]?.role?.name || '',
         businessName: data.businessName ?? data.business?.name,
         avatar: data.avatar,
+        permissions: data.permissions ?? {},
+        hasAccess: data.hasAccess === true,
       };
       if (!user) setUser(mapped);
       return mapped;

@@ -40,13 +40,17 @@ export class NotificationsService {
   }
 
   async updatePreferences(userId: string, preferences: { channel: any; type: any; enabled: boolean }[]) {
-    for (const pref of preferences) {
-      await this.prisma.notificationPreference.upsert({
-        where: { userId_channel_type: { userId, channel: pref.channel, type: pref.type } },
-        update: { enabled: pref.enabled },
-        create: { userId, channel: pref.channel, type: pref.type, enabled: pref.enabled },
-      });
-    }
+    if (!preferences.length) return { message: 'Preferences updated' };
+
+    await this.prisma.$transaction(
+      preferences.map((pref) =>
+        this.prisma.notificationPreference.upsert({
+          where: { userId_channel_type: { userId, channel: pref.channel, type: pref.type } },
+          update: { enabled: pref.enabled },
+          create: { userId, channel: pref.channel, type: pref.type, enabled: pref.enabled },
+        }),
+      ),
+    );
     return { message: 'Preferences updated' };
   }
 

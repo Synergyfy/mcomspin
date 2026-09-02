@@ -28,9 +28,12 @@ export class BusinessDashboardService {
       this.prisma.gameSession.count({
         where: { config: { businessId } },
       }),
-      this.prisma.gameSession
-        .groupBy({ by: ['customerId'], where: { config: { businessId } } })
-        .then((r) => r.length),
+this.prisma.$queryRaw<{ count: bigint }[]>`
+        SELECT COUNT(DISTINCT "GameSession"."customerId") AS count
+        FROM "GameSession"
+        INNER JOIN "GameConfig" ON "GameConfig"."id" = "GameSession"."configId"
+        WHERE "GameConfig"."businessId" = ${businessId}
+      `.then((r) => Number(r[0]?.count ?? 0)),
       this.prisma.gameSession.findMany({
         where: { config: { businessId } },
         include: { customer: { select: { id: true, firstName: true, lastName: true } } },

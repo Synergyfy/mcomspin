@@ -74,72 +74,21 @@ interface CustomerState {
 const initialProfile: CustomerProfile = {
   name: '',
   email: '',
-  avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=150&h=150&q=80',
+  avatar: '',
   onboardingCompleted: false,
   interests: [],
   categories: [],
   favoritePartners: [],
-  streakDays: 3,
-  totalPoints: 120,
-  availableSpins: 2,
+  streakDays: 0,
+  totalPoints: 0,
+  availableSpins: 0,
 };
 
-const initialWallet: CustomerReward[] = [
-  {
-    id: 'w-1',
-    title: '$15 Off First Order',
-    provider: 'Meridian Apparel',
-    providerLogo: 'MA',
-    type: 'voucher',
-    value: '$15 Off',
-    details: 'Valid storewide on orders over $50. Cannot be combined with other offers.',
-    code: 'MERIDIAN15',
-    qrCode: 'MCS-MERIDIAN-15-CLAIMED',
-    expiry: 'Jun 30, 2026',
-    claimed: false,
-    status: 'active',
-  },
-  {
-    id: 'w-2',
-    title: 'Complimentary Detox Tea',
-    provider: 'Elara Wellness',
-    providerLogo: 'EW',
-    type: 'product',
-    value: 'Free Tea',
-    details: 'Claim one free signature organic detox tea blend at the reception.',
-    code: 'ELARATEA',
-    qrCode: 'MCS-ELARA-TEA-CLAIMED',
-    expiry: 'Jul 15, 2026',
-    claimed: true,
-    claimedAt: 'May 18, 2026',
-    status: 'redeemed',
-  }
-];
+const initialWallet: CustomerReward[] = [];
 
-const initialNotifications: CustomerNotification[] = [
-  {
-    id: 'n-1',
-    title: 'Welcome Reward Unlocked!',
-    description: 'You received a $15 discount voucher from Meridian Apparel. Check your wallet.',
-    time: 'Just now',
-    read: false,
-    type: 'reward'
-  },
-  {
-    id: 'n-2',
-    title: '3-Day Engagement Streak!',
-    description: 'Keep visiting daily to unlock premium bonus spins and higher tier rewards.',
-    time: '2 hours ago',
-    read: false,
-    type: 'streak'
-  }
-];
+const initialNotifications: CustomerNotification[] = [];
 
-const initialActivity: ActivityLog[] = [
-  { id: 'a-1', type: 'streak', description: 'Claimed 3-Day daily streak bonus', time: '2 hours ago', points: 20 },
-  { id: 'a-2', type: 'redeem', description: 'Redeemed Complimentary Detox Tea code at Elara Wellness', time: '3 days ago', points: 50 },
-  { id: 'a-3', type: 'spin', description: 'Unlocked "Complimentary Detox Tea" via Spin Wheel', time: '4 days ago', points: 50 },
-];
+const initialActivity: ActivityLog[] = [];
 
 export const useCustomerStore = create<CustomerState>((set) => ({
   profile: initialProfile,
@@ -196,7 +145,7 @@ export const useCustomerStore = create<CustomerState>((set) => ({
       id: uniqueId,
       code,
       qrCode: `MCS-QR-${uniqueId}`,
-      expiry: 'Jul 30, 2026',
+      expiry: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }),
       claimed: false,
       status: 'active',
     };

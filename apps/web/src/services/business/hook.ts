@@ -79,6 +79,63 @@ export function useBusinessBilling() {
   });
 }
 
+export function useSubscribePlan() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (payload: { planId: string; billingCycle?: 'month' | 'year' }) =>
+      api.post('/business/billing/subscribe', payload).then((r) => r.data.data ?? r.data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: businessKeys.billing });
+    },
+  });
+}
+
+/* ─── MCOM Purchase (payment via MCOM Solutions) ─── */
+
+export function useInitiatePurchase() {
+  return useMutation({
+    mutationFn: (payload: {
+      planId: string;
+      billingCycle?: 'month' | 'year';
+      provider: 'stripe' | 'paypal';
+    }) =>
+      api.post('/business/billing/purchase/initiate', payload).then((r) => r.data.data ?? r.data),
+  });
+}
+
+export function useConfirmStripe() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (payload: {
+      planId: string;
+      billingCycle?: 'month' | 'year';
+      paymentIntentId?: string;
+      setupIntentId?: string;
+    }) =>
+      api.post('/business/billing/purchase/confirm', payload).then((r) => r.data.data ?? r.data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: businessKeys.billing });
+      queryClient.invalidateQueries({ queryKey: ['user', 'me'] });
+    },
+  });
+}
+
+export function useCapturePaypal() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (payload: {
+      orderId: string;
+      planId: string;
+      billingCycle?: 'month' | 'year';
+    }) =>
+      api.post('/business/billing/purchase/capture', payload).then((r) => r.data.data ?? r.data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: businessKeys.billing });
+      queryClient.invalidateQueries({ queryKey: ['user', 'me'] });
+    },
+  });
+}
+
 /* ─── Locations ─── */
 
 export function useLocations() {

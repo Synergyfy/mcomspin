@@ -21,11 +21,9 @@ export class AuthController {
 
   @Public()
   @Post('register')
-  @ApiOperation({ summary: 'Register a new user account' })
-  async register(@Body() dto: RegisterDto, @Res({ passthrough: true }) res: Response) {
-    const result = await this.authService.register(dto);
-    this.setTokenCookies(res, result.accessToken, result.refreshToken);
-    return result;
+  @ApiOperation({ summary: 'Register a new user account (disabled — self-registration blocked)' })
+  async register(@Body() dto: RegisterDto) {
+    return this.authService.register(dto);
   }
 
   @Public()

@@ -178,10 +178,10 @@ export default function CampaignDetailsPage() {
                       U{i + 1}
                     </div>
                     <div className="flex-1">
-                      <p className="text-sm font-bold text-on-surface">{item?.customerName ?? `User_${(Math.floor(Math.random() * 9000) + 1000)}`} played</p>
+                      <p className="text-sm font-bold text-on-surface">{item?.customerName ? `${item.customerName} played` : 'Customer played'}</p>
                       <p className="text-xs text-on-surface-variant">Won: {item?.rewardName ?? '—'}</p>
                     </div>
-                    <span className="text-xs text-on-surface-variant font-medium">{item?.createdAt ? new Date(item.createdAt).toLocaleDateString() : 'Just now'}</span>
+                    <span className="text-xs text-on-surface-variant font-medium">{item?.createdAt ? new Date(item.createdAt).toLocaleDateString() : '—'}</span>
                   </div>
                 ))}
               </div>

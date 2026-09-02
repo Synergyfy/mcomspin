@@ -1,5 +1,13 @@
 import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
+import { Prisma, SubscriptionPlanType } from '@prisma/client';
 import { PrismaService } from '../../../prisma/prisma.service';
+
+const PLAN_TYPE_BY_NAME: Record<string, SubscriptionPlanType> = {
+  'spin free': SubscriptionPlanType.Free,
+  'spin starter': SubscriptionPlanType.Starter,
+  'spin growth': SubscriptionPlanType.Growth,
+  'spin enterprise': SubscriptionPlanType.Enterprise,
+};
 
 @Injectable()
 export class BillingService {
@@ -9,7 +17,7 @@ export class BillingService {
     const sub = await this.prisma.subscription.findFirst({
       where: { businessId },
       orderBy: { createdAt: 'desc' },
-      include: { invoices: { orderBy: { createdAt: 'desc' }, take: 5 } },
+      include: { plan: true, invoices: { orderBy: { createdAt: 'desc' }, take: 5 } },
     });
     if (!sub) throw new NotFoundException('No active subscription');
     return sub;
@@ -25,10 +33,162 @@ export class BillingService {
     });
   }
 
+  /**
+   * Subscribe the business to a plan. Cancels the current active subscription
+   * and creates a new one linked to the chosen SubscriptionPlan.
+   */
+  async subscribe(businessId: string, dto: { planId: string; billingCycle?: 'month' | 'year' }) {
+    const plan = await this.prisma.subscriptionPlan.findUnique({ where: { id: dto.planId } });
+    if (!plan) throw new NotFoundException('Plan not found');
+    if (!plan.isActive) throw new BadRequestException('This plan is not currently available');
+
+    const billingCycle = dto.billingCycle === 'year' ? 'year' : 'month';
+    const periodMs = billingCycle === 'year' ? 365 * 24 * 60 * 60 * 1000 : 30 * 24 * 60 * 60 * 1000;
+
+    await this.prisma.subscription.updateMany({
+      where: { businessId, status: 'active' },
+      data: { status: 'cancelled', cancelledAt: new Date() },
+    });
+
+    const planType = PLAN_TYPE_BY_NAME[plan.name.toLowerCase()] ?? SubscriptionPlanType.Growth;
+    const now = new Date();
+
+    return this.prisma.$transaction(async (tx) => {
+      const sub = await tx.subscription.create({
+        data: {
+          businessId,
+          planId: plan.id,
+          planType,
+          status: 'active',
+          currentPeriodStart: now,
+          currentPeriodEnd: new Date(now.getTime() + periodMs),
+          metadata: { billingCycle },
+        },
+      });
+
+      if (!plan.isFree && Number(plan.price) > 0) {
+        const invoice = await tx.invoice.create({
+          data: {
+            businessId,
+            subscriptionId: sub.id,
+            invoiceNumber: `INV-${sub.id.slice(0, 8).toUpperCase()}`,
+            description: `${plan.name} subscription (${billingCycle})`,
+            amount: plan.price,
+            taxAmount: new Prisma.Decimal(0),
+            totalAmount: plan.price,
+            currency: plan.currency,
+            status: 'Paid',
+            dueDate: now,
+            paidAt: now,
+          },
+        });
+        await tx.transaction.create({
+          data: {
+            businessId,
+            invoiceId: invoice.id,
+            amount: plan.price,
+            currency: plan.currency,
+            status: 'Completed',
+            type: 'Subscription',
+            description: `${plan.name} (${billingCycle})`,
+          },
+        });
+      }
+
+      return tx.subscription.findUnique({
+        where: { id: sub.id },
+        include: { plan: true },
+      });
+    });
+  }
+
   async cancelSubscription(businessId: string) {
     const sub = await this.prisma.subscription.findFirst({ where: { businessId, status: 'active' }, orderBy: { createdAt: 'desc' } });
     if (!sub) throw new NotFoundException('No active subscription');
     return this.prisma.subscription.update({ where: { id: sub.id }, data: { status: 'cancelled', cancelledAt: new Date() } });
+  }
+
+  /**
+   * Activate a paid plan locally after the payment has been settled through
+   * MCOM Solutions. Mirrors `subscribe()` but stamps the gateway provider and
+   * reference on the subscription metadata and the transaction record.
+   */
+  async activatePaidPlan(
+    businessId: string,
+    opts: { planId: string; billingCycle?: 'month' | 'year'; provider?: string; providerRef?: string },
+  ) {
+    const plan = await this.prisma.subscriptionPlan.findUnique({ where: { id: opts.planId } });
+    if (!plan) throw new NotFoundException('Plan not found');
+    if (!plan.isActive) throw new BadRequestException('This plan is not currently available');
+
+    const billingCycle = opts.billingCycle === 'year' ? 'year' : 'month';
+    const periodMs = billingCycle === 'year' ? 365 * 24 * 60 * 60 * 1000 : 30 * 24 * 60 * 60 * 1000;
+
+    await this.prisma.subscription.updateMany({
+      where: { businessId, status: 'active' },
+      data: { status: 'cancelled', cancelledAt: new Date() },
+    });
+
+    const planType = PLAN_TYPE_BY_NAME[plan.name.toLowerCase()] ?? SubscriptionPlanType.Growth;
+    const now = new Date();
+
+    return this.prisma.$transaction(async (tx) => {
+      const sub = await tx.subscription.create({
+        data: {
+          businessId,
+          planId: plan.id,
+          planType,
+          status: 'active',
+          currentPeriodStart: now,
+          currentPeriodEnd: new Date(now.getTime() + periodMs),
+          metadata: {
+            billingCycle,
+            provider: opts.provider ?? null,
+            providerRef: opts.providerRef ?? null,
+          },
+        },
+      });
+
+      if (!plan.isFree && Number(plan.price) > 0) {
+        const invoice = await tx.invoice.create({
+          data: {
+            businessId,
+            subscriptionId: sub.id,
+            invoiceNumber: `INV-${sub.id.slice(0, 8).toUpperCase()}`,
+            description: `${plan.name} subscription (${billingCycle})`,
+            amount: plan.price,
+            taxAmount: new Prisma.Decimal(0),
+            totalAmount: plan.price,
+            currency: plan.currency,
+            status: 'Paid',
+            dueDate: now,
+            paidAt: now,
+            metadata: {
+              provider: opts.provider ?? null,
+              providerRef: opts.providerRef ?? null,
+            },
+          },
+        });
+        await tx.transaction.create({
+          data: {
+            businessId,
+            invoiceId: invoice.id,
+            amount: plan.price,
+            currency: plan.currency,
+            status: 'Completed',
+            type: 'Subscription',
+            description: `${plan.name} (${billingCycle})`,
+            provider: opts.provider ?? null,
+            providerRef: opts.providerRef ?? null,
+          },
+        });
+      }
+
+      return tx.subscription.findUnique({
+        where: { id: sub.id },
+        include: { plan: true },
+      });
+    });
   }
 
   async getPaymentMethods(businessId: string) {
@@ -103,6 +263,23 @@ export class BillingService {
   }
 
   async getPlans() {
-    return this.prisma.subscriptionPlan.findMany({ where: { isActive: true }, orderBy: { sortOrder: 'asc' } });
+    const plans = await this.prisma.subscriptionPlan.findMany({
+      where: { isActive: true },
+      orderBy: { sortOrder: 'asc' },
+    });
+    return plans.map((plan) => ({
+      id: plan.id,
+      name: plan.name,
+      description: plan.description,
+      isFree: plan.isFree,
+      monthlyPrice: Number(plan.price),
+      currency: plan.currency,
+      interval: plan.interval,
+      isDefault: ((plan.features as any)?.isDefault ?? false) as boolean,
+      configuration: {
+        quotas: ((plan.features as any)?.quotas ?? {}) as Record<string, number>,
+        featureFlags: ((plan.features as any)?.featureFlags ?? {}) as Record<string, boolean>,
+      },
+    }));
   }
 }

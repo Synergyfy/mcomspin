@@ -1,6 +1,7 @@
 'use client';
 
 import React from 'react';
+import { usePathname } from 'next/navigation';
 import { AuthProxy } from '../proxy';
 
 export default function AdminLayout({
@@ -8,8 +9,14 @@ export default function AdminLayout({
 }: {
   children: React.ReactNode;
 }) {
+  const pathname = usePathname();
+
+  if (pathname === '/admin/login') {
+    return <>{children}</>;
+  }
+
   return (
-    <AuthProxy allowedRoles={['SuperAdmin', 'BoroughAdmin']}>
+    <AuthProxy allowedRoles={['SuperAdmin', 'BoroughAdmin']} redirectTo="/admin/login">
       {children}
     </AuthProxy>
   );

@@ -1,5 +1,6 @@
 import { Module } from '@nestjs/common';
 import { PrismaModule } from '../../prisma/prisma.module';
+import { SystemModule } from '../system/system.module';
 import { AdminDashboardController } from './controllers/admin-dashboard.controller';
 import { AdminGamesController } from './controllers/admin-games.controller';
 import { AdminCampaignsController } from './controllers/admin-campaigns.controller';
@@ -10,6 +11,7 @@ import { AdminRedemptionsController } from './controllers/admin-redemptions.cont
 import { AdminPartnersController } from './controllers/admin-partners.controller';
 import { AdminAnalyticsController } from './controllers/admin-analytics.controller';
 import { AdminSettingsController } from './controllers/admin-settings.controller';
+import { AdminPlansController } from './controllers/admin-plans.controller';
 import { AdminDashboardService } from './services/admin-dashboard.service';
 import { AdminGamesService } from './services/admin-games.service';
 import { AdminCampaignsService } from './services/admin-campaigns.service';
@@ -20,10 +22,11 @@ import { AdminRedemptionsService } from './services/admin-redemptions.service';
 import { AdminPartnersService } from './services/admin-partners.service';
 import { AdminAnalyticsService } from './services/admin-analytics.service';
 import { AdminSettingsService } from './services/admin-settings.service';
+import { AdminPlansService } from './services/admin-plans.service';
 import { SuperAdminGuard } from './guards/super-admin.guard';
 
 @Module({
-  imports: [PrismaModule],
+  imports: [PrismaModule, SystemModule],
   controllers: [
     AdminDashboardController,
     AdminGamesController,
@@ -35,6 +38,7 @@ import { SuperAdminGuard } from './guards/super-admin.guard';
     AdminPartnersController,
     AdminAnalyticsController,
     AdminSettingsController,
+    AdminPlansController,
   ],
   providers: [
     AdminDashboardService,
@@ -47,6 +51,7 @@ import { SuperAdminGuard } from './guards/super-admin.guard';
     AdminPartnersService,
     AdminAnalyticsService,
     AdminSettingsService,
+    AdminPlansService,
     SuperAdminGuard,
   ],
 })

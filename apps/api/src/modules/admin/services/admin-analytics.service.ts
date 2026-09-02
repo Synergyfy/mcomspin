@@ -20,7 +20,9 @@ export class AdminAnalyticsService {
       topRewards,
     ] = await Promise.all([
       this.prisma.gameSession.count(),
-      this.prisma.gameSession.groupBy({ by: ['customerId'] }).then((r) => r.length),
+      this.prisma.$queryRaw<{ count: bigint }[]>`
+        SELECT COUNT(DISTINCT "customerId") AS count FROM "GameSession"
+      `.then((r) => Number(r[0]?.count ?? 0)),
       this.prisma.customerReward.count(),
       this.prisma.rewardRedemption.count(),
       this.prisma.business.count({ where: { isActive: true } }),

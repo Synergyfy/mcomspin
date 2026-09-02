@@ -7,25 +7,27 @@ export class CustomerSettingsService {
   constructor(private prisma: PrismaService) {}
 
   async update(customerId: string, dto: CustomerUpdateSettingsDto) {
-    if (dto.notificationPrefs) {
-      for (const pref of dto.notificationPrefs) {
-        await this.prisma.notificationPreference.upsert({
-          where: {
-            userId_channel_type: {
+    if (dto.notificationPrefs?.length) {
+      await this.prisma.$transaction(
+        dto.notificationPrefs.map((pref) =>
+          this.prisma.notificationPreference.upsert({
+            where: {
+              userId_channel_type: {
+                userId: customerId,
+                channel: pref.channel as any,
+                type: pref.type as any,
+              },
+            },
+            update: { enabled: pref.enabled },
+            create: {
               userId: customerId,
               channel: pref.channel as any,
               type: pref.type as any,
+              enabled: pref.enabled,
             },
-          },
-          update: { enabled: pref.enabled },
-          create: {
-            userId: customerId,
-            channel: pref.channel as any,
-            type: pref.type as any,
-            enabled: pref.enabled,
-          },
-        });
-      }
+          }),
+        ),
+      );
     }
 
     const metadataUpdate: any = {};

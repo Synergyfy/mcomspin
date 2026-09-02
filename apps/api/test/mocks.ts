@@ -54,6 +54,14 @@ Object.assign(_mockPrisma, {
     update: jestFn(),
     count: jestFn(),
   },
+  otpVerification: {
+    findUnique: jestFn(),
+    findFirst: jestFn(),
+    create: jestFn(),
+    update: jestFn(),
+    updateMany: jestFn(),
+    count: jestFn(),
+  },
   businessStaff: {
     findUnique: jestFn(),
     findFirst: jestFn(),
@@ -200,7 +208,7 @@ Object.assign(_mockPrisma, {
   sharedAudience: { findMany: jestFn(), create: jestFn() },
   audit: { create: jestFn(), findMany: jestFn() },
   analyticsEvent: { create: jestFn(), findMany: jestFn(), count: jestFn() },
-  analyticsAggregation: { findMany: jestFn(), create: jestFn(), upsert: jestFn() },
+  analyticsAggregation: { findMany: jestFn(), create: jestFn(), upsert: jestFn(), aggregate: jestFn() },
   promotion: { findMany: jestFn(), count: jestFn(), findUnique: jestFn(), findFirst: jestFn(), create: jestFn(), update: jestFn() },
   promotionRedemption: { findMany: jestFn(), count: jestFn(), create: jestFn() },
   rotator: { findMany: jestFn(), count: jestFn(), findUnique: jestFn(), create: jestFn(), update: jestFn() },

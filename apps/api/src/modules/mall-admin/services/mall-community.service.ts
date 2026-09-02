@@ -24,17 +24,41 @@ export class MallCommunityService {
   }
 
   async sendNotification(dto: { title: string; message: string; audience: string; boroughId?: string; type?: string }) {
-    const users = await this.prisma.user.findMany({ take: 1000 });
+    const where: any = { isActive: true };
+
+    if (dto.boroughId) {
+      // Borough-scoped broadcast reaches business owners located in that borough.
+      where.ownedBusinesses = {
+        some: { deletedAt: null, businessLocations: { some: { highStreet: { boroughId: dto.boroughId } } } },
+      };
+    } else {
+      const audience = (dto.audience || 'all').toLowerCase();
+      if (audience === 'business' || audience === 'business-owners' || audience === 'businesses') {
+        where.ownedBusinesses = { some: { deletedAt: null } };
+      } else if (audience === 'customers') {
+        where.ownedBusinesses = { none: {} };
+      }
+    }
+
+    const users = await this.prisma.user.findMany({
+      where,
+      select: { id: true },
+    });
+
+    const validTypes = ['Promotional', 'Transactional', 'Alert', 'Reminder', 'Community'] as const;
+    const type = validTypes.includes((dto.type || '') as any) ? (dto.type as any) : 'Promotional';
 
     const notifications = users.map(u => ({
       userId: u.id,
       title: dto.title,
-      message: dto.message,
-      type: dto.type || 'System',
-      channel: 'Push',
+      body: dto.message,
+      type,
+      channel: 'InApp' as const,
     }));
 
-    await this.prisma.notification.createMany({ data: notifications as any });
+    if (notifications.length > 0) {
+      await this.prisma.notification.createMany({ data: notifications });
+    }
     return { message: `Notification sent to ${notifications.length} users` };
   }
 

@@ -902,8 +902,8 @@ function ArcadeGamesPageContent() {
               type: res.reward.type?.toLowerCase() || 'voucher',
               rarity: res.box?.rarity || 'rare',
               details: res.box?.label || res.reward.name,
-              expiryDate: '30 days',
-              terms: 'Valid at storefront',
+              expiryDate: res.reward.expiresAt ? new Date(res.reward.expiresAt).toLocaleDateString() : 'N/A',
+              terms: res.reward.terms || 'See merchant for redemption details',
             });
             playSound('victory');
             fireVictoryConfetti();
