@@ -51,6 +51,9 @@ export class SsoController {
 
     return {
       success: true,
+      accessToken: result.accessToken,
+      refreshToken: result.refreshToken,
+      user: result.user,
       redirect: this.targetForRoles(result.user.roles),
       permissions: result.permissions,
       hasAccess: result.hasAccess,
@@ -88,16 +91,17 @@ export class SsoController {
   }
 
   private setTokenCookies(res: Response, accessToken: string, refreshToken: string) {
+    const isProd = process.env.NODE_ENV === 'production';
     res.cookie('accessToken', accessToken, {
       httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: 'lax',
+      secure: isProd,
+      sameSite: isProd ? 'none' : 'lax',
       maxAge: 15 * 60 * 1000,
     });
     res.cookie('refreshToken', refreshToken, {
       httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: 'lax',
+      secure: isProd,
+      sameSite: isProd ? 'none' : 'lax',
       maxAge: 7 * 24 * 60 * 60 * 1000,
     });
   }
