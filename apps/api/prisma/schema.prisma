@@ -329,6 +329,8 @@ model User {
   moderatedReports  AbuseReport[]    @relation("AbuseReportModerator")
   moderationActions ModerationAction[]
   customerActivity  CustomerActivityLog[]
+  membership        Membership?
+  membershipPayments MembershipPayment[]
   deletedAt         DateTime?
   createdAt         DateTime         @default(now())
   updatedAt         DateTime         @updatedAt
@@ -2266,4 +2268,111 @@ model PlatformSetting {
   updatedAt DateTime @updatedAt
 
   @@index([key])
+}
+
+// ──────────────────────────────────────────────
+// UNIFIED MEMBERSHIP & PLAN ARCHITECTURE
+// ──────────────────────────────────────────────
+
+enum PlanTierName {
+  STANDARD
+  PRO
+  PRO_PLUS
+}
+
+model Plan {
+  id          String        @id @default(uuid()) @db.Uuid
+  name        String
+  slug        String        @unique
+  description String?
+  isActive    Boolean       @default(true)
+  variants    PlanVariant[]
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+}
+
+model PlanTierLevel {
+  id             String        @id @default(uuid()) @db.Uuid
+  name           PlanTierName  @unique
+  sortOrder      Int
+  durationDays   Int?
+  isCalendarYear Boolean       @default(false)
+  variants       PlanVariant[]
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
+}
+
+model PlanVariant {
+  id            String        @id @default(uuid()) @db.Uuid
+  planId        String        @db.Uuid
+  plan          Plan          @relation(fields: [planId], references: [id], onDelete: Cascade)
+  tierLevelId   String        @db.Uuid
+  tierLevel     PlanTierLevel @relation(fields: [tierLevelId], references: [id], onDelete: Restrict)
+  isActive      Boolean       @default(true)
+  features      String[]
+  configuration Json
+  prices        PlanPrice[]
+  memberships   Membership[]
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+
+  @@index([planId])
+  @@index([tierLevelId])
+}
+
+model PlanPrice {
+  id            String      @id @default(uuid()) @db.Uuid
+  planVariantId String      @db.Uuid
+  planVariant   PlanVariant @relation(fields: [planVariantId], references: [id], onDelete: Cascade)
+  currency      String      @default("GBP")
+  amount        Decimal     @db.Decimal(10, 2)
+  stripePriceId String?
+  paypalPlanId  String?
+  isActive      Boolean     @default(true)
+  effectiveFrom DateTime    @default(now()) @db.Timestamptz
+  effectiveTo   DateTime?   @db.Timestamptz
+  memberships   Membership[]
+  createdAt     DateTime    @default(now())
+  updatedAt     DateTime    @updatedAt
+
+  @@index([planVariantId])
+  @@index([isActive])
+}
+
+model Membership {
+  id            String             @id @default(uuid()) @db.Uuid
+  userId        String             @unique @db.Uuid
+  user          User               @relation(fields: [userId], references: [id], onDelete: Cascade)
+  planVariantId String             @db.Uuid
+  planVariant   PlanVariant        @relation(fields: [planVariantId], references: [id], onDelete: Restrict)
+  priceId       String             @db.Uuid
+  price         PlanPrice          @relation(fields: [priceId], references: [id], onDelete: Restrict)
+  paymentId     String?            @db.Uuid
+  payment       MembershipPayment? @relation(fields: [paymentId], references: [id], onDelete: SetNull)
+  isActive      Boolean            @default(true)
+  isTrial       Boolean            @default(false)
+  startDate     DateTime           @db.Timestamptz
+  expiresAt     DateTime           @db.Timestamptz
+  endDate       DateTime           @db.Timestamptz
+  createdAt     DateTime           @default(now())
+  updatedAt     DateTime           @updatedAt
+
+  @@index([userId])
+  @@index([planVariantId])
+}
+
+model MembershipPayment {
+  id            String       @id @default(uuid()) @db.Uuid
+  userId        String       @db.Uuid
+  user          User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  amount        Decimal      @db.Decimal(12, 2)
+  currency      String       @default("GBP")
+  paymentMethod String
+  transactionId String       @unique
+  memberships   Membership[]
+  createdAt     DateTime     @default(now())
+  updatedAt     DateTime     @updatedAt
+
+  @@index([userId])
+  @@index([transactionId])
 }

@@ -2,7 +2,7 @@ import { Controller, Get, Post, Patch, Delete, Body, Param, UseGuards } from '@n
 import { ApiTags, ApiOperation } from '@nestjs/swagger';
 import { Public } from '../../common/decorators/public.decorator';
 import { ServiceApiKeyGuard } from './service-api-key.guard';
-import { SystemService, CreatePlanInput, UpdatePlanInput } from './system.service';
+import { SystemService, CreatePlanDto, UpdateVariantPriceDto } from './system.service';
 
 /**
  * Endpoints consumed by the McomSolution GenericHttpConnector
@@ -18,14 +18,21 @@ export class SystemController {
   @Get('plans')
   @ApiOperation({ summary: 'List all subscription plans' })
   listPlans() {
-    return this.systemService.getPlans();
+    return this.systemService.listUnifiedPlans();
   }
 
   @Public()
   @Post('plans')
-  @ApiOperation({ summary: 'Create a subscription plan' })
-  createPlan(@Body() dto: CreatePlanInput) {
-    return this.systemService.createPlan(dto);
+  @ApiOperation({ summary: 'Create a subscription plan with 3 variants' })
+  createPlan(@Body() dto: CreatePlanDto) {
+    return this.systemService.createUnifiedPlan(dto);
+  }
+
+  @Public()
+  @Post('plans/variants/:variantId/prices')
+  @ApiOperation({ summary: 'Update variant price immutably' })
+  repriceVariant(@Param('variantId') variantId: string, @Body() dto: UpdateVariantPriceDto) {
+    return this.systemService.repriceVariant(variantId, dto);
   }
 
   @Public()
@@ -37,24 +44,9 @@ export class SystemController {
 
   @Public()
   @Get('plans/:id')
-  @ApiOperation({ summary: 'Get a single subscription plan' })
+  @ApiOperation({ summary: 'Get canonical plan format by plan or variant ID' })
   getPlan(@Param('id') id: string) {
-    return this.systemService.getPlanById(id);
-  }
-
-  @Public()
-  @Patch('plans/:id')
-  @ApiOperation({ summary: 'Update a subscription plan' })
-  updatePlan(@Param('id') id: string, @Body() dto: UpdatePlanInput) {
-    return this.systemService.updatePlan(id, dto);
-  }
-
-  @Public()
-  @Delete('plans/:id')
-  @ApiOperation({ summary: 'Delete a subscription plan' })
-  async deletePlan(@Param('id') id: string) {
-    await this.systemService.deletePlan(id);
-    return { success: true };
+    return this.systemService.findOneCanonicalPlan(id);
   }
 
   @Public()

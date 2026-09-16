@@ -2,6 +2,7 @@ import { Module } from '@nestjs/common';
 import { JwtModule } from '@nestjs/jwt';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { PrismaModule } from '../../prisma/prisma.module';
+import { BillingModule } from '../billing/billing.module';
 import { BusinessAuthController } from './controllers/business-auth.controller';
 import { BusinessDashboardController } from './controllers/business-dashboard.controller';
 import { BusinessProfileController } from './controllers/business-profile.controller';
@@ -19,6 +20,8 @@ import { BusinessPromotionsController } from './controllers/business-promotions.
 import { BusinessEventsController } from './controllers/business-events.controller';
 import { BusinessGamificationController } from './controllers/business-gamification.controller';
 import { BusinessSalesSettingsController } from './controllers/business-sales-settings.controller';
+import { BusinessMembershipController } from './controllers/business-membership.controller';
+import { BusinessToolsController } from './controllers/business-tools.controller';
 import { BusinessAuthService } from './services/business-auth.service';
 import { BusinessDashboardService } from './services/business-dashboard.service';
 import { BusinessProfileService } from './services/business-profile.service';
@@ -36,13 +39,12 @@ import { BusinessPromotionsService } from './services/business-promotions.servic
 import { BusinessEventsService } from './services/business-events.service';
 import { BusinessGamificationService } from './services/business-gamification.service';
 import { BusinessSalesSettingsService } from './services/business-sales-settings.service';
-import { BusinessMembershipController } from './controllers/business-membership.controller';
-import { BusinessToolsController } from './controllers/business-tools.controller';
 import { BusinessOwnerGuard } from './guards/business-owner.guard';
 
 @Module({
   imports: [
     PrismaModule,
+    BillingModule,
     JwtModule.registerAsync({
       imports: [ConfigModule],
       inject: [ConfigService],

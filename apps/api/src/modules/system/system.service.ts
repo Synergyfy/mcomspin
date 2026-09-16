@@ -1,50 +1,43 @@
-import { Injectable, NotFoundException, ConflictException } from '@nestjs/common';
-import { Prisma } from '@prisma/client';
+import { Injectable, NotFoundException, ConflictException, BadRequestException } from '@nestjs/common';
+import { Prisma, PlanTierName } from '@prisma/client';
 import { PrismaService } from '../../prisma/prisma.service';
 
-export interface PlanConfiguration {
-  quotas?: Record<string, number>;
-  featureFlags?: Record<string, boolean>;
-}
-
-export interface ExternalPlan {
-  id: string;
-  name: string;
-  description?: string | null;
-  isFree?: boolean;
-  monthlyPrice?: number;
-  quarterlyPrice?: number;
-  annualPrice?: number;
-  type?: 'STANDARD' | 'TRIAL' | 'SEASONAL';
+export interface PlanVariantConfigDto {
+  tier: 'STANDARD' | 'PRO' | 'PRO_PLUS';
+  price: number;
   features?: string[];
-  configuration?: PlanConfiguration;
-  isActive?: boolean;
-  isDefault?: boolean;
-  trialDuration?: number;
-  seasonId?: string;
-  created_at?: string;
-  updated_at?: string;
+  configuration: {
+    quotas?: Record<string, number>;
+    featureFlags?: Record<string, boolean>;
+    disabledNavIds?: string[];
+  };
 }
 
-export interface CreatePlanInput {
+export interface CreatePlanDto {
   name: string;
+  slug: string;
   description?: string;
-  isFree?: boolean;
-  monthlyPrice?: number;
-  quarterlyPrice?: number;
-  annualPrice?: number;
-  type?: 'STANDARD' | 'TRIAL' | 'SEASONAL';
-  features?: string[];
-  configuration?: PlanConfiguration;
-  isActive?: boolean;
-  isDefault?: boolean;
-  trialDuration?: number;
-  seasonId?: string;
+  variants: PlanVariantConfigDto[];
 }
 
-export interface UpdatePlanInput extends Partial<CreatePlanInput> {}
+export interface UpdateVariantPriceDto {
+  amount: number;
+  currency?: string;
+  stripePriceId?: string;
+  paypalPlanId?: string;
+}
 
 const SPIN_QUOTA_FIELDS: Array<{ key: string; label: string; unlimited?: boolean }> = [
+  { key: 'maxListings', label: 'Max listings', unlimited: true },
+  { key: 'allowProductListing', label: 'Allow product listing', unlimited: false },
+  { key: 'allowServiceListing', label: 'Allow service listing', unlimited: false },
+  { key: 'maxProducts', label: 'Max products', unlimited: true },
+  { key: 'maxServices', label: 'Max services', unlimited: true },
+  { key: 'maxGiftCardTemplates', label: 'Max gift card templates', unlimited: true },
+  { key: 'maxCouponTemplates', label: 'Max coupon templates', unlimited: true },
+  { key: 'maxLoyaltyPrograms', label: 'Max loyalty programs', unlimited: true },
+  { key: 'maxImagesPerListing', label: 'Max images per listing', unlimited: true },
+  { key: 'featuredListingAllowance', label: 'Featured listing allowance', unlimited: true },
   { key: 'maxActiveGames', label: 'Max active games', unlimited: true },
   { key: 'maxActiveCampaigns', label: 'Max active campaigns', unlimited: true },
   { key: 'maxRewards', label: 'Max rewards', unlimited: true },
@@ -54,6 +47,11 @@ const SPIN_QUOTA_FIELDS: Array<{ key: string; label: string; unlimited?: boolean
 ];
 
 const SPIN_FEATURE_FLAG_FIELDS: Array<{ key: string; label: string }> = [
+  { key: 'priorityInSearch', label: 'Priority ranking in search' },
+  { key: 'advancedAnalytics', label: 'Realtime analytics dashboard' },
+  { key: 'dedicatedSupport', label: 'Account manager' },
+  { key: 'allowCustomBranding', label: 'Storefront custom colors/logos' },
+  { key: 'allowGroupCreation', label: 'Automated circles/groups' },
   { key: 'canScheduleCampaigns', label: 'Schedule campaigns ahead of time' },
   { key: 'hasAdvancedAnalytics', label: 'Advanced analytics' },
   { key: 'canCreateRewardFromScratch', label: 'Create rewards from scratch' },
@@ -63,132 +61,214 @@ const SPIN_FEATURE_FLAG_FIELDS: Array<{ key: string; label: string }> = [
 export class SystemService {
   constructor(private readonly prisma: PrismaService) {}
 
-  async getPlans(): Promise<ExternalPlan[]> {
-    const plans = await this.prisma.subscriptionPlan.findMany({
-      orderBy: { sortOrder: 'asc' },
+  async listUnifiedPlans() {
+    return this.prisma.plan.findMany({
+      include: {
+        variants: {
+          include: {
+            tierLevel: true,
+            prices: {
+              where: { isActive: true },
+              orderBy: { createdAt: 'desc' },
+            },
+          },
+        },
+      },
+      orderBy: { createdAt: 'desc' },
     });
-    return plans.map((plan) => this.serialize(plan));
   }
 
-  async getPlanById(id: string): Promise<ExternalPlan> {
-    const plan = await this.prisma.subscriptionPlan.findUnique({ where: { id } });
+  async getUnifiedPlan(id: string) {
+    const plan = await this.prisma.plan.findUnique({
+      where: { id },
+      include: {
+        variants: {
+          include: {
+            tierLevel: true,
+            prices: {
+              where: { isActive: true },
+              orderBy: { createdAt: 'desc' },
+            },
+          },
+        },
+      },
+    });
     if (!plan) throw new NotFoundException(`Plan "${id}" not found`);
-    return this.serialize(plan);
+    return plan;
   }
 
-  async createPlan(input: CreatePlanInput): Promise<ExternalPlan> {
-    const configuration = input.configuration ?? {};
-    const isFree = input.isFree ?? false;
-    const monthlyPrice = isFree ? 0 : this.roundPrice(input.monthlyPrice);
-    const isDefault = input.isDefault ?? false;
+  async createUnifiedPlan(dto: CreatePlanDto) {
+    this.assertExactlyThreeTiers(dto);
 
-    if (isDefault) {
-      await this.clearDefaultPlan();
-    }
+    const existing = await this.prisma.plan.findUnique({ where: { slug: dto.slug } });
+    if (existing) throw new ConflictException(`Plan with slug "${dto.slug}" already exists`);
 
-    try {
-      const created = await this.prisma.subscriptionPlan.create({
+    // Ensure PlanTierLevels exist
+    await this.ensureTierLevelsExist();
+    const tierLevels = await this.prisma.planTierLevel.findMany();
+
+    return this.prisma.$transaction(async (tx) => {
+      const plan = await tx.plan.create({
         data: {
-          name: input.name,
-          description: input.description ?? null,
-          isFree,
-          price: new Prisma.Decimal(monthlyPrice),
-          currency: 'GBP',
-          interval: 'month',
-features: {
-        ...configuration,
-        isDefault,
-        quarterlyPrice: input.quarterlyPrice !== undefined ? this.roundPrice(input.quarterlyPrice) : undefined,
-        annualPrice: input.annualPrice !== undefined ? this.roundPrice(input.annualPrice) : undefined,
-        type: input.type ?? (isFree ? 'TRIAL' : 'STANDARD'),
-        trialDuration: input.trialDuration ?? undefined,
-      } as Prisma.InputJsonValue,
-          maxStaff: configuration.quotas?.maxTeamMembers ?? 0,
-          maxLocations: 1,
-          maxProducts: 0,
-          maxCampaigns: configuration.quotas?.maxActiveCampaigns ?? 0,
-          isActive: input.isActive ?? true,
-          sortOrder: 0,
+          name: dto.name,
+          slug: dto.slug,
+          description: dto.description ?? null,
+          isActive: true,
         },
       });
-      return this.serialize(created);
-    } catch (err) {
-      this.throwForPrisma(err);
-    }
+
+      for (const vDto of dto.variants) {
+        const tierLevel = tierLevels.find((t) => t.name === vDto.tier);
+        if (!tierLevel) throw new BadRequestException(`Tier level "${vDto.tier}" not found`);
+
+        const variant = await tx.planVariant.create({
+          data: {
+            planId: plan.id,
+            tierLevelId: tierLevel.id,
+            features: vDto.features ?? [],
+            configuration: vDto.configuration as unknown as Prisma.InputJsonValue,
+            isActive: true,
+          },
+        });
+
+        await tx.planPrice.create({
+          data: {
+            planVariantId: variant.id,
+            amount: new Prisma.Decimal(vDto.price),
+            currency: 'GBP',
+            isActive: true,
+            effectiveFrom: new Date(),
+            effectiveTo: null,
+          },
+        });
+      }
+
+      return tx.plan.findUnique({
+        where: { id: plan.id },
+        include: {
+          variants: {
+            include: {
+              tierLevel: true,
+              prices: {
+                where: { isActive: true },
+              },
+            },
+          },
+        },
+      });
+    });
   }
 
-  async updatePlan(id: string, input: UpdatePlanInput): Promise<ExternalPlan> {
-    const existing = await this.prisma.subscriptionPlan.findUnique({ where: { id } });
-    if (!existing) throw new NotFoundException(`Plan "${id}" not found`);
+  async repriceVariant(variantId: string, dto: UpdateVariantPriceDto) {
+    const variant = await this.prisma.planVariant.findUnique({ where: { id: variantId } });
+    if (!variant) throw new NotFoundException(`PlanVariant "${variantId}" not found`);
 
-    const existingConfig = ((existing.features ?? {}) as PlanConfiguration & {
-      isDefault?: boolean;
-      quarterlyPrice?: number;
-      annualPrice?: number;
-      type?: string;
-      trialDuration?: number;
-    }) ?? {};
+    const now = new Date();
 
-    if (input.isDefault === true) {
-      await this.clearDefaultPlan(id);
-    }
+    return this.prisma.$transaction(async (tx) => {
+      // 1. Deactivate old price rows
+      await tx.planPrice.updateMany({
+        where: { planVariantId: variantId, isActive: true },
+        data: { isActive: false, effectiveTo: now },
+      });
 
-    const nextIsFree = input.isFree !== undefined ? input.isFree : existing.isFree;
-    const data: Prisma.SubscriptionPlanUpdateInput = {};
-    if (input.name !== undefined) data.name = input.name;
-    if (input.description !== undefined) data.description = input.description ?? null;
-    if (input.isFree !== undefined) data.isFree = input.isFree;
-    if (input.monthlyPrice !== undefined) data.price = new Prisma.Decimal(nextIsFree ? 0 : this.roundPrice(input.monthlyPrice));
-    if (input.isActive !== undefined) data.isActive = input.isActive;
-
-    const nextConfig = { ...existingConfig };
-    let configChanged = false;
-    if (input.configuration !== undefined) {
-      if (input.configuration.quotas !== undefined) {
-        nextConfig.quotas = { ...(nextConfig.quotas ?? {}), ...input.configuration.quotas };
-      }
-      if (input.configuration.featureFlags !== undefined) {
-        nextConfig.featureFlags = { ...(nextConfig.featureFlags ?? {}), ...input.configuration.featureFlags };
-      }
-      configChanged = true;
-    }
-    if (input.isDefault !== undefined && existingConfig.isDefault !== input.isDefault) {
-      nextConfig.isDefault = input.isDefault;
-      configChanged = true;
-    }
-    if (input.quarterlyPrice !== undefined) {
-      nextConfig.quarterlyPrice = this.roundPrice(input.quarterlyPrice);
-      configChanged = true;
-    }
-    if (input.annualPrice !== undefined) {
-      nextConfig.annualPrice = this.roundPrice(input.annualPrice);
-      configChanged = true;
-    }
-    if (input.type !== undefined) {
-      nextConfig.type = input.type;
-      configChanged = true;
-    }
-    if (input.trialDuration !== undefined) {
-      nextConfig.trialDuration = input.trialDuration;
-      configChanged = true;
-    }
-    if (configChanged) data.features = nextConfig as Prisma.InputJsonValue;
-    if (nextConfig.quotas?.maxTeamMembers !== undefined) data.maxStaff = nextConfig.quotas.maxTeamMembers;
-    if (nextConfig.quotas?.maxActiveCampaigns !== undefined) data.maxCampaigns = nextConfig.quotas.maxActiveCampaigns;
-
-    try {
-      const updated = await this.prisma.subscriptionPlan.update({ where: { id }, data });
-      return this.serialize(updated);
-    } catch (err) {
-      this.throwForPrisma(err);
-    }
+      // 2. Insert new active price row
+      return tx.planPrice.create({
+        data: {
+          planVariantId: variantId,
+          amount: new Prisma.Decimal(dto.amount),
+          currency: dto.currency ?? 'GBP',
+          stripePriceId: dto.stripePriceId ?? null,
+          paypalPlanId: dto.paypalPlanId ?? null,
+          isActive: true,
+          effectiveFrom: now,
+          effectiveTo: null,
+        },
+      });
+    });
   }
 
-  async deletePlan(id: string): Promise<void> {
+  async resolveActivePrice(id: string) {
+    // 1. Try finding by variant ID
+    const variant = await this.prisma.planVariant.findUnique({
+      where: { id },
+      include: {
+        plan: true,
+        tierLevel: true,
+        prices: { where: { isActive: true }, orderBy: { createdAt: 'desc' }, take: 1 },
+      },
+    });
+
+    if (variant && variant.prices.length > 0) {
+      return { variant, price: variant.prices[0] };
+    }
+
+    // 2. Fallback: If id is plan ID, pick STANDARD variant
+    const plan = await this.prisma.plan.findUnique({
+      where: { id },
+      include: {
+        variants: {
+          include: {
+            plan: true,
+            tierLevel: true,
+            prices: { where: { isActive: true }, orderBy: { createdAt: 'desc' }, take: 1 },
+          },
+        },
+      },
+    });
+
+    if (plan && plan.variants.length > 0) {
+      const stdVariant = plan.variants.find((v) => v.tierLevel.name === 'STANDARD') ?? plan.variants[0];
+      if (stdVariant.prices.length > 0) {
+        return { variant: stdVariant, price: stdVariant.prices[0] };
+      }
+    }
+
+    throw new NotFoundException(`Active price resolution failed for ID "${id}"`);
+  }
+
+  async findOneCanonicalPlan(id: string) {
     try {
-      await this.prisma.subscriptionPlan.delete({ where: { id } });
-    } catch (err) {
-      this.throwForPrisma(err);
+      const { variant, price } = await this.resolveActivePrice(id);
+      const level = variant.tierLevel?.name;
+      const label = level === PlanTierName.PRO_PLUS ? 'Pro+' : level === PlanTierName.PRO ? 'Pro' : 'Standard';
+      const amount = Number(price.amount);
+
+      return {
+        id: variant.id,
+        name: `${variant.plan?.name} · ${label}`,
+        description: variant.plan?.description ?? null,
+        monthlyPrice: amount,
+        quarterlyPrice: amount,
+        annualPrice: amount,
+        features: variant.features ?? [],
+        configuration: variant.configuration ?? null,
+        isActive: variant.isActive && (variant.plan?.isActive ?? true),
+        isDefault: false,
+        type: level,
+      };
+    } catch {
+      // Fallback for legacy SubscriptionPlan
+      const legacyPlan = await this.prisma.subscriptionPlan.findUnique({ where: { id } });
+      if (!legacyPlan) throw new NotFoundException(`Plan "${id}" not found`);
+
+      const config = (legacyPlan.features as any) ?? {};
+      return {
+        id: legacyPlan.id,
+        name: legacyPlan.name,
+        description: legacyPlan.description,
+        monthlyPrice: Number(legacyPlan.price),
+        quarterlyPrice: config.quarterlyPrice ?? Number(legacyPlan.price),
+        annualPrice: config.annualPrice ?? Number(legacyPlan.price),
+        features: (config.features as string[]) ?? [],
+        configuration: {
+          quotas: config.quotas ?? {},
+          featureFlags: config.featureFlags ?? {},
+        },
+        isActive: legacyPlan.isActive,
+        isDefault: config.isDefault ?? false,
+        type: 'STANDARD',
+      };
     }
   }
 
@@ -212,70 +292,35 @@ features: {
     return [];
   }
 
-  private roundPrice(value?: number): number {
-    if (value === undefined || value === null || Number.isNaN(Number(value))) return 0;
-    return Math.round(Number(value) * 100) / 100;
+  private assertExactlyThreeTiers(dto: CreatePlanDto) {
+    if (!dto.variants || dto.variants.length !== 3) {
+      throw new BadRequestException('Every plan must be created with exactly 3 variants: STANDARD, PRO, PRO_PLUS');
+    }
+    const tiers = dto.variants.map((v) => v.tier);
+    const hasStandard = tiers.includes('STANDARD');
+    const hasPro = tiers.includes('PRO');
+    const hasProPlus = tiers.includes('PRO_PLUS');
+
+    if (!hasStandard || !hasPro || !hasProPlus) {
+      throw new BadRequestException('Plan variants must include exactly one STANDARD, PRO, and PRO_PLUS tier');
+    }
   }
 
-  private async clearDefaultPlan(excludeId?: string): Promise<void> {
-    const where: Prisma.SubscriptionPlanWhereInput = { features: { path: ['isDefault'], equals: true } };
-    if (excludeId) {
-      where.id = { not: excludeId };
-    }
-    await this.prisma.subscriptionPlan.updateMany({
-      where,
-      data: { features: { path: ['isDefault'], set: false } as unknown as Prisma.InputJsonValue },
+  private async ensureTierLevelsExist() {
+    await this.prisma.planTierLevel.upsert({
+      where: { name: 'STANDARD' },
+      create: { name: 'STANDARD', sortOrder: 1, durationDays: 90, isCalendarYear: false },
+      update: { sortOrder: 1, durationDays: 90, isCalendarYear: false },
     });
-  }
-
-  private serialize(plan: {
-    id: string;
-    name: string;
-    description: string | null;
-    isFree: boolean;
-    price: Prisma.Decimal;
-    isActive: boolean;
-    features: Prisma.JsonValue;
-    createdAt: Date;
-    updatedAt: Date;
-  }): ExternalPlan {
-    const config = ((plan.features ?? {}) as PlanConfiguration & {
-      isDefault?: boolean;
-      quarterlyPrice?: number;
-      annualPrice?: number;
-      type?: string;
-      trialDuration?: number;
-    }) ?? {};
-    return {
-      id: plan.id,
-      name: plan.name,
-      description: plan.description,
-      isFree: plan.isFree,
-      monthlyPrice: Number(plan.price),
-      quarterlyPrice: config.quarterlyPrice,
-      annualPrice: config.annualPrice,
-      type: (config.type ?? (plan.isFree ? 'TRIAL' : 'STANDARD')) as ExternalPlan['type'],
-      trialDuration: config.trialDuration,
-      configuration: {
-        quotas: config.quotas ?? {},
-        featureFlags: config.featureFlags ?? {},
-      },
-      isActive: plan.isActive,
-      isDefault: config.isDefault ?? false,
-      created_at: plan.createdAt.toISOString(),
-      updated_at: plan.updatedAt.toISOString(),
-    };
-  }
-
-  private throwForPrisma(err: unknown): never {
-    if (err instanceof Prisma.PrismaClientKnownRequestError) {
-      if (err.code === 'P2002') {
-        throw new ConflictException('A plan with this name already exists');
-      }
-      if (err.code === 'P2025') {
-        throw new NotFoundException('Plan not found');
-      }
-    }
-    throw err;
+    await this.prisma.planTierLevel.upsert({
+      where: { name: 'PRO' },
+      create: { name: 'PRO', sortOrder: 2, durationDays: 180, isCalendarYear: false },
+      update: { sortOrder: 2, durationDays: 180, isCalendarYear: false },
+    });
+    await this.prisma.planTierLevel.upsert({
+      where: { name: 'PRO_PLUS' },
+      create: { name: 'PRO_PLUS', sortOrder: 3, durationDays: null, isCalendarYear: true },
+      update: { sortOrder: 3, durationDays: null, isCalendarYear: true },
+    });
   }
 }

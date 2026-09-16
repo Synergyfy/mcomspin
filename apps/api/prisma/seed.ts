@@ -239,6 +239,24 @@ async function main() {
     ],
   });
 
+
+  // ── Plan Tier Levels ──
+  await prisma.planTierLevel.upsert({
+    where: { name: 'STANDARD' },
+    create: { name: 'STANDARD', sortOrder: 1, durationDays: 90, isCalendarYear: false },
+    update: { sortOrder: 1, durationDays: 90, isCalendarYear: false },
+  });
+  await prisma.planTierLevel.upsert({
+    where: { name: 'PRO' },
+    create: { name: 'PRO', sortOrder: 2, durationDays: 180, isCalendarYear: false },
+    update: { sortOrder: 2, durationDays: 180, isCalendarYear: false },
+  });
+  await prisma.planTierLevel.upsert({
+    where: { name: 'PRO_PLUS' },
+    create: { name: 'PRO_PLUS', sortOrder: 3, durationDays: null, isCalendarYear: true },
+    update: { sortOrder: 3, durationDays: null, isCalendarYear: true },
+  });
+
   // ── Subscription Plans ──
   await seedPlans();
 
