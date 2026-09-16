@@ -2,13 +2,15 @@ import { Controller, Get, Post, Put, Delete, Param, Body, UseGuards, Req } from 
 import { ApiTags, ApiOperation, ApiBearerAuth } from '@nestjs/swagger';
 import { JwtAuthGuard } from '../../../common/guards/jwt-auth.guard';
 import { BusinessOwnerGuard } from '../guards/business-owner.guard';
+import { PlanCapabilityGuard } from '../../../common/guards/plan-capability.guard';
+import { RequireQuota } from '../../../common/decorators/plan-capability.decorator';
 import { BusinessStaffService } from '../services/business-staff.service';
 import { InviteStaffDto } from '../dto/invite-staff.dto';
 import { UpdateStaffDto } from '../dto/update-staff.dto';
 
 @ApiTags('Business - Staff')
 @ApiBearerAuth()
-@UseGuards(JwtAuthGuard, BusinessOwnerGuard)
+@UseGuards(JwtAuthGuard, BusinessOwnerGuard, PlanCapabilityGuard)
 @Controller('business/staff')
 export class BusinessStaffController {
   constructor(private readonly businessStaffService: BusinessStaffService) {}
@@ -20,6 +22,7 @@ export class BusinessStaffController {
   }
 
   @Post()
+  @RequireQuota('maxTeamMembers')
   @ApiOperation({ summary: 'Invite staff member' })
   invite(@Req() req: any, @Body() dto: InviteStaffDto) {
     return this.businessStaffService.invite(req.businessId, dto);

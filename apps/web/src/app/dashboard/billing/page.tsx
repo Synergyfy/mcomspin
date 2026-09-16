@@ -20,6 +20,8 @@ import {
   Sparkles,
 } from 'lucide-react';
 
+import api from '@/services/api';
+
 interface ActiveMembership {
   id: string;
   isActive: boolean;
@@ -90,21 +92,17 @@ export default function BusinessMembershipPage() {
     setIsLoading(true);
     try {
       const [memRes, plansRes] = await Promise.all([
-        fetch('/api/business/membership'),
-        fetch('/api/admin/plans'),
+        api.get('/business/membership'),
+        api.get('/business/membership/plans'),
       ]);
 
-      if (memRes.ok) {
-        const memData = await memRes.json();
-        setMembershipData(memData.membership || null);
-      }
+      const memData = memRes.data?.data ?? memRes.data;
+      setMembershipData(memData.membership || null);
 
-      if (plansRes.ok) {
-        const plansData = await plansRes.json();
-        setPlans(plansData);
-      }
+      const plansData = plansRes.data?.data ?? plansRes.data;
+      setPlans(Array.isArray(plansData) ? plansData : plansData?.data || []);
     } catch (err: any) {
-      setMsg({ type: 'error', text: err.message });
+      setMsg({ type: 'error', text: err.response?.data?.message || err.message });
     } finally {
       setIsLoading(false);
     }
@@ -121,20 +119,15 @@ export default function BusinessMembershipPage() {
 
     try {
       // 1. Initiate
-      const initRes = await fetch('/api/business/membership/initiate-payment', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          provider: paymentProvider,
-          planVariantId: checkoutVariant.variant.id,
-        }),
+      const initRes = await api.post('/business/membership/initiate-payment', {
+        provider: paymentProvider,
+        planVariantId: checkoutVariant.variant.id,
       });
 
-      if (!initRes.ok) throw new Error('Failed to initiate payment');
-      const initData = await initRes.json();
+      const initData = initRes.data?.data ?? initRes.data;
 
-      let transactionId = initData.transactionId || initData.orderId;
-      let holdId = initData.holdId;
+      const transactionId = initData.transactionId || initData.orderId || initData.clientSecret;
+      const holdId = initData.holdId;
 
       if (paymentProvider === 'paypal' && initData.approvalUrl) {
         window.location.href = initData.approvalUrl;
@@ -142,24 +135,18 @@ export default function BusinessMembershipPage() {
       }
 
       // 2. Verify / Capture
-      const verifyRes = await fetch('/api/business/membership/verify-payment', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          provider: paymentProvider,
-          planVariantId: checkoutVariant.variant.id,
-          holdId,
-          transactionId,
-        }),
+      await api.post('/business/membership/verify-payment', {
+        provider: paymentProvider,
+        planVariantId: checkoutVariant.variant.id,
+        holdId,
+        transactionId,
       });
-
-      if (!verifyRes.ok) throw new Error('Failed to verify payment and activate membership');
 
       setMsg({ type: 'success', text: 'Membership activated successfully!' });
       setCheckoutVariant(null);
       fetchData();
     } catch (err: any) {
-      setMsg({ type: 'error', text: err.message });
+      setMsg({ type: 'error', text: err.response?.data?.error?.message || err.response?.data?.message || err.message });
     } finally {
       setIsProcessing(false);
     }
@@ -301,9 +288,9 @@ export default function BusinessMembershipPage() {
                 <button
                   disabled={isCurrent}
                   onClick={() => setCheckoutVariant({ planName: plan.name, variant, price: priceVal })}
-                  className={`w-full py-3 rounded-2xl text-xs font-bold transition-all flex items-center justify-center gap-2 ${isCurrent ? 'bg-stone-100 text-stone-400 cursor-not-allowed' : 'bg-[#1a1a1a] hover:bg-[#f97316] text-white'}`}
+                  className={`w-full py-3 rounded-2xl text-xs font-bold transition-all flex items-center justify-center gap-2 ${isCurrent ? 'bg-stone-100 text-stone-400 cursor-not-allowed' : 'bg-[#1a1a1a] hover:bg-[#f97316] text-white shadow-sm'}`}
                 >
-                  {isCurrent ? 'Active Tier' : `Select ${selectedDuration} · £${priceVal.toFixed(2)}`}
+                  {isCurrent ? 'Active Tier' : `Subscribe · £${priceVal.toFixed(2)}`}
                 </button>
               </div>
             );

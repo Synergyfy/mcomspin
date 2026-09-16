@@ -84,8 +84,8 @@ export class BillingController {
   @UseGuards(JwtAuthGuard, BusinessOwnerGuard)
   @Get('business/billing/invoices/:id')
   @ApiOperation({ summary: 'Get invoice details' })
-  getInvoiceById(@Param('id') id: string) {
-    return this.billingService.getInvoiceById(id);
+  getInvoiceById(@Req() req: any, @Param('id') id: string) {
+    return this.billingService.getInvoiceById(req.businessId, id);
   }
 
   @UseGuards(JwtAuthGuard, BusinessOwnerGuard)

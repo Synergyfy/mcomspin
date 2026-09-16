@@ -141,7 +141,18 @@ export class McomPaymentService {
   }
 
   private async requirePurchasablePlan(planId: string) {
-    const plan = await this.prisma.subscriptionPlan.findUnique({ where: { id: planId } });
+    const variant = await this.prisma.planVariant.findUnique({
+      where: { id: planId },
+      include: { plan: true },
+    });
+    if (variant) {
+      if (!variant.isActive || !variant.plan?.isActive) {
+        throw new BadRequestException('This plan variant is not currently available');
+      }
+      return;
+    }
+
+    const plan = await this.prisma.plan.findUnique({ where: { id: planId } });
     if (!plan) throw new NotFoundException('Plan not found');
     if (!plan.isActive) throw new BadRequestException('This plan is not currently available');
   }

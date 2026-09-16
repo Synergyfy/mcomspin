@@ -1,4 +1,5 @@
 import { Injectable, NotFoundException, BadRequestException, ForbiddenException } from '@nestjs/common';
+import * as crypto from 'crypto';
 import { PrismaService } from '../../../prisma/prisma.service';
 import { CustomerGameStartDto } from '../dto/customer-game-start.dto';
 import { CustomerGameDropDto } from '../dto/customer-game-drop.dto';
@@ -139,10 +140,15 @@ export class CustomerGameService {
       },
     });
 
+    const sanitizedBoxes = boxes.map((b, idx) => ({
+      index: idx,
+      label: b.label || `Box ${idx + 1}`,
+    }));
+
     return {
       sessionId: session.id,
       game: { id: config.gameId, config: config.config },
-      boxes,
+      boxes: sanitizedBoxes,
       startedAt: session.startedAt,
     };
   }
@@ -202,43 +208,51 @@ export class CustomerGameService {
   }
 
   async claimReward(customerId: string, dto: CustomerGameClaimDto) {
-    const session = await this.prisma.gameSession.findFirst({
-      where: { id: dto.sessionId, customerId, isWin: true, endedAt: { not: null } },
-      include: { reward: true },
+    return this.prisma.$transaction(async (tx) => {
+      const session = await tx.gameSession.findFirst({
+        where: { id: dto.sessionId, customerId, isWin: true, endedAt: { not: null } },
+        include: { reward: true },
+      });
+      if (!session) throw new NotFoundException('Won game session not found');
+      if (!session.reward) throw new BadRequestException('No reward to claim');
+
+      // Check if this session was already claimed
+      const sessionClaimed = await tx.customerReward.findFirst({
+        where: { customerId, metadata: { path: ['sessionId'], equals: session.id } },
+      });
+      if (sessionClaimed) throw new BadRequestException('Reward from this game session has already been claimed');
+
+      const existing = await tx.customerReward.findFirst({
+        where: { customerId, rewardId: session.reward.id, usedAt: null },
+      });
+      if (existing) throw new BadRequestException('Reward already claimed');
+
+      const expiresAt = new Date();
+      expiresAt.setDate(expiresAt.getDate() + 30);
+
+      const customerReward = await tx.customerReward.create({
+        data: {
+          customerId,
+          rewardId: session.reward.id,
+          expiresAt,
+          metadata: { sessionId: session.id },
+        },
+        include: { reward: true },
+      });
+
+      return {
+        id: customerReward.id,
+        reward: customerReward.reward,
+        expiresAt: customerReward.expiresAt,
+        qrData: `MCS-REWARD-${customerReward.id}`,
+      };
     });
-    if (!session) throw new NotFoundException('Won game session not found');
-    if (!session.reward) throw new BadRequestException('No reward to claim');
-
-    const existing = await this.prisma.customerReward.findFirst({
-      where: { customerId, rewardId: session.reward.id, usedAt: null },
-    });
-    if (existing) throw new BadRequestException('Reward already claimed');
-
-    const expiresAt = new Date();
-    expiresAt.setDate(expiresAt.getDate() + 30);
-
-    const customerReward = await this.prisma.customerReward.create({
-      data: {
-        customerId,
-        rewardId: session.reward.id,
-        expiresAt,
-        metadata: { sessionId: session.id },
-      },
-      include: { reward: true },
-    });
-
-    return {
-      id: customerReward.id,
-      reward: customerReward.reward,
-      expiresAt: customerReward.expiresAt,
-      qrData: `MCS-REWARD-${customerReward.id}`,
-    };
   }
 
   private shuffleBoxes(config: any[]): any[] {
     const boxes = config.length > 0 ? [...config] : this.generateDefaultBoxes();
     for (let i = boxes.length - 1; i > 0; i--) {
-      const j = Math.floor(Math.random() * (i + 1));
+      const j = crypto.randomInt(0, i + 1);
       [boxes[i], boxes[j]] = [boxes[j], boxes[i]];
     }
     return boxes;

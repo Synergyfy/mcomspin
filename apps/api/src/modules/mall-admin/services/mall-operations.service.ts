@@ -84,17 +84,17 @@ export class MallOperationsService {
       default: startDate = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
     }
 
-    const [campaigns, rewards, customers] = await Promise.all([
-      this.prisma.campaign.findMany({ where: { createdAt: { gte: startDate } } }),
-      this.prisma.rewardRedemption.findMany({ where: { redeemedAt: { gte: startDate } } }),
+    const [campaignsCreated, rewardsRedeemed, activeCustomers] = await Promise.all([
+      this.prisma.campaign.count({ where: { createdAt: { gte: startDate } } }),
+      this.prisma.rewardRedemption.count({ where: { redeemedAt: { gte: startDate } } }),
       this.prisma.customerActivityLog.count({ where: { createdAt: { gte: startDate } } }),
     ]);
 
     return {
       period: query.period || 'monthly',
-      campaignsCreated: campaigns.length,
-      rewardsRedeemed: rewards.length,
-      activeCustomers: customers,
+      campaignsCreated,
+      rewardsRedeemed,
+      activeCustomers,
     };
   }
 }

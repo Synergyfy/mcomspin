@@ -117,7 +117,7 @@ export default function LandingPage() {
               <Link href="/auth" className="text-[11px] font-bold tracking-[0.15em] uppercase text-[#1a1a1a] hover:text-[#f97316] transition-colors px-4 py-2">
                 Sign In
               </Link>
-              <Link href="/acquire" className="text-[11px] font-bold tracking-[0.15em] bg-[#1a1a1a] text-white px-6 py-3 rounded-xl hover:bg-[#f97316] hover:shadow-lg hover:shadow-black/10 transition-all duration-300 uppercase">
+              <Link href="/auth" className="text-[11px] font-bold tracking-[0.15em] bg-[#1a1a1a] text-white px-6 py-3 rounded-xl hover:bg-[#f97316] hover:shadow-lg hover:shadow-black/10 transition-all duration-300 uppercase">
                 Get Started
               </Link>
             </div>
@@ -140,7 +140,7 @@ export default function LandingPage() {
               <Link href="/auth" onClick={() => setMobileMenuOpen(false)} className="text-center text-[11px] font-bold tracking-[0.15em] uppercase text-[#1a1a1a] hover:text-[#f97316] transition-colors py-2">
                 Sign In
               </Link>
-              <Link href="/acquire" onClick={() => setMobileMenuOpen(false)} className="text-center text-[11px] font-bold tracking-[0.15em] bg-[#1a1a1a] text-white px-6 py-3 rounded-xl hover:bg-[#f97316] hover:shadow-lg hover:shadow-black/10 transition-all duration-300 uppercase">
+              <Link href="/auth" onClick={() => setMobileMenuOpen(false)} className="text-center text-[11px] font-bold tracking-[0.15em] bg-[#1a1a1a] text-white px-6 py-3 rounded-xl hover:bg-[#f97316] hover:shadow-lg hover:shadow-black/10 transition-all duration-300 uppercase">
                 Get Started
               </Link>
             </div>

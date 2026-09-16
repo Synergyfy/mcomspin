@@ -176,7 +176,7 @@ export class AuthService {
   async sendOtp(dto: SendOtpDto) {
     if (!dto.email && !dto.phone) throw new BadRequestException('Email or phone required');
 
-    const code = Math.floor(100000 + Math.random() * 900000).toString();
+    const code = crypto.randomInt(100000, 1000000).toString();
 
     const otp = await this.prisma.otpVerification.create({
       data: {
@@ -252,7 +252,7 @@ export class AuthService {
     if (!user) return { message: 'If the email exists, a reset link has been sent' };
 
     const resetToken = crypto.randomBytes(32).toString('hex');
-    const resetTokenHash = await bcrypt.hash(resetToken, 10);
+    const resetTokenHash = crypto.createHash('sha256').update(resetToken).digest('hex');
 
     await this.prisma.user.update({
       where: { id: user.id },
@@ -263,28 +263,30 @@ export class AuthService {
   }
 
   async resetPassword(dto: ResetPasswordDto) {
-    const users = await this.prisma.user.findMany({
+    const tokenHash = crypto.createHash('sha256').update(dto.token).digest('hex');
+    const user = await this.prisma.user.findFirst({
       where: {
-        metadata: { path: ['resetTokenHash'], not: Prisma.DbNull },
+        metadata: { path: ['resetTokenHash'], equals: tokenHash },
       },
       select: { id: true, metadata: true },
     });
 
-    for (const user of users) {
-      const meta = user.metadata as any;
-      if (!meta?.resetTokenExpiry || new Date(meta.resetTokenExpiry) < new Date()) continue;
-      if (await bcrypt.compare(dto.token, meta.resetTokenHash)) {
-        const passwordHash = await bcrypt.hash(dto.newPassword, 12);
-        const { resetTokenHash, resetTokenExpiry, ...rest } = meta;
-        await this.prisma.user.update({
-          where: { id: user.id },
-          data: { passwordHash, metadata: rest },
-        });
-        return { message: 'Password reset successfully' };
-      }
+    if (!user) {
+      throw new BadRequestException('Invalid or expired reset token');
     }
 
-    throw new BadRequestException('Invalid or expired reset token');
+    const meta = (user.metadata as any) || {};
+    if (!meta.resetTokenExpiry || new Date(meta.resetTokenExpiry) < new Date()) {
+      throw new BadRequestException('Invalid or expired reset token');
+    }
+
+    const passwordHash = await bcrypt.hash(dto.newPassword, 12);
+    const { resetTokenHash, resetTokenExpiry, ...rest } = meta;
+    await this.prisma.user.update({
+      where: { id: user.id },
+      data: { passwordHash, metadata: rest },
+    });
+    return { message: 'Password reset successfully' };
   }
 
   async generateTokens(userId: string, email: string) {

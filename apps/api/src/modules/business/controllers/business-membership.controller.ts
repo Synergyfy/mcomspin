@@ -66,6 +66,27 @@ export class BusinessMembershipController {
     return { membership, isUnified: true };
   }
 
+  @Get('membership/plans')
+  @ApiOperation({ summary: 'List all available unified plans with variants and prices' })
+  async listPlans() {
+    return this.prisma.plan.findMany({
+      where: { isActive: true },
+      include: {
+        variants: {
+          where: { isActive: true },
+          include: {
+            tierLevel: true,
+            prices: {
+              where: { isActive: true },
+              orderBy: { createdAt: 'desc' },
+            },
+          },
+        },
+      },
+      orderBy: { createdAt: 'desc' },
+    });
+  }
+
   @Post('membership/initiate-payment')
   @ApiOperation({ summary: 'Initiate payment hold/intent via MCOM Solutions or Wallet' })
   async initiatePayment(@Req() req: any, @Body() dto: InitiatePaymentDto) {
@@ -257,8 +278,8 @@ export class BusinessMembershipController {
   @ApiOperation({ summary: 'Redeem credits' })
   async redeemCredits(@Req() req: any, @Body() dto: { creditId: string; amount: number; reason?: string }) {
     const credit = await this.prisma.credit.findUnique({ where: { id: dto.creditId } });
-    if (!credit || credit.businessId !== req.businessId) throw new Error('Credit not found');
-    if (Number(credit.balance) < dto.amount) throw new Error('Insufficient credits');
+    if (!credit || credit.businessId !== req.businessId) throw new NotFoundException('Credit not found');
+    if (Number(credit.balance) < dto.amount) throw new BadRequestException('Insufficient credits');
 
     await this.prisma.creditUsage.create({
       data: { creditId: dto.creditId, amount: dto.amount, referenceType: 'manual', metadata: dto.reason ? { reason: dto.reason } : undefined },

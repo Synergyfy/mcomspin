@@ -2,13 +2,15 @@ import { Controller, Get, Post, Put, Delete, Param, Body, Query, UseGuards, Req 
 import { ApiTags, ApiOperation, ApiBearerAuth, ApiQuery } from '@nestjs/swagger';
 import { JwtAuthGuard } from '../../../common/guards/jwt-auth.guard';
 import { BusinessOwnerGuard } from '../guards/business-owner.guard';
+import { PlanCapabilityGuard } from '../../../common/guards/plan-capability.guard';
+import { RequireQuota } from '../../../common/decorators/plan-capability.decorator';
 import { BusinessCampaignsService } from '../services/business-campaigns.service';
 import { CreateCampaignDto } from '../../admin/dto/create-campaign.dto';
 import { UpdateCampaignDto } from '../../admin/dto/update-campaign.dto';
 
 @ApiTags('Business - Campaigns')
 @ApiBearerAuth()
-@UseGuards(JwtAuthGuard, BusinessOwnerGuard)
+@UseGuards(JwtAuthGuard, BusinessOwnerGuard, PlanCapabilityGuard)
 @Controller('business/campaigns')
 export class BusinessCampaignsController {
   constructor(private readonly businessCampaignsService: BusinessCampaignsService) {}
@@ -33,6 +35,7 @@ export class BusinessCampaignsController {
   }
 
   @Post()
+  @RequireQuota('maxActiveCampaigns')
   @ApiOperation({ summary: 'Create a campaign' })
   create(@Req() req: any, @Body() dto: CreateCampaignDto) {
     return this.businessCampaignsService.create(req.businessId, dto);

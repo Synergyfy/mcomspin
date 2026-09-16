@@ -228,48 +228,24 @@ export class SystemService {
   }
 
   async findOneCanonicalPlan(id: string) {
-    try {
-      const { variant, price } = await this.resolveActivePrice(id);
-      const level = variant.tierLevel?.name;
-      const label = level === PlanTierName.PRO_PLUS ? 'Pro+' : level === PlanTierName.PRO ? 'Pro' : 'Standard';
-      const amount = Number(price.amount);
+    const { variant, price } = await this.resolveActivePrice(id);
+    const level = variant.tierLevel?.name;
+    const label = level === PlanTierName.PRO_PLUS ? 'Pro+' : level === PlanTierName.PRO ? 'Pro' : 'Standard';
+    const amount = Number(price.amount);
 
-      return {
-        id: variant.id,
-        name: `${variant.plan?.name} · ${label}`,
-        description: variant.plan?.description ?? null,
-        monthlyPrice: amount,
-        quarterlyPrice: amount,
-        annualPrice: amount,
-        features: variant.features ?? [],
-        configuration: variant.configuration ?? null,
-        isActive: variant.isActive && (variant.plan?.isActive ?? true),
-        isDefault: false,
-        type: level,
-      };
-    } catch {
-      // Fallback for legacy SubscriptionPlan
-      const legacyPlan = await this.prisma.subscriptionPlan.findUnique({ where: { id } });
-      if (!legacyPlan) throw new NotFoundException(`Plan "${id}" not found`);
-
-      const config = (legacyPlan.features as any) ?? {};
-      return {
-        id: legacyPlan.id,
-        name: legacyPlan.name,
-        description: legacyPlan.description,
-        monthlyPrice: Number(legacyPlan.price),
-        quarterlyPrice: config.quarterlyPrice ?? Number(legacyPlan.price),
-        annualPrice: config.annualPrice ?? Number(legacyPlan.price),
-        features: (config.features as string[]) ?? [],
-        configuration: {
-          quotas: config.quotas ?? {},
-          featureFlags: config.featureFlags ?? {},
-        },
-        isActive: legacyPlan.isActive,
-        isDefault: config.isDefault ?? false,
-        type: 'STANDARD',
-      };
-    }
+    return {
+      id: variant.id,
+      name: `${variant.plan?.name} · ${label}`,
+      description: variant.plan?.description ?? null,
+      monthlyPrice: amount,
+      quarterlyPrice: amount,
+      annualPrice: amount,
+      features: variant.features ?? [],
+      configuration: variant.configuration ?? null,
+      isActive: variant.isActive && (variant.plan?.isActive ?? true),
+      isDefault: false,
+      type: level,
+    };
   }
 
   getPlanSchema() {

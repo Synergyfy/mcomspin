@@ -16,7 +16,7 @@ export class CustomerFeaturesController {
   @ApiOperation({ summary: 'Get onboarding status' })
   async getOnboarding(@Req() req: any) {
     const user = await this.prisma.user.findUnique({ where: { id: req.user.id } });
-    if (!user) throw new Error('User not found');
+    if (!user) throw new NotFoundException('User not found');
     return {
       isEmailVerified: user.isEmailVerified,
       isPhoneVerified: user.isPhoneVerified,
@@ -66,7 +66,7 @@ export class CustomerFeaturesController {
   @ApiOperation({ summary: 'Save a promotion' })
   async savePromotion(@Req() req: any, @Param('id') id: string) {
     const user = await this.prisma.user.findUnique({ where: { id: req.user.id } });
-    if (!user) throw new Error('User not found');
+    if (!user) throw new NotFoundException('User not found');
     const savedIds: string[] = (user.metadata as any)?.savedPromotionIds || [];
     if (!savedIds.includes(id)) savedIds.push(id);
     await this.prisma.user.update({ where: { id: req.user.id }, data: { metadata: { ...(user.metadata as any || {}), savedPromotionIds: savedIds } } });
@@ -77,7 +77,7 @@ export class CustomerFeaturesController {
   @ApiOperation({ summary: 'Unsave a promotion' })
   async unsavePromotion(@Req() req: any, @Param('id') id: string) {
     const user = await this.prisma.user.findUnique({ where: { id: req.user.id } });
-    if (!user) throw new Error('User not found');
+    if (!user) throw new NotFoundException('User not found');
     const savedIds: string[] = (user.metadata as any)?.savedPromotionIds || [];
     const filtered = savedIds.filter(s => s !== id);
     await this.prisma.user.update({ where: { id: req.user.id }, data: { metadata: { ...(user.metadata as any || {}), savedPromotionIds: filtered } } });
@@ -114,7 +114,7 @@ export class CustomerFeaturesController {
     const l = limit || 20;
     const [promotions, events, posts] = await Promise.all([
       this.prisma.promotion.findMany({ where: { status: 'Active' as any }, include: { business: { select: { id: true, name: true, slug: true, logoUrl: true } } }, orderBy: { createdAt: 'desc' }, skip: (p - 1) * l, take: l }),
-      this.prisma.event.findMany({ where: { status: 'published' as any, startDate: { gte: new Date() } }, orderBy: { startDate: 'asc' }, take: 10 }),
+      this.prisma.event.findMany({ where: { status: 'Published', startDate: { gte: new Date() } }, orderBy: { startDate: 'asc' }, take: 10 }),
       this.prisma.communityPost.findMany({ include: { author: { select: { id: true, firstName: true, lastName: true, avatarUrl: true } } }, orderBy: { createdAt: 'desc' }, take: 20 }),
     ]);
     return { promotions, events, posts };

@@ -23,6 +23,7 @@ export class AppGateway implements OnGatewayConnection, OnGatewayDisconnect {
   server: Server;
 
   private userSockets = new Map<string, Set<string>>();
+  private socketToUser = new Map<string, string>();
 
   constructor(
     private jwtService: JwtService,
@@ -47,6 +48,7 @@ export class AppGateway implements OnGatewayConnection, OnGatewayDisconnect {
         this.userSockets.set(userId, new Set());
       }
       this.userSockets.get(userId)!.add(client.id);
+      this.socketToUser.set(client.id, userId);
       client.join(`user:${userId}`);
 
       for (const role of roles) {
@@ -58,9 +60,15 @@ export class AppGateway implements OnGatewayConnection, OnGatewayDisconnect {
   }
 
   handleDisconnect(client: Socket) {
-    for (const [userId, sockets] of this.userSockets.entries()) {
-      if (sockets.delete(client.id) && sockets.size === 0) {
-        this.userSockets.delete(userId);
+    const userId = this.socketToUser.get(client.id);
+    this.socketToUser.delete(client.id);
+    if (userId) {
+      const sockets = this.userSockets.get(userId);
+      if (sockets) {
+        sockets.delete(client.id);
+        if (sockets.size === 0) {
+          this.userSockets.delete(userId);
+        }
       }
     }
   }
