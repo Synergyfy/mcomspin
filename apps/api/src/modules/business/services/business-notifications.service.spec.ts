@@ -26,7 +26,10 @@ describe('BusinessNotificationsService', () => {
       { customerId: 'cust-2' },
       { customerId: 'cust-1' },
     ]);
-    mockPrisma.notification.createMany.mockResolvedValue({ count: 2 });
+    mockPrisma.customerReward.findMany.mockResolvedValue([
+      { customerId: 'cust-3' },
+    ]);
+    mockPrisma.notification.createMany.mockResolvedValue({ count: 3 });
 
     const result = await service.send('biz-1', {
       title: 'New Reward',
@@ -39,12 +42,14 @@ describe('BusinessNotificationsService', () => {
       data: expect.arrayContaining([
         expect.objectContaining({ userId: 'cust-1', title: 'New Reward' }),
         expect.objectContaining({ userId: 'cust-2' }),
+        expect.objectContaining({ userId: 'cust-3' }),
       ]),
     });
   });
 
   it('should return 0 sent when no customers', async () => {
     mockPrisma.gameSession.findMany.mockResolvedValue([]);
+    mockPrisma.customerReward.findMany.mockResolvedValue([]);
 
     const result = await service.send('biz-1', {
       title: 'Test',

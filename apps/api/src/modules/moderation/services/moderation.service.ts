@@ -8,7 +8,7 @@ export class ModerationService {
   constructor(private prisma: PrismaService) {}
 
   async getReports(page: number = 1, limit: number = 20, status?: string) {
-    const validStatuses = ['Pending', 'Resolved', 'Dismissed'];
+    const validStatuses = ['Open', 'Investigating', 'Resolved', 'Dismissed'];
     if (status && !validStatuses.includes(status)) {
       throw new BadRequestException(`Invalid status. Must be one of: ${validStatuses.join(', ')}`);
     }

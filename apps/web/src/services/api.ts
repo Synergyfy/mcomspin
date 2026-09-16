@@ -114,9 +114,10 @@ export async function initAuth(): Promise<boolean> {
     return true;
   }
   try {
+    const token = getRefreshToken();
     const { data } = await axios.post(
       `${api.defaults.baseURL}/auth/refresh`,
-      {},
+      token ? { refreshToken: token } : {},
       { withCredentials: true },
     );
     const newToken = data.data?.accessToken ?? data.accessToken;

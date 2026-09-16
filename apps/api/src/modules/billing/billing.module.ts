@@ -4,6 +4,11 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
 import { PrismaModule } from '../../prisma/prisma.module';
 import { BillingController } from './controllers/billing.controller';
 import { BillingService } from './services/billing.service';
+import { PlanExpiryService } from './services/plan-expiry.service';
+import { PlanCapabilityService } from './services/plan-capability.service';
+import { PlanCapabilityGuard } from '../../common/guards/plan-capability.guard';
+import { McomWalletService } from './services/mcom-wallet.service';
+import { SolutionsPaymentProxyService } from './services/solutions-payment-proxy.service';
 
 @Module({
   imports: [
@@ -18,7 +23,21 @@ import { BillingService } from './services/billing.service';
     }),
   ],
   controllers: [BillingController],
-  providers: [BillingService],
-  exports: [BillingService],
+  providers: [
+    BillingService,
+    PlanExpiryService,
+    PlanCapabilityService,
+    PlanCapabilityGuard,
+    McomWalletService,
+    SolutionsPaymentProxyService,
+  ],
+  exports: [
+    BillingService,
+    PlanExpiryService,
+    PlanCapabilityService,
+    PlanCapabilityGuard,
+    McomWalletService,
+    SolutionsPaymentProxyService,
+  ],
 })
 export class BillingModule {}

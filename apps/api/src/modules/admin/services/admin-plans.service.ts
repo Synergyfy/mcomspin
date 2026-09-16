@@ -1,27 +1,23 @@
 import { Injectable } from '@nestjs/common';
-import { SystemService, CreatePlanInput, UpdatePlanInput } from '../../system/system.service';
+import { SystemService, CreatePlanDto, UpdateVariantPriceDto } from '../../system/system.service';
 
 @Injectable()
 export class AdminPlansService {
   constructor(private readonly systemService: SystemService) {}
 
   listPlans() {
-    return this.systemService.getPlans();
+    return this.systemService.listUnifiedPlans();
   }
 
   getPlan(id: string) {
-    return this.systemService.getPlanById(id);
+    return this.systemService.getUnifiedPlan(id);
   }
 
-  createPlan(input: CreatePlanInput) {
-    return this.systemService.createPlan(input);
+  createPlan(input: CreatePlanDto) {
+    return this.systemService.createUnifiedPlan(input);
   }
 
-  updatePlan(id: string, input: UpdatePlanInput) {
-    return this.systemService.updatePlan(id, input);
-  }
-
-  deletePlan(id: string) {
-    return this.systemService.deletePlan(id);
+  repriceVariant(variantId: string, input: UpdateVariantPriceDto) {
+    return this.systemService.repriceVariant(variantId, input);
   }
 }

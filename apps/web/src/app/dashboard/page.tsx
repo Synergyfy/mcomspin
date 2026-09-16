@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Target, Gift, Users2, Rocket, Building2, ClipboardList, Zap } from 'lucide-react';
 import {
   AreaChart,
@@ -68,7 +68,12 @@ interface KpiItem {
 }
 
 export default function DashboardOverview() {
+  const [isMounted, setIsMounted] = useState(false);
   const [chartMetric, setChartMetric] = useState<'engagement' | 'leads' | 'rewards'>('engagement');
+
+  useEffect(() => {
+    setIsMounted(true);
+  }, []);
 
   const { data: rawSummary, isLoading: summaryLoading } = useDashboardSummary();
   const { data: rawLive, isLoading: liveLoading } = useLiveMonitoring();
@@ -248,42 +253,46 @@ export default function DashboardOverview() {
             </div>
           </div>
 
-          <div className="h-[320px] -ml-2">
-            <ResponsiveContainer width="100%" height="100%">
-              <AreaChart data={engagementData} margin={{ top: 5, right: 20, left: 0, bottom: 5 }}>
-                <defs>
-                  <linearGradient id="orangeGradient" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="0%" stopColor="#f97316" stopOpacity={0.2} />
-                    <stop offset="95%" stopColor="#f97316" stopOpacity={0.01} />
-                  </linearGradient>
-                </defs>
-                <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" vertical={false} />
-                <XAxis
-                  dataKey="day"
-                  tick={{ fontSize: 10, fill: '#aaa' }}
-                  axisLine={false}
-                  tickLine={false}
-                  interval={4}
-                />
-                <YAxis
-                  tick={{ fontSize: 10, fill: '#aaa' }}
-                  axisLine={false}
-                  tickLine={false}
-                  width={40}
-                />
-                <Tooltip content={<ChartTooltip />} />
-                <Area
-                  type="monotone"
-                  dataKey={chartMetric}
-                  stroke="#f97316"
-                  strokeWidth={2.5}
-                  fill="url(#orangeGradient)"
-                  dot={false}
-                  activeDot={{ r: 5, stroke: '#f97316', strokeWidth: 2, fill: '#fff' }}
-                />
-              </AreaChart>
-            </ResponsiveContainer>
-            {engagementData.length === 0 && <p className="text-center text-[#888] py-12">No engagement data yet</p>}
+          <div className="h-[320px] w-full min-w-0 -ml-2">
+            {isMounted ? (
+              <ResponsiveContainer width="100%" height="100%">
+                <AreaChart data={engagementData} margin={{ top: 5, right: 20, left: 0, bottom: 5 }}>
+                  <defs>
+                    <linearGradient id="orangeGradient" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="0%" stopColor="#f97316" stopOpacity={0.2} />
+                      <stop offset="95%" stopColor="#f97316" stopOpacity={0.01} />
+                    </linearGradient>
+                  </defs>
+                  <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" vertical={false} />
+                  <XAxis
+                    dataKey="day"
+                    tick={{ fontSize: 10, fill: '#aaa' }}
+                    axisLine={false}
+                    tickLine={false}
+                    interval={4}
+                  />
+                  <YAxis
+                    tick={{ fontSize: 10, fill: '#aaa' }}
+                    axisLine={false}
+                    tickLine={false}
+                    width={40}
+                  />
+                  <Tooltip content={<ChartTooltip />} />
+                  <Area
+                    type="monotone"
+                    dataKey={chartMetric}
+                    stroke="#f97316"
+                    strokeWidth={2.5}
+                    fill="url(#orangeGradient)"
+                    dot={false}
+                    activeDot={{ r: 5, stroke: '#f97316', strokeWidth: 2, fill: '#fff' }}
+                  />
+                </AreaChart>
+              </ResponsiveContainer>
+            ) : (
+              <div className="h-full w-full" />
+            )}
+            {engagementData.length === 0 && isMounted && <p className="text-center text-[#888] py-12">No engagement data yet</p>}
           </div>
         </div>
 

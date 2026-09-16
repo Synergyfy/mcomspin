@@ -220,7 +220,7 @@ export class SsoService {
 
     const profile = await this.getCentralUserInfo(central.accessToken);
     const permissions = profile.permissions ?? {};
-    const hasAccess = permissions[`canAccess_${this.platformSlug}`] === true;
+    const hasAccess = permissions[`canAccess_${this.platformSlug}`] === true || permissions.canAccessSpin === true;
 
     if (this.isBusinessRole(central.user.role)) {
       await this.ensureDefaultBusiness(user, profile);

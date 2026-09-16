@@ -2,6 +2,8 @@
 
 import { Suspense, useEffect, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
+import { setTokens } from '@/services/token-store';
+import { useAuthStore } from '@/store/auth-store';
 
 function CallbackContent() {
   const router = useRouter();
@@ -24,6 +26,19 @@ function CallbackContent() {
         const body = await res.json().catch(() => null);
         if (!res.ok || !body?.success) {
           throw new Error(body?.error?.message || body?.message || 'SSO login failed');
+        }
+        if (body.accessToken) {
+          setTokens(body.accessToken, body.refreshToken);
+        }
+        if (body.user) {
+          useAuthStore.getState().setUser({
+            id: body.user.id,
+            name: body.user.name ?? `${body.user.firstName ?? ''} ${body.user.lastName ?? ''}`.trim(),
+            email: body.user.email,
+            role: body.user.role || (body.user.roles && body.user.roles[0]) || '',
+            permissions: body.permissions,
+            hasAccess: body.hasAccess,
+          });
         }
         if (!cancelled) router.replace(body.redirect || state || '/dashboard');
       })

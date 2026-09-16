@@ -63,12 +63,32 @@ export function AuthProxy({
         const jsonPayload = new TextDecoder().decode(bytes);
         const payload = JSON.parse(jsonPayload);
 
+        let effectivePayload = payload;
         if (payload.exp && Date.now() >= payload.exp * 1000) {
-          router.replace(redirectTo);
-          return;
+          const restored = await initAuth();
+          if (cancelled) return;
+          if (!restored) {
+            router.replace(redirectTo);
+            return;
+          }
+          const freshToken = getAccessToken();
+          if (!freshToken) {
+            router.replace(redirectTo);
+            return;
+          }
+          const freshParts = freshToken.split('.');
+          if (freshParts.length !== 3) {
+            router.replace(redirectTo);
+            return;
+          }
+          const b64 = freshParts[1].replace(/-/g, '+').replace(/_/g, '/');
+          const bin = window.atob(b64);
+          const u8 = new Uint8Array(bin.length);
+          for (let i = 0; i < bin.length; i++) u8[i] = bin.charCodeAt(i);
+          effectivePayload = JSON.parse(new TextDecoder().decode(u8));
         }
 
-        const userRoles = payload.roles || [];
+        const userRoles = effectivePayload.roles || [];
         const hasRole = allowedRoles.some((r) =>
           userRoles.map((role: string) => role.toLowerCase()).includes(r.toLowerCase())
         );

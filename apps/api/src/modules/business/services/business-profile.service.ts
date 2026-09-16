@@ -60,41 +60,31 @@ export class BusinessProfileService {
       this.prisma.subscription.findFirst({
         where: { businessId },
         orderBy: { createdAt: 'desc' },
-        include: { plan: true },
       }),
       this.prisma.invoice.findMany({
         where: { businessId },
         orderBy: { createdAt: 'desc' },
       }),
-      this.prisma.subscriptionPlan.findMany({
+      this.prisma.plan.findMany({
         where: { isActive: true },
-        orderBy: { sortOrder: 'asc' },
+        include: {
+          variants: {
+            where: { isActive: true },
+            include: {
+              tierLevel: true,
+              prices: { where: { isActive: true }, orderBy: { createdAt: 'desc' }, take: 1 },
+            },
+          },
+        },
+        orderBy: { createdAt: 'desc' },
       }),
       this.prisma.paymentMethod.findMany({ where: { businessId } }),
     ]);
 
-    const serializedPlans = plans.map((plan) => ({
-      id: plan.id,
-      name: plan.name,
-      description: plan.description,
-      isFree: plan.isFree,
-      monthlyPrice: Number(plan.price),
-      quarterlyPrice: ((plan.features as any)?.quarterlyPrice ?? undefined) as number | undefined,
-      annualPrice: ((plan.features as any)?.annualPrice ?? undefined) as number | undefined,
-      type: ((plan.features as any)?.type ?? (plan.isFree ? 'TRIAL' : 'STANDARD')) as string,
-      currency: plan.currency,
-      interval: plan.interval,
-      isDefault: ((plan.features as any)?.isDefault ?? false) as boolean,
-      configuration: {
-        quotas: ((plan.features as any)?.quotas ?? {}) as Record<string, number>,
-        featureFlags: ((plan.features as any)?.featureFlags ?? {}) as Record<string, boolean>,
-      },
-    }));
-
     return {
       subscription,
       invoices,
-      plans: serializedPlans,
+      plans,
       paymentMethod: paymentMethods.find((pm) => pm.isDefault) ?? paymentMethods[0] ?? null,
     };
   }

@@ -1,4 +1,4 @@
-﻿import { Injectable } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../../../prisma/prisma.service';
 
 @Injectable()
@@ -28,11 +28,11 @@ export class BusinessDashboardService {
       this.prisma.gameSession.count({
         where: { config: { businessId } },
       }),
-this.prisma.$queryRaw<{ count: bigint }[]>`
+      this.prisma.$queryRaw<{ count: bigint }[]>`
         SELECT COUNT(DISTINCT "GameSession"."customerId") AS count
         FROM "GameSession"
         INNER JOIN "GameConfig" ON "GameConfig"."id" = "GameSession"."configId"
-        WHERE "GameConfig"."businessId" = ${businessId}
+        WHERE "GameConfig"."businessId" = ${businessId}::uuid
       `.then((r) => Number(r[0]?.count ?? 0)),
       this.prisma.gameSession.findMany({
         where: { config: { businessId } },

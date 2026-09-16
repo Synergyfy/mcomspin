@@ -54,7 +54,7 @@ export class CustomerCampaignsService {
 
     const data = rawData.map((campaign) => {
       const primaryBusiness = campaign.businesses[0]?.business;
-      const gameCampaign = campaign.gameCampaigns[0];
+      const gameCampaign = campaign.gameCampaigns?.[0];
       const gameConfig = primaryBusiness?.games?.find((g: any) => g.gameId === gameCampaign?.gameId);
       const boxes = ((gameConfig?.config as any)?.boxes ?? []) as any[];
       const prizeBoxes = boxes.filter((b: any) => b.hasReward);

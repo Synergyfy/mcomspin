@@ -2,13 +2,15 @@ import { Controller, Get, Post, Put, Delete, Param, Body, Query, UseGuards, Req 
 import { ApiTags, ApiOperation, ApiBearerAuth, ApiQuery } from '@nestjs/swagger';
 import { JwtAuthGuard } from '../../../common/guards/jwt-auth.guard';
 import { BusinessOwnerGuard } from '../guards/business-owner.guard';
+import { PlanCapabilityGuard } from '../../../common/guards/plan-capability.guard';
+import { RequireQuota } from '../../../common/decorators/plan-capability.decorator';
 import { BusinessRewardsService } from '../services/business-rewards.service';
 import { CreateRewardDto } from '../../admin/dto/create-reward.dto';
 import { UpdateRewardDto } from '../../admin/dto/update-reward.dto';
 
 @ApiTags('Business - Rewards')
 @ApiBearerAuth()
-@UseGuards(JwtAuthGuard, BusinessOwnerGuard)
+@UseGuards(JwtAuthGuard, BusinessOwnerGuard, PlanCapabilityGuard)
 @Controller('business/rewards')
 export class BusinessRewardsController {
   constructor(private readonly businessRewardsService: BusinessRewardsService) {}
@@ -33,6 +35,7 @@ export class BusinessRewardsController {
   }
 
   @Post()
+  @RequireQuota('maxRewards')
   @ApiOperation({ summary: 'Create a reward' })
   create(@Req() req: any, @Body() dto: CreateRewardDto) {
     return this.businessRewardsService.create(req.businessId, dto);

@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Body, Query, UseGuards, Req } from '@nestjs/common';
+import { Controller, Get, Post, Body, Query, UseGuards, Req, NotFoundException } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiBearerAuth } from '@nestjs/swagger';
 import { JwtAuthGuard } from '../../../common/guards/jwt-auth.guard';
 import { BusinessOwnerGuard } from '../guards/business-owner.guard';
@@ -33,7 +33,7 @@ export class BusinessToolsController {
     const product = await this.prisma.product.findFirst({
       where: { id: dto.productId, storefront: { businessId: req.businessId }, deletedAt: null },
     });
-    if (!product) throw new Error('Product not found');
+    if (!product) throw new NotFoundException('Product not found');
 
     const discountedPrice = Number(product.price) * (1 - dto.discountPercent / 100);
     return this.prisma.product.update({
@@ -48,7 +48,7 @@ export class BusinessToolsController {
     const service = await this.prisma.service.findFirst({
       where: { id: dto.serviceId, storefront: { businessId: req.businessId } },
     });
-    if (!service) throw new Error('Service not found');
+    if (!service) throw new NotFoundException('Service not found');
 
     const existingAttributes = (service.attributes as Record<string, any>) || {};
     const spareOffers = existingAttributes.spareCapacityOffers || [];
@@ -72,12 +72,12 @@ export class BusinessToolsController {
     const notifications = customers.map(u => ({
       userId: u.id,
       title: dto.title,
-      message: dto.message,
-      type: 'Promotion',
-      channel: 'Push',
+      body: dto.message,
+      type: 'Promotional' as const,
+      channel: 'Push' as const,
     }));
 
-    await this.prisma.notification.createMany({ data: notifications as any });
+    await this.prisma.notification.createMany({ data: notifications });
     return { message: `Notification sent to ${notifications.length} customers` };
   }
 

@@ -21,8 +21,8 @@ export class BusinessNotificationsService {
     ]);
 
     const customerIds = new Set([
-      ...players.map((c) => c.customerId),
-      ...rewardCustomers.map((c) => c.customerId),
+      ...(players || []).map((c) => c.customerId),
+      ...(rewardCustomers || []).map((c) => c.customerId),
     ]);
 
     const notifications = Array.from(customerIds).map((userId) => ({

@@ -239,6 +239,24 @@ async function main() {
     ],
   });
 
+
+  // ── Plan Tier Levels ──
+  await prisma.planTierLevel.upsert({
+    where: { name: 'STANDARD' },
+    create: { name: 'STANDARD', sortOrder: 1, durationDays: 90, isCalendarYear: false },
+    update: { sortOrder: 1, durationDays: 90, isCalendarYear: false },
+  });
+  await prisma.planTierLevel.upsert({
+    where: { name: 'PRO' },
+    create: { name: 'PRO', sortOrder: 2, durationDays: 180, isCalendarYear: false },
+    update: { sortOrder: 2, durationDays: 180, isCalendarYear: false },
+  });
+  await prisma.planTierLevel.upsert({
+    where: { name: 'PRO_PLUS' },
+    create: { name: 'PRO_PLUS', sortOrder: 3, durationDays: null, isCalendarYear: true },
+    update: { sortOrder: 3, durationDays: null, isCalendarYear: true },
+  });
+
   // ── Subscription Plans ──
   await seedPlans();
 
@@ -252,123 +270,102 @@ async function main() {
 }
 
 async function seedPlans() {
-  const plans = [
+  const tierStandard = await prisma.planTierLevel.findUnique({ where: { name: 'STANDARD' } });
+  const tierPro = await prisma.planTierLevel.findUnique({ where: { name: 'PRO' } });
+  const tierProPlus = await prisma.planTierLevel.findUnique({ where: { name: 'PRO_PLUS' } });
+
+  if (!tierStandard || !tierPro || !tierProPlus) return;
+
+  const samplePlans = [
     {
-      name: 'Spin Free',
-      description: 'Free tier to try the platform',
-      isFree: true,
-      monthlyPrice: 0,
-      sortOrder: 1,
-      isDefault: true,
-      quotas: {
-        maxActiveGames: 1,
-        maxActiveCampaigns: 1,
-        maxRewards: 5,
-        monthlyPlaysAllowance: 100,
-        maxGameSessions: 100,
-        maxTeamMembers: 1,
-      },
-      featureFlags: {},
-    },
-    {
-      name: 'Spin Starter',
-      description: 'For growing businesses',
-      isFree: false,
-      monthlyPrice: 29,
-      sortOrder: 2,
-      isDefault: false,
-      quotas: {
-        maxActiveGames: 3,
-        maxActiveCampaigns: 3,
-        maxRewards: 20,
-        monthlyPlaysAllowance: 1000,
-        maxGameSessions: 1000,
-        maxTeamMembers: 3,
-      },
-      featureFlags: {
-        canCreateRewardFromScratch: true,
-      },
-    },
-    {
-      name: 'Spin Growth',
-      description: 'For scaling operations',
-      isFree: false,
-      monthlyPrice: 79,
-      sortOrder: 3,
-      isDefault: false,
-      quotas: {
-        maxActiveGames: 10,
-        maxActiveCampaigns: 10,
-        maxRewards: 100,
-        monthlyPlaysAllowance: 5000,
-        maxGameSessions: 5000,
-        maxTeamMembers: 10,
-      },
-      featureFlags: {
-        canCreateRewardFromScratch: true,
-        canScheduleCampaigns: true,
-      },
-    },
-    {
-      name: 'Spin Enterprise',
-      description: 'For large organisations',
-      isFree: false,
-      monthlyPrice: 199,
-      sortOrder: 4,
-      isDefault: false,
-      quotas: {
-        maxActiveGames: -1,
-        maxActiveCampaigns: -1,
-        maxRewards: -1,
-        monthlyPlaysAllowance: -1,
-        maxGameSessions: -1,
-        maxTeamMembers: 50,
-      },
-      featureFlags: {
-        canCreateRewardFromScratch: true,
-        canScheduleCampaigns: true,
-        hasAdvancedAnalytics: true,
-      },
+      name: 'Spin Commercial Plan',
+      slug: 'spin-commercial-plan',
+      description: 'Commercial merchant package with Standard (90d), Pro (180d), and Pro+ (1yr) variants',
+      variants: [
+        {
+          tierLevelId: tierStandard.id,
+          price: 49.99,
+          features: ['90 Days Full Access', 'Standard Search Placement', 'Up to 25 Listings'],
+          configuration: {
+            quotas: { maxListings: 25, maxProducts: 10, maxActiveGames: 2, maxActiveCampaigns: 2 },
+            featureFlags: { priorityInSearch: false },
+          },
+        },
+        {
+          tierLevelId: tierPro.id,
+          price: 89.99,
+          features: ['180 Days Full Access', 'Priority Search Ranking', 'Up to 100 Listings', 'Realtime Analytics'],
+          configuration: {
+            quotas: { maxListings: 100, maxProducts: 50, maxActiveGames: 5, maxActiveCampaigns: 5 },
+            featureFlags: { priorityInSearch: true, advancedAnalytics: true },
+          },
+        },
+        {
+          tierLevelId: tierProPlus.id,
+          price: 149.99,
+          features: ['1 Full Calendar Year', 'Top Search Priority', 'Unlimited Listings', 'Dedicated Support'],
+          configuration: {
+            quotas: { maxListings: -1, maxProducts: -1, maxActiveGames: 10, maxActiveCampaigns: 10 },
+            featureFlags: { priorityInSearch: true, advancedAnalytics: true, dedicatedSupport: true },
+          },
+        },
+      ],
     },
   ];
 
-  for (const plan of plans) {
-    const features = {
-      quotas: plan.quotas,
-      featureFlags: plan.featureFlags,
-      isDefault: plan.isDefault,
-    };
-    await prisma.subscriptionPlan.upsert({
-      where: { name: plan.name },
-      create: {
-        name: plan.name,
-        description: plan.description,
-        isFree: plan.isFree,
-        price: plan.monthlyPrice,
-        currency: 'GBP',
-        interval: 'month',
-        features,
-        maxStaff: plan.quotas.maxTeamMembers,
-        maxLocations: 1,
-        maxProducts: 0,
-        maxCampaigns: plan.quotas.maxActiveCampaigns,
-        isActive: true,
-        sortOrder: plan.sortOrder,
-      },
-      update: {
-        description: plan.description,
-        isFree: plan.isFree,
-        price: plan.monthlyPrice,
-        features,
-        maxStaff: plan.quotas.maxTeamMembers,
-        maxCampaigns: plan.quotas.maxActiveCampaigns,
-        isActive: true,
-        sortOrder: plan.sortOrder,
-      },
-    });
+  for (const p of samplePlans) {
+    let plan = await prisma.plan.findUnique({ where: { slug: p.slug } });
+    if (!plan) {
+      plan = await prisma.plan.create({
+        data: {
+          name: p.name,
+          slug: p.slug,
+          description: p.description,
+          isActive: true,
+        },
+      });
+    }
+
+    for (const v of p.variants) {
+      let variant = await prisma.planVariant.findFirst({
+        where: { planId: plan.id, tierLevelId: v.tierLevelId },
+      });
+
+      if (!variant) {
+        variant = await prisma.planVariant.create({
+          data: {
+            planId: plan.id,
+            tierLevelId: v.tierLevelId,
+            features: v.features,
+            configuration: v.configuration,
+            isActive: true,
+          },
+        });
+      } else {
+        await prisma.planVariant.update({
+          where: { id: variant.id },
+          data: { features: v.features, configuration: v.configuration },
+        });
+      }
+
+      const existingPrice = await prisma.planPrice.findFirst({
+        where: { planVariantId: variant.id, isActive: true },
+      });
+
+      if (!existingPrice) {
+        await prisma.planPrice.create({
+          data: {
+            planVariantId: variant.id,
+            amount: v.price,
+            currency: 'GBP',
+            isActive: true,
+          },
+        });
+      }
+    }
   }
 
-  console.log('  💳 Plans:     Spin Free / Starter / Growth / Enterprise');
+  console.log('  💳 Plans:     Unified Plan seeded (STANDARD 90d, PRO 180d, PRO_PLUS 1yr)');
 }
 
 main()

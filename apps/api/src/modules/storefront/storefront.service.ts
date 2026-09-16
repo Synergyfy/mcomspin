@@ -162,7 +162,7 @@ export class StorefrontService {
         isTrackStock: dto.isTrackStock ?? true,
         allowBackorder: dto.allowBackorder ?? false,
         status: dto.status ?? 'active',
-        images: dto.images ? JSON.stringify(dto.images) : undefined,
+        images: dto.images as any,
         attributes: dto.attributes,
         variants: dto.variants,
       },
@@ -177,7 +177,6 @@ export class StorefrontService {
     if (!product) throw new NotFoundException('Product not found');
 
     const data: any = { ...dto };
-    if (dto.images) data.images = JSON.stringify(dto.images);
     if (dto.name && !dto.slug) data.slug = slugify(dto.name);
 
     return this.prisma.product.update({ where: { id: productId }, data });
@@ -247,7 +246,7 @@ export class StorefrontService {
         maxBookingsPerSlot: dto.maxBookingsPerSlot ?? 1,
         bufferMinutes: dto.bufferMinutes ?? 0,
         status: dto.status ?? 'active',
-        images: dto.images ? JSON.stringify(dto.images) : undefined,
+        images: dto.images as any,
       },
     });
   }
@@ -261,7 +260,6 @@ export class StorefrontService {
 
     const data: any = { ...dto };
     if (dto.name && !dto.slug) data.slug = slugify(dto.name);
-    if (dto.images) data.images = JSON.stringify(dto.images);
 
     return this.prisma.service.update({ where: { id: serviceId }, data });
   }

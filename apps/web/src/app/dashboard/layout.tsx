@@ -249,7 +249,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                 <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z" />
               </svg>
               <div className="flex-1">
-                <p className="text-[13px] font-bold text-amber-900">No active MCOM Spin Local package</p>
+                <p className="text-[13px] font-bold text-amber-900">No active MComSpin package</p>
                 <p className="text-[12px] text-amber-700 mt-0.5 leading-relaxed">
                   You&apos;re signed in but don&apos;t have an active Central Hub Solution subscription for this platform.
                   Upgrade your membership to unlock the full experience.
